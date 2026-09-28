@@ -1,0 +1,77 @@
+/* Code Academy design tokens. Dark is the default; light is a paper theme. */
+:root,
+:root[data-theme='dark'] {
+  color-scheme: dark;
+  --bg: #0a0f1c;
+  --panel: #111a2c;
+  --panel-raised: #16213a;
+  --panel-2: #1c2a46;
+  --line: rgba(183, 192, 212, 0.12);
+  --line-strong: rgba(183, 192, 212, 0.22);
+
+  --brass: #c9a227;
+  --brass-light: #e6c667;
+  --brass-soft: rgba(201, 162, 39, 0.14);
+  --mint: #4fd1ae;
+  --mint-dim: #2e8a73;
+  --mint-soft: rgba(79, 209, 174, 0.13);
+  --sky: #6ea8ff;
+  --rose: #f08aa0;
+  --danger: #f2766b;
+  --danger-soft: rgba(242, 118, 107, 0.13);
+
+  --paper: #ece6d3;
+  --ink: #241f14;
+
+  --text: #f4f1e8;
+  --text-2: #b7c0d4;
+  --muted: #8f9bb8;
+
+  --shadow: 0 1px 0 rgba(255, 255, 255, 0.03) inset, 0 12px 32px -18px rgba(0, 0, 0, 0.7);
+  --grid-line: rgba(110, 168, 255, 0.045);
+  --code-bg: #0d1424;
+  --heat-0: #1f2d4b;
+}
+
+:root[data-theme='light'] {
+  color-scheme: light;
+  --bg: #f4efe1;
+  --panel: #fbf8f0;
+  --panel-raised: #ffffff;
+  --panel-2: #efe8d6;
+  --line: rgba(36, 31, 20, 0.12);
+  --line-strong: rgba(36, 31, 20, 0.22);
+
+  --brass: #7a5d0b;
+  --brass-light: #6a5008;
+  --brass-soft: rgba(143, 111, 15, 0.12);
+  --mint: #136454;
+  --mint-dim: #1d7a66;
+  --mint-soft: rgba(31, 125, 102, 0.12);
+  --sky: #285aa8;
+  --rose: #a53652;
+  --danger: #b3382c;
+  --danger-soft: rgba(179, 56, 44, 0.1);
+
+  --text: #241f14;
+  --text-2: #4d4632;
+  --muted: #665c44;
+
+  --shadow: 0 1px 0 rgba(255, 255, 255, 0.6) inset, 0 10px 26px -18px rgba(60, 45, 10, 0.45);
+  --grid-line: rgba(36, 31, 20, 0.04);
+  --code-bg: #1a2233;
+  --heat-0: #e3d9bf;
+}
+
+:root {
+  --font-ui: 'Vazirmatn', system-ui, sans-serif;
+  --font-serif: 'Noto Serif Arabic', 'Vazirmatn', serif;
+  --font-mono: 'JetBrains Mono', ui-monospace, monospace;
+  --radius: 14px;
+  --radius-sm: 9px;
+  --sidebar-w: 268px;
+  --accent-brass: var(--brass);
+  --accent-mint: var(--mint);
+  --accent-sky: var(--sky);
+  --accent-rose: var(--rose);
+}

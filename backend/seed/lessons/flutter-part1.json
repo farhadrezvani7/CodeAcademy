@@ -1,0 +1,763 @@
+{
+ "courses": [
+  {
+   "course": "flutter-101",
+   "lessons": [
+    {
+     "title": "Flutter چیست و درخت Widget",
+     "estimatedMinutes": 20,
+     "what": "صفحه‌ی یک اپ Flutter را مثل یک جعبه‌ی لگو تصور کن: متن، دکمه، فاصله و حتی خودِ صفحه، همه `Widget` هستند و داخل هم چیده می‌شوند. این چیدمانِ تودرتو را «درخت Widget» می‌گویند.\n\nFlutter یک فریم‌ورک متن‌باز است که با یک کد Dart برای اندروید، iOS، وب و دسکتاپ اپ می‌سازد. رابط کاربری را خودش رسم می‌کند، برای همین اپ تو در همه‌ی گوشی‌ها یک شکل دارد.",
+     "why": "هر مشکل چیدمان یا کندی در Flutter به همین درخت برمی‌گردد. اگر ندانی کدام Widget والدِ کدام است، نمی‌فهمی چرا متنی وسط صفحه نیامد یا چرا متن فارسی‌ات چپ‌چین شد. کسی که درخت را در ذهن دارد، باگ را چند برابر سریع‌تر پیدا می‌کند.",
+     "simpleExample": {
+      "language": "dart",
+      "code": "import 'package:flutter/material.dart';\n\nvoid main() {\n  runApp(\n    const Directionality(\n      textDirection: TextDirection.rtl,\n      child: Center(\n        child: Text('سلام Flutter!'),\n      ),\n    ),\n  );\n}",
+      "explanation": "`runApp` ریشه‌ی درخت را می‌گیرد. `Directionality` جهت راست‌به‌چپ را برای فرزندانش تعیین می‌کند، `Center` فرزندش را وسط می‌گذارد و `Text` برگِ درخت است. بدون `Directionality` یا `MaterialApp`، ویجت `Text` خطا می‌دهد."
+     },
+     "realExample": {
+      "language": "dart",
+      "code": "import 'package:flutter/material.dart';\n\nvoid main() => runApp(const BookShopApp());\n\nclass BookShopApp extends StatelessWidget {\n  const BookShopApp({super.key});\n\n  @override\n  Widget build(BuildContext context) {\n    return MaterialApp(\n      builder: (context, child) =>\n          Directionality(textDirection: TextDirection.rtl, child: child!),\n      home: Scaffold(\n        appBar: AppBar(title: const Text('کتاب‌فروشی')),\n        body: const Column(\n          children: [\n            ListTile(\n              leading: Icon(Icons.menu_book),\n              title: Text('شازده کوچولو'),\n              subtitle: Text('۱۲۰٬۰۰۰ تومان'),\n            ),\n            ListTile(\n              leading: Icon(Icons.menu_book),\n              title: Text('کلیدر'),\n              subtitle: Text('۴۵۰٬۰۰۰ تومان'),\n            ),\n          ],\n        ),\n      ),\n    );\n  }\n}",
+      "explanation": "اسکلت معمول هر اپ: `MaterialApp` → `Scaffold` → `body`. با `builder` کل اپ را راست‌به‌چپ کرده‌ایم تا فهرست کتاب‌ها مثل یک اپ فارسی واقعی چیده شود."
+     },
+     "mistakes": [
+      "فکر می‌کنی Widget همان چیزی است که روی صفحه رسم می‌شود؛ در واقع Widget فقط یک «توصیف» سبک و تغییرناپذیر است و Flutter از روی آن رسم می‌کند.",
+      "به ویجتی مثل `Center` یا `Padding` که فقط یک `child` می‌گیرد، چند فرزند می‌دهی؛ برای چند فرزند باید `Column` یا `Row` و `children` بنویسی.",
+      "متن فارسی را بدون تنظیم جهت نمایش می‌دهی و بعد تعجب می‌کنی چرا آیکون‌ها و ترتیب فهرست برعکس است."
+     ],
+     "bestPractices": [
+      "قبل از کدنویسی، درخت Widget صفحه را روی کاغذ بکش: چه چیزی داخل چه چیزی است؟",
+      "جلوی هر ویجتی که ورودی ثابت دارد `const` بگذار تا Flutter در rebuild آن را دوباره نسازد.",
+      "جهت اپ فارسی را یک‌بار در ریشه (مثلاً `builder` در `MaterialApp`) تنظیم کن، نه جداجدا در هر صفحه."
+     ],
+     "relatedTerms": [
+      "stateless-widget",
+      "build-context",
+      "widget-lifecycle"
+     ],
+     "tryIt": "یک پروژه‌ی جدید بساز (`flutter create`). صفحه‌ای راست‌به‌چپ بساز که `AppBar` آن «منوی کافه» باشد و در `body` سه `ListTile` با نام نوشیدنی و قیمت تومانی نشان دهد. اول درختش را روی کاغذ بکش."
+    },
+    {
+     "title": "StatelessWidget و ساخت اولین صفحه",
+     "estimatedMinutes": 25,
+     "what": "`StatelessWidget` مثل یک برچسب قیمتِ چاپ‌شده است: اطلاعات را از بیرون می‌گیرد و فقط نمایش می‌دهد؛ خودش چیزی را عوض نمی‌کند.\n\nهر StatelessWidget یک متد `build` دارد که از روی ورودی‌هایش (فیلدهای `final`) درخت ویجت را برمی‌گرداند. هر وقت والد با ورودی جدید دوباره build شود، این ویجت هم با داده‌ی تازه ساخته می‌شود.",
+     "why": "بدون ویجت‌های کوچک و قابل‌استفاده‌ی دوباره، یک صفحه‌ی فروشگاه تبدیل به یک متد `build` هزار خطی می‌شود که هیچ‌کس جرئت دست‌زدن به آن را ندارد. با StatelessWidget یک «کارت محصول» را یک‌بار می‌نویسی و در ده صفحه استفاده می‌کنی.",
+     "simpleExample": {
+      "language": "dart",
+      "code": "import 'package:flutter/material.dart';\n\nclass Greeting extends StatelessWidget {\n  const Greeting({super.key, required this.name});\n\n  final String name;\n\n  @override\n  Widget build(BuildContext context) {\n    return Text('سلام $name، خوش آمدی!');\n  }\n}\n\n// Usage: const Greeting(name: 'سارا')",
+      "explanation": "ورودی `name` فیلد `final` است و از سازنده می‌آید. سازنده‌ی `const` و `super.key` را همیشه بنویس. ویجت فقط از روی ورودی‌اش متن می‌سازد و state ندارد."
+     },
+     "realExample": {
+      "language": "dart",
+      "code": "import 'package:flutter/material.dart';\n\nString toman(int price) {\n  final digits = price.toString().replaceAllMapped(\n      RegExp(r'\\B(?=(\\d{3})+(?!\\d))'), (m) => '٬');\n  return '$digits تومان';\n}\n\nclass ProductCard extends StatelessWidget {\n  const ProductCard(\n      {super.key, required this.title, required this.price, this.onBuy});\n\n  final String title;\n  final int price;\n  final VoidCallback? onBuy;\n\n  @override\n  Widget build(BuildContext context) {\n    return Card(\n      child: ListTile(\n        title: Text(title, style: Theme.of(context).textTheme.titleMedium),\n        subtitle: Text(toman(price)),\n        trailing: IconButton(\n          onPressed: onBuy,\n          icon: const Icon(Icons.add_shopping_cart),\n        ),\n      ),\n    );\n  }\n}",
+      "explanation": "کارت محصول قیمت را با جداکننده‌ی هزارگان و «تومان» نشان می‌دهد. رویداد خرید را با `onBuy` به والد می‌سپارد؛ خودِ کارت تصمیم نمی‌گیرد، فقط نمایش می‌دهد."
+     },
+     "mistakes": [
+      "فیلدهای StatelessWidget را غیر `final` می‌نویسی و انتظار داری با تغییرشان صفحه عوض شود؛ این ویجت هرگز خودش را دوباره نمی‌سازد.",
+      "کار سنگین مثل مرتب‌سازی فهرست یا خواندن فایل را داخل `build` می‌گذاری؛ `build` ممکن است بارها در ثانیه صدا زده شود.",
+      "به‌جای ساختن کلاس ویجت، متدهای کمکیِ `Widget _buildCard()` می‌نویسی و مزیت `const` و rebuild جداگانه را از دست می‌دهی."
+     ],
+     "bestPractices": [
+      "هر تکه‌ی تکراری UI (کارت محصول، ردیف سفارش) را یک کلاس StatelessWidget با نام روشن کن.",
+      "رویدادها را با callback مثل `VoidCallback? onBuy` به والد بده تا ویجت ساده و قابل‌استفاده‌ی دوباره بماند.",
+      "رنگ و فونت را از `Theme.of(context)` بگیر، نه به‌صورت ثابت در هر ویجت."
+     ],
+     "relatedTerms": [
+      "stateless-widget",
+      "build-context",
+      "immutability"
+     ],
+     "tryIt": "ویجت `OrderTile` بساز که نام غذا، تعداد و مبلغ کل را بگیرد (مثلاً «کباب کوبیده × ۲ — ۶۸۰٬۰۰۰ تومان») و در یک `Card` نشان دهد. سه نمونه‌ی آن را در یک `Column` با `const` بچین."
+    },
+    {
+     "title": "StatefulWidget و چرخه‌ی حیات",
+     "estimatedMinutes": 30,
+     "what": "دکمه‌ی «+» کنار یک غذا در اپ سفارش را تصور کن: با هر لمس، عدد تغییر می‌کند. این ویجت چیزی را «به خاطر می‌سپارد»؛ به این حافظه `State` می‌گویند.\n\n`StatefulWidget` دو کلاس دارد: خود ویجت (تغییرناپذیر) و کلاس `State` که عمرش طولانی‌تر است و داده‌ی قابل‌تغییر را نگه می‌دارد. با `setState` به Flutter می‌گویی «داده عوض شد، دوباره build کن».",
+     "why": "اگر چرخه‌ی حیات را نشناسی، Timer یا Stream را در `dispose` نمی‌بندی و حافظه نشت می‌کند، یا بعد از بسته‌شدن صفحه `setState` صدا می‌زنی و خطا می‌گیری. ترتیب مهم: `initState` → `build` → (`didUpdateWidget` و rebuildها) → `dispose`.",
+     "simpleExample": {
+      "language": "dart",
+      "code": "import 'package:flutter/material.dart';\n\nclass QuantityPicker extends StatefulWidget {\n  const QuantityPicker({super.key});\n\n  @override\n  State<QuantityPicker> createState() => _QuantityPickerState();\n}\n\nclass _QuantityPickerState extends State<QuantityPicker> {\n  int _count = 1;\n\n  @override\n  Widget build(BuildContext context) {\n    return TextButton(\n        onPressed: () => setState(() => _count++), child: Text('تعداد: $_count'));\n  }\n}",
+      "explanation": "`_count` در کلاس State زندگی می‌کند، نه در ویجت. تغییر آن داخل `setState` باعث می‌شود `build` دوباره اجرا و عدد جدید نمایش داده شود."
+     },
+     "realExample": {
+      "language": "dart",
+      "code": "import 'dart:async';\nimport 'package:flutter/material.dart';\nclass OtpResendButton extends StatefulWidget {\n  const OtpResendButton({super.key, required this.onResend});\n  final VoidCallback onResend;\n  @override\n  State<OtpResendButton> createState() => _OtpResendButtonState();\n}\n\nclass _OtpResendButtonState extends State<OtpResendButton> {\n  int _left = 60;\n  late final Timer _timer;\n  @override\n  void initState() {\n    super.initState();\n    _timer = Timer.periodic(const Duration(seconds: 1), (t) => setState(() {\n          if (--_left == 0) t.cancel();\n        }));\n  }\n\n  @override\n  void dispose() {\n    _timer.cancel(); // no setState after the page is closed\n    super.dispose();\n  }\n\n  @override\n  Widget build(BuildContext context) => TextButton(\n        onPressed: _left == 0 ? widget.onResend : null,\n        child: Text(_left == 0 ? 'ارسال دوباره‌ی کد' : '$_left ثانیه تا ارسال دوباره'),\n      );\n}",
+      "explanation": "دکمه‌ی «ارسال دوباره‌ی کد پیامکی» در صفحه‌ی ورود. Timer در `initState` شروع و در `dispose` بسته می‌شود؛ وگرنه بعد از بستن صفحه هم `setState` صدا زده می‌شود و خطا می‌دهد. `widget.onResend` نشان می‌دهد State چطور به ورودی ویجت دسترسی دارد."
+     },
+     "mistakes": [
+      "داده‌ی قابل‌تغییر را در کلاس ویجت (نه State) می‌گذاری؛ با هر rebuild والد، ویجت از نو ساخته و مقدار گم می‌شود.",
+      "متغیر را بیرون از `setState` تغییر می‌دهی و فراموش می‌کنی `setState` بزنی؛ داده عوض شده اما صفحه همان قبلی است.",
+      "در `initState` از `Theme.of(context)` یا چیزهای وابسته به InheritedWidget استفاده می‌کنی؛ جایش `didChangeDependencies` یا `build` است."
+     ],
+     "bestPractices": [
+      "هر Timer، `StreamSubscription` و `TextEditingController` که در `initState` می‌سازی را در `dispose` ببند.",
+      "داخل `setState` فقط تغییر داده را بنویس؛ کار async را بیرون انجام بده و بعد از `if (!mounted) return;` state را به‌روز کن.",
+      "State را تا جای ممکن پایین درخت نگه دار تا فقط همان بخش کوچک rebuild شود، نه کل صفحه."
+     ],
+     "relatedTerms": [
+      "stateful-widget",
+      "widget-lifecycle",
+      "state-management"
+     ],
+     "tryIt": "یک `LikeButton` بساز که با هر لمس بین قلب خالی و پر جابه‌جا شود و تعداد لایک‌ها را کنار آن نشان دهد. در `initState` و `dispose` یک `debugPrint` بگذار و با رفتن به صفحه‌ی دیگر ببین کِی اجرا می‌شوند."
+    }
+   ]
+  },
+  {
+   "course": "flutter-201",
+   "lessons": [
+    {
+     "title": "Row، Column و Flex",
+     "estimatedMinutes": 25,
+     "what": "قفسه‌ی سوپرمارکت را تصور کن: جنس‌ها یا کنار هم در یک ردیف‌اند یا روی هم در یک ستون. `Row` فرزندانش را افقی و `Column` عمودی می‌چیند؛ هر دو نوعی `Flex` هستند.\n\nهر کدام یک محور اصلی (main axis) و یک محور فرعی (cross axis) دارند. با `mainAxisAlignment` و `crossAxisAlignment` جای فرزندان را تعیین می‌کنی و با `Expanded` فضای خالی را بین آن‌ها تقسیم می‌کنی.",
+     "why": "تقریباً هر صفحه‌ای از چند Row و Column ساخته شده است. اگر محورها و `Expanded` را نشناسی، یا با خطای نوار زرد-مشکی overflow روبه‌رو می‌شوی، یا با عددهای ثابت چیدمانی می‌سازی که روی گوشی کوچک‌تر به هم می‌ریزد.",
+     "simpleExample": {
+      "language": "dart",
+      "code": "import 'package:flutter/material.dart';\n\nclass PriceRow extends StatelessWidget {\n  const PriceRow({super.key});\n\n  @override\n  Widget build(BuildContext context) {\n    return const Row(\n      children: [\n        Expanded(child: Text('پیتزا مخصوص خانواده')),\n        Text('۲۸۰٬۰۰۰ تومان'),\n      ],\n    );\n  }\n}",
+      "explanation": "`Expanded` هر چه فضا مانده به نام غذا می‌دهد و قیمت به انتهای ردیف می‌رود. در اپ راست‌به‌چپ «ابتدا» یعنی سمت راست؛ پس نام، راست و قیمت، چپ می‌نشیند."
+     },
+     "realExample": {
+      "language": "dart",
+      "code": "import 'package:flutter/material.dart';\n\nclass OrderSummary extends StatelessWidget {\n  const OrderSummary({super.key, required this.total});\n  final String total;\n\n  @override\n  Widget build(BuildContext context) {\n    return Padding(\n      padding: const EdgeInsets.all(16),\n      child: Column(\n        crossAxisAlignment: CrossAxisAlignment.stretch,\n        children: [\n          Row(children: [\n            const Text('مبلغ قابل پرداخت'),\n            const Spacer(),\n            Text(total, style: const TextStyle(fontWeight: FontWeight.bold)),\n          ]),\n          const SizedBox(height: 12),\n          Row(spacing: 8, children: [\n            Expanded(flex: 2, child: FilledButton(onPressed: () {}, child: const Text('پرداخت'))),\n            Expanded(child: OutlinedButton(onPressed: () {}, child: const Text('کد تخفیف'))),\n          ]),\n        ],\n      ),\n    );\n  }\n}",
+      "explanation": "پایین صفحه‌ی سبد خرید: `Spacer` مبلغ را به انتهای ردیف هل می‌دهد، `stretch` ردیف‌ها را هم‌عرض می‌کند و `flex: 2` دکمه‌ی پرداخت را دو برابر دکمه‌ی کد تخفیف پهن می‌کند."
+     },
+     "mistakes": [
+      "متن بلند را بدون `Expanded` یا `Flexible` داخل `Row` می‌گذاری و نوار زرد-مشکی overflow می‌گیری.",
+      "فکر می‌کنی `MainAxisAlignment.start` همیشه یعنی چپ؛ در اپ فارسی (RTL) ابتدای Row سمت راست است.",
+      "برای فاصله بین فرزندان به همه‌شان `Padding` جدا می‌دهی؛ `SizedBox` یا پارامتر `spacing` در Row و Column ساده‌تر است."
+     ],
+     "bestPractices": [
+      "اول محور اصلی را مشخص کن: ردیف افقی `Row`، فهرست عمودی `Column`؛ بعد تراز را روی همان محور تنظیم کن.",
+      "برای تقسیم نسبی فضا از `Expanded(flex: ...)` استفاده کن، نه عرض ثابت پیکسلی.",
+      "برای جهت‌ها از `start` و `end` استفاده کن، نه left و right، تا چیدمان در فارسی و انگلیسی درست بماند."
+     ],
+     "relatedTerms": [
+      "layout-constraints",
+      "stateless-widget"
+     ],
+     "tryIt": "ردیف یک «بلیت مترو» بساز: سمت راست نام ایستگاه مبدأ، وسط یک `Icon(Icons.arrow_back)` و سمت چپ مقصد؛ زیرش ردیفی با قیمت و دو دکمه با نسبت ۲ به ۱. روی عرض کم امتحانش کن که overflow نگیرد."
+    },
+    {
+     "title": "قانون Constraints در چیدمان",
+     "estimatedMinutes": 30,
+     "what": "چیدمان Flutter با یک جمله خلاصه می‌شود: «Constraintها پایین می‌روند، اندازه‌ها بالا می‌آیند، والد جای فرزند را تعیین می‌کند.» والد به فرزند می‌گوید «عرضت بین فلان و فلان باشد»، فرزند در همان محدوده اندازه‌اش را انتخاب و اعلام می‌کند، و والد تصمیم می‌گیرد آن را کجا بگذارد.\n\nپس ویجت نمی‌تواند هر اندازه‌ای بخواهد داشته باشد؛ فقط در محدوده‌ای که والدش اجازه داده.",
+     "why": "پرتکرارترین خطاهای چیدمان همین‌جا ریشه دارند: «چرا `width: 100` کار نمی‌کند؟»، «Vertical viewport was given unbounded height» یا TextField داخل Row که غیب می‌شود. وقتی قانون را بدانی، به‌جای آزمون‌وخطا مستقیم علت را پیدا می‌کنی.",
+     "simpleExample": {
+      "language": "dart",
+      "code": "import 'package:flutter/material.dart';\n\nvoid main() {\n  runApp(\n    // Screen forces tight constraints: this box fills the screen.\n    // Wrap it in Center to loosen constraints and get 100x100.\n    Container(width: 100, height: 100, color: Colors.teal),\n  );\n}",
+      "explanation": "صفحه به ریشه constraint «دقیقاً هم‌اندازه‌ی صفحه» می‌دهد، پس `width: 100` نادیده گرفته می‌شود. اگر آن را در `Center` بگذاری، Center محدودیت را شُل می‌کند و جعبه واقعاً ۱۰۰ در ۱۰۰ می‌شود."
+     },
+     "realExample": {
+      "language": "dart",
+      "code": "import 'package:flutter/material.dart';\n\nclass LoginPage extends StatelessWidget {\n  const LoginPage({super.key, required this.recentNumbers});\n  final List<String> recentNumbers;\n\n  @override\n  Widget build(BuildContext context) {\n    return Column(children: [\n      const Padding(\n        padding: EdgeInsets.all(16),\n        child: Row(spacing: 8, children: [\n          // TextField wants infinite width: Expanded bounds it.\n          Expanded(\n            child: TextField(\n              keyboardType: TextInputType.phone,\n              decoration: InputDecoration(hintText: '09121234567'),\n            ),\n          ),\n          Text('+98'),\n        ]),\n      ),\n      // ListView needs a bounded height inside Column.\n      Expanded(\n        child: ListView(children: [\n          for (final n in recentNumbers) ListTile(title: Text(n)),\n        ]),\n      ),\n    ]);\n  }\n}",
+      "explanation": "صفحه‌ی ورود با شماره موبایل. `Row` به TextField عرض نامحدود می‌دهد و `Column` به ListView ارتفاع نامحدود؛ هر دو خطا می‌دهند. `Expanded` در هر دو، محدودیتِ مشخص می‌سازد."
+     },
+     "mistakes": [
+      "انتظار داری `Container(width: 100)` همیشه ۱۰۰ باشد؛ اگر والد constraint دقیق (tight) بدهد، اندازه‌ی تو نادیده گرفته می‌شود.",
+      "`ListView` را مستقیم داخل `Column` می‌گذاری و خطای unbounded height می‌گیری؛ باید آن را در `Expanded` یا `SizedBox` با ارتفاع بگذاری.",
+      "برای رفع خطا `shrinkWrap: true` را همه‌جا می‌زنی؛ در فهرست‌های بلند همه‌ی آیتم‌ها یکجا ساخته می‌شوند و اسکرول کند می‌شود."
+     ],
+     "bestPractices": [
+      "وقتی اندازه‌ای اعمال نمی‌شود، بپرس «والد چه constraintی داده است؟» و در Flutter Inspector آن را ببین.",
+      "برای شُل‌کردن constraint از `Center` یا `Align` و برای محدودکردن فضای نامحدود از `Expanded` یا `SizedBox` استفاده کن.",
+      "با `LayoutBuilder` می‌توانی constraint واقعی والد را بخوانی و بر اساس آن تصمیم بگیری."
+     ],
+     "relatedTerms": [
+      "layout-constraints",
+      "debugging"
+     ],
+     "tryIt": "در یک `Column` یک `ListView` با ۳۰ `ListTile` بگذار و خطا را در کنسول بخوان. بعد یک‌بار با `Expanded` و یک‌بار با `SizedBox(height: 200)` درستش کن و در Flutter Inspector constraintهای هر حالت را یادداشت کن."
+    },
+    {
+     "title": "Stack و Positioned",
+     "estimatedMinutes": 20,
+     "what": "برچسب «۲۰٪ تخفیف» روی عکس محصول یا عدد قرمز روی آیکون سبد خرید را دیده‌ای؟ اینجا ویجت‌ها روی هم قرار گرفته‌اند. `Stack` فرزندانش را لایه‌لایه روی هم می‌چیند: اولی زیر، آخری رو.\n\nبا `Positioned` یک لایه را به فاصله‌ی مشخص از لبه‌ها می‌چسبانی. برای اپ فارسی `PositionedDirectional` بهتر است، چون `start` در RTL خودش سمت راست می‌شود.",
+     "why": "بدون Stack، نشان دادن badge، دکمه‌ی شناور روی نقشه یا متن روی عکس بنر تقریباً ناممکن است. استفاده‌ی نادرست از آن هم رایج است: لایه‌ای که پشت عکس گم می‌شود یا برچسبی که در نسخه‌ی انگلیسی اپ سمت اشتباه می‌افتد.",
+     "simpleExample": {
+      "language": "dart",
+      "code": "import 'package:flutter/material.dart';\n\nclass CartIcon extends StatelessWidget {\n  const CartIcon({super.key, required this.count});\n  final int count;\n  @override\n  Widget build(BuildContext context) {\n    return Stack(\n      clipBehavior: Clip.none,\n      children: [\n        const Icon(Icons.shopping_cart, size: 32),\n        if (count > 0)\n          PositionedDirectional(top: -4, end: -4,\n              child: CircleAvatar(radius: 9, child: Text('$count', style: const TextStyle(fontSize: 11)))),\n      ],\n    );\n  }\n}",
+      "explanation": "آیکون سبد اولین فرزند (لایه‌ی زیر) و badge آخرین فرزند (لایه‌ی رو) است. `Clip.none` اجازه می‌دهد badge کمی از لبه بیرون بزند و `end` در RTL گوشه‌ی چپ را انتخاب می‌کند."
+     },
+     "realExample": {
+      "language": "dart",
+      "code": "import 'package:flutter/material.dart';\n\nclass DiscountBanner extends StatelessWidget {\n  const DiscountBanner({super.key, required this.imageUrl, required this.percent});\n  final String imageUrl;\n  final int percent;\n\n  @override\n  Widget build(BuildContext context) {\n    return ClipRRect(\n      borderRadius: BorderRadius.circular(12),\n      child: Stack(\n        children: [\n          AspectRatio(\n            aspectRatio: 16 / 9,\n            child: Image.network(imageUrl, fit: BoxFit.cover),\n          ),\n          PositionedDirectional(\n              top: 8, start: 8, child: Chip(label: Text('$percent٪ تخفیف'))),\n          const Positioned.fill(\n            top: null,\n            child: ColoredBox(\n              color: Colors.black54,\n              child: Text(' جشنواره‌ی پاییزه', style: TextStyle(color: Colors.white)),\n            ),\n          ),\n        ],\n      ),\n    );\n  }\n}",
+      "explanation": "بنر فروشگاه: عکس اندازه‌ی Stack را تعیین می‌کند (فرزند بدون Position)، برچسب تخفیف در گوشه‌ی بالا-ابتدا و نوار متن با `Positioned.fill(top: null)` به پایین و دو طرف چسبیده است."
+     },
+     "mistakes": [
+      "`Positioned` را خارج از `Stack` یا داخل یک `Container` در Stack می‌گذاری؛ `Positioned` باید فرزند مستقیم Stack باشد.",
+      "ترتیب children را فراموش می‌کنی و badge را اول می‌نویسی؛ آن‌وقت زیر آیکون پنهان می‌شود.",
+      "برای اپ دوزبانه از `left` و `right` استفاده می‌کنی و در حالت RTL برچسب سمت اشتباه می‌افتد."
+     ],
+     "bestPractices": [
+      "یک فرزند بدون Position (مثل عکس) بگذار تا اندازه‌ی Stack را تعیین کند.",
+      "در اپ فارسی `PositionedDirectional` و `AlignmentDirectional` را به left/right ترجیح بده.",
+      "اگر فقط یک لایه را می‌خواهی وسط یا گوشه بگذاری، `Align` در Stack ساده‌تر از عددهای Positioned است."
+     ],
+     "relatedTerms": [
+      "layout-constraints",
+      "stateless-widget"
+     ],
+     "tryIt": "کارت یک آگهی اجاره‌ی آپارتمان بساز: عکس با نسبت ۴ به ۳، برچسب «فوری» در گوشه‌ی بالا-ابتدا، آیکون قلب در گوشه‌ی بالا-انتها و نوار قیمت «ودیعه ۲۰۰ میلیون تومان» در پایین عکس."
+    },
+    {
+     "title": "اسکرول و طراحی Responsive",
+     "estimatedMinutes": 30,
+     "what": "فهرست سفارش‌های یک رستوران ممکن است ۱۰ یا ۱۰ هزار ردیف باشد. `ListView.builder` مثل پیشخدمتی است که فقط بشقاب‌های روی میز را می‌آورد: فقط ردیف‌هایی را می‌سازد که روی صفحه دیده می‌شوند.\n\nطراحی Responsive یعنی همان صفحه روی گوشی کوچک، تبلت و وب درست بنشیند. با `LayoutBuilder` یا `MediaQuery.sizeOf` عرض واقعی را می‌خوانی و مثلاً تعداد ستون‌های Grid را تغییر می‌دهی.",
+     "why": "فهرستی که با `Column` و `for` همه‌ی آیتم‌ها را یکجا می‌سازد روی گوشی ارزان می‌لنگد. صفحه‌ای که فقط برای یک گوشی طراحی شده، روی تبلت کش می‌آید یا روی گوشی کوچک overflow می‌دهد و کاربر اپ را پاک می‌کند.",
+     "simpleExample": {
+      "language": "dart",
+      "code": "import 'package:flutter/material.dart';\n\nclass OrderList extends StatelessWidget {\n  const OrderList({super.key, required this.orders});\n  final List<String> orders;\n\n  @override\n  Widget build(BuildContext context) {\n    return ListView.builder(\n      itemCount: orders.length,\n      itemBuilder: (context, i) => ListTile(\n        leading: CircleAvatar(child: Text('${i + 1}')),\n        title: Text(orders[i]),\n      ),\n    );\n  }\n}",
+      "explanation": "`itemBuilder` فقط برای ردیف‌های نزدیک به صفحه صدا زده می‌شود. حتی با هزار سفارش، فقط چند ده ویجت ساخته می‌شود و اسکرول روان می‌ماند."
+     },
+     "realExample": {
+      "language": "dart",
+      "code": "import 'package:flutter/material.dart';\n\nclass Product {\n  const Product(this.name, this.price);\n  final String name, price;\n}\n\nclass ProductGrid extends StatelessWidget {\n  const ProductGrid({super.key, required this.products});\n  final List<Product> products;\n\n  @override\n  Widget build(BuildContext context) {\n    return LayoutBuilder(\n      builder: (context, constraints) {\n        final width = constraints.maxWidth;\n        final columns = width < 600 ? 2 : (width < 1000 ? 3 : 5);\n        return GridView.builder(\n          padding: const EdgeInsets.all(12),\n          gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(\n              crossAxisCount: columns, mainAxisSpacing: 12, crossAxisSpacing: 12),\n          itemCount: products.length,\n          itemBuilder: (context, i) => Card(\n            child: Center(child: Text('${products[i].name}\\n${products[i].price}')),\n          ),\n        );\n      },\n    );\n  }\n}",
+      "explanation": "فروشگاه اینترنتی روی گوشی ۲ ستون، روی تبلت ۳ و روی وب ۵ ستون محصول نشان می‌دهد. `LayoutBuilder` عرض واقعی والد را می‌دهد، نه کل صفحه؛ برای همین در پنل کناری هم درست کار می‌کند."
+     },
+     "mistakes": [
+      "فهرست بلند را با `SingleChildScrollView` و `Column` می‌سازی؛ همه‌ی ردیف‌ها یکجا ساخته می‌شوند و حافظه پر می‌شود.",
+      "تعداد ستون یا اندازه‌ی فونت را برای یک گوشی خاص ثابت می‌نویسی و روی تبلت یا گوشی کوچک چیدمان خراب می‌شود.",
+      "کل `MediaQuery.of(context)` را می‌خوانی؛ با باز شدن کیبورد هم rebuild می‌شوی. فقط `MediaQuery.sizeOf(context)` بخوان."
+     ],
+     "bestPractices": [
+      "برای فهرست‌های پویا همیشه از نسخه‌ی `builder` استفاده کن: `ListView.builder` و `GridView.builder`.",
+      "نقطه‌های شکست (breakpoint) مثل ۶۰۰ و ۱۰۰۰ را یک‌جا به‌صورت ثابت تعریف کن و همه‌جا از همان استفاده کن.",
+      "اپ را در شبیه‌ساز با گوشی کوچک، تبلت و حالت افقی امتحان کن، نه فقط روی گوشی خودت."
+     ],
+     "relatedTerms": [
+      "layout-constraints",
+      "performance-profiling"
+     ],
+     "tryIt": "صفحه‌ی «سفارش‌های من» با ۲۰۰ سفارش ساختگی بساز (شماره، تاریخ شمسی، مبلغ). روی عرض کمتر از ۶۰۰ فهرست ساده و روی عرض بیشتر Grid دوستونه نشان بده. در DevTools ببین چند ردیف واقعاً ساخته شده است."
+    }
+   ]
+  },
+  {
+   "course": "flutter-210",
+   "lessons": [
+    {
+     "title": "setState و مدیریت وضعیت محلی",
+     "estimatedMinutes": 25,
+     "what": "دکمه‌ی چشم کنار فیلد رمز عبور را تصور کن: با لمسش رمز دیده یا پنهان می‌شود. این داده فقط به همان فیلد مربوط است؛ به آن «state محلی» می‌گویند و ساده‌ترین ابزارش `setState` است.\n\n`setState` به Flutter می‌گوید «این State عوض شد، `build` همین ویجت را دوباره اجرا کن». فقط همان ویجت و فرزندانش rebuild می‌شوند، نه کل اپ.",
+     "why": "خیلی‌ها برای هر تیک و سوییچی سراغ Provider یا BLoC می‌روند و کد ساده را پیچیده می‌کنند. برعکسش هم هست: `setState` بعد از یک درخواست شبکه روی صفحه‌ی بسته‌شده، خطای معروف «setState() called after dispose()» می‌دهد.",
+     "simpleExample": {
+      "language": "dart",
+      "code": "import 'package:flutter/material.dart';\n\nclass PasswordField extends StatefulWidget {\n  const PasswordField({super.key});\n  @override\n  State<PasswordField> createState() => _PasswordFieldState();\n}\n\nclass _PasswordFieldState extends State<PasswordField> {\n  bool _hidden = true;\n  @override\n  Widget build(BuildContext context) => TextField(\n        obscureText: _hidden,\n        decoration: InputDecoration(labelText: 'رمز عبور', suffixIcon: IconButton(\n            icon: Icon(_hidden ? Icons.visibility : Icons.visibility_off),\n            onPressed: () => setState(() => _hidden = !_hidden))),\n      );\n}",
+      "explanation": "`_hidden` فقط به همین فیلد مربوط است، پس جایش در State همین ویجت است. هر لمس، مقدار را داخل `setState` برعکس می‌کند و آیکون و متن با هم به‌روز می‌شوند."
+     },
+     "realExample": {
+      "language": "dart",
+      "code": "import 'package:flutter/material.dart';\n\nclass PhoneLoginForm extends StatefulWidget {\n  const PhoneLoginForm({super.key, required this.sendOtp});\n  final Future<void> Function(String phone) sendOtp;\n  @override\n  State<PhoneLoginForm> createState() => _PhoneLoginFormState();\n}\n\nclass _PhoneLoginFormState extends State<PhoneLoginForm> {\n  final _phone = TextEditingController();\n  bool _loading = false;\n  bool get _valid => RegExp(r'^09\\d{9}$').hasMatch(_phone.text);\n\n  Future<void> _submit() async {\n    setState(() => _loading = true);\n    await widget.sendOtp(_phone.text); // network call, outside setState\n    if (mounted) setState(() => _loading = false); // page may be closed\n  }\n  @override\n  void dispose() {\n    _phone.dispose();\n    super.dispose();\n  }\n\n  @override\n  Widget build(BuildContext context) => Column(children: [\n        TextField(controller: _phone, keyboardType: TextInputType.phone, onChanged: (_) => setState(() {})),\n        FilledButton(onPressed: _valid && !_loading ? _submit : null,\n            child: _loading ? const CircularProgressIndicator() : const Text('دریافت کد')),\n      ]);\n}",
+      "explanation": "دکمه فقط وقتی فعال است که شماره با `09` شروع شود و ۱۱ رقم باشد. درخواست شبکه بیرون از `setState` است و قبل از به‌روزرسانی، `mounted` بررسی می‌شود."
+     },
+     "mistakes": [
+      "کد async را داخل `setState` می‌نویسی (`setState(() async {...})`)؛ `setState` باید همگام باشد و Flutter خطا می‌دهد.",
+      "بعد از `await` بدون چک `mounted` دوباره `setState` صدا می‌زنی؛ اگر کاربر صفحه را بسته باشد، خطا می‌گیری.",
+      "state مشترک چند صفحه (مثل سبد خرید) را با `setState` در یک صفحه نگه می‌داری و بعد نمی‌دانی چطور به صفحه‌ی دیگر برسانی‌اش."
+     ],
+     "bestPractices": [
+      "از `setState` برای state کاملاً محلی استفاده کن: باز/بسته بودن، تب انتخاب‌شده، متن در حال تایپ.",
+      "داخل `setState` فقط مقدار را عوض کن؛ محاسبه و درخواست شبکه را قبل یا بعد از آن انجام بده.",
+      "ویجتی که state دارد را کوچک نگه دار تا با هر `setState` فقط همان تکه rebuild شود."
+     ],
+     "relatedTerms": [
+      "stateful-widget",
+      "state-management",
+      "widget-lifecycle"
+     ],
+     "tryIt": "فرم «ثبت کد ملی» بساز: فیلد ۱۰ رقمی، پیام خطای زیر فیلد وقتی طول اشتباه است، و دکمه‌ی «ثبت» که فقط با ۱۰ رقم فعال شود. بعد از لمس، ۲ ثانیه loading نشان بده (`Future.delayed`) و `mounted` را چک کن."
+    },
+    {
+     "title": "بالا بردن State (Lifting State Up)",
+     "estimatedMinutes": 25,
+     "what": "در اپ سفارش غذا، دکمه‌ی «افزودن» در کارت هر غذاست ولی عدد سبد در AppBar. این دو ویجت هم‌سطح‌اند و state همدیگر را نمی‌بینند. راه‌حل: state را به نزدیک‌ترین والد مشترک ببر.\n\nوالد داده را نگه می‌دارد و به فرزندان دو چیز می‌دهد: مقدار (برای نمایش) و یک callback (برای تغییر). فرزندان StatelessWidget ساده می‌مانند.",
+     "why": "اگر هر فرزند کپی جداگانه‌ی state داشته باشد، دیر یا زود با هم ناهماهنگ می‌شوند: badge سبد «۳» نشان می‌دهد و صفحه‌ی پرداخت «۲». یک «منبع حقیقت» (single source of truth) این باگ را از ریشه حذف می‌کند.",
+     "simpleExample": {
+      "language": "dart",
+      "code": "import 'package:flutter/material.dart';\n\nclass AddButton extends StatelessWidget {\n  const AddButton({super.key, required this.onAdd});\n  final VoidCallback onAdd;\n\n  @override\n  Widget build(BuildContext context) =>\n      IconButton(icon: const Icon(Icons.add), onPressed: onAdd);\n}\n\n// Parent owns the count and passes a callback:\n// AddButton(onAdd: () => setState(() => _count++))",
+      "explanation": "`AddButton` نمی‌داند عدد سبد چند است و نیازی هم ندارد. فقط خبر می‌دهد «لمس شدم» و تصمیم را به والدی می‌سپارد که state را نگه داشته است."
+     },
+     "realExample": {
+      "language": "dart",
+      "code": "import 'package:flutter/material.dart';\n\nclass MenuPage extends StatefulWidget {\n  const MenuPage({super.key});\n  @override\n  State<MenuPage> createState() => _MenuPageState();\n}\n\nclass _MenuPageState extends State<MenuPage> {\n  final Map<String, int> _cart = {}; // single source of truth\n  static const _foods = ['چلوکباب', 'قورمه‌سبزی', 'جوجه‌کباب'];\n\n  int get _total => _cart.values.fold(0, (a, b) => a + b);\n\n  void _add(String food) =>\n      setState(() => _cart[food] = (_cart[food] ?? 0) + 1);\n\n  @override\n  Widget build(BuildContext context) {\n    return Scaffold(\n      appBar: AppBar(title: Text('سبد: $_total')),\n      body: ListView(children: [\n        for (final f in _foods)\n          ListTile(\n            title: Text(f),\n            subtitle: Text('تعداد: ${_cart[f] ?? 0}'),\n            trailing: IconButton(icon: const Icon(Icons.add), onPressed: () => _add(f)),\n          ),\n      ]),\n    );\n  }\n}",
+      "explanation": "`MenuPage` والد مشترک AppBar و فهرست است و تنها صاحب `_cart`. هر دو بخش از همان داده می‌خوانند، پس هیچ‌وقت ناهماهنگ نمی‌شوند."
+     },
+     "mistakes": [
+      "state را هم در والد و هم در فرزند نگه می‌داری («کپی» state) و بعد این دو از هم جدا می‌شوند.",
+      "state را تا ریشه‌ی اپ بالا می‌بری در حالی که فقط دو ویجت کنار هم به آن نیاز دارند؛ کل صفحه بی‌دلیل rebuild می‌شود.",
+      "callback را از چند لایه‌ی میانی که به آن نیازی ندارند عبور می‌دهی (prop drilling)؛ این یعنی وقت InheritedWidget یا Provider است."
+     ],
+     "bestPractices": [
+      "state را به «نزدیک‌ترین» والد مشترک ببر، نه بالاتر.",
+      "فرزندان را StatelessWidget با ورودی مقدار و callback (مثل `ValueChanged<int>`) نگه دار.",
+      "اگر مسیر عبور callback بیش از دو-سه لایه شد، سراغ InheritedWidget یا Provider برو."
+     ],
+     "relatedTerms": [
+      "state-management",
+      "stateless-widget",
+      "stateful-widget"
+     ],
+     "tryIt": "صفحه‌ای با دو ویجت جدا بساز: `SeatPicker` (انتخاب تعداد صندلی بلیت اتوبوس با + و −) و `PriceBar` (نمایش مبلغ کل با قیمت ۴۵۰٬۰۰۰ تومان برای هر صندلی). state را در والد نگه دار تا هر دو هماهنگ بمانند."
+    },
+    {
+     "title": "InheritedWidget",
+     "estimatedMinutes": 30,
+     "what": "`Theme.of(context)` را بارها نوشته‌ای؛ پشت آن یک `InheritedWidget` است. InheritedWidget مثل بلندگوی ساختمان است: داده را بالای درخت می‌گذارد و هر ویجتی در طبقه‌های پایین، بدون عبور دادن دستی، می‌تواند صدایش را بشنود.\n\nویجتی که با `dependOnInheritedWidgetOfExactType` داده را می‌خواند، ثبت‌نام می‌شود و هر بار که داده عوض شود (و `updateShouldNotify` بگوید بله) دوباره build می‌شود.",
+     "why": "بدون آن، باید کاربر واردشده یا تنظیم زبان را از ده لایه constructor عبور بدهی. شناختن InheritedWidget همچنین کلید فهم Provider است، چون Provider در اصل یک لایه‌ی راحت‌تر روی همین مکانیزم است.",
+     "simpleExample": {
+      "language": "dart",
+      "code": "import 'package:flutter/material.dart';\n\nclass UserScope extends InheritedWidget {\n  const UserScope({super.key, required this.name, required super.child});\n  final String name;\n\n  static String of(BuildContext context) =>\n      context.dependOnInheritedWidgetOfExactType<UserScope>()!.name;\n\n  @override\n  bool updateShouldNotify(UserScope old) => name != old.name;\n}\n\n// Anywhere below: Text('سلام ${UserScope.of(context)}')",
+      "explanation": "`UserScope` نام کاربر را بالای درخت نگه می‌دارد. متد `of` الگوی آشنای Flutter است و `updateShouldNotify` فقط وقتی نام واقعاً عوض شود، وابسته‌ها را rebuild می‌کند."
+     },
+     "realExample": {
+      "language": "dart",
+      "code": "import 'package:flutter/material.dart';\n\nclass CartScope extends InheritedWidget {\n  const CartScope({super.key, required this.count, required this.onAdd, required super.child});\n  final int count;\n  final VoidCallback onAdd;\n\n  static CartScope of(BuildContext context) =>\n      context.dependOnInheritedWidgetOfExactType<CartScope>()!;\n  @override\n  bool updateShouldNotify(CartScope old) => count != old.count;\n}\n\nclass ShopRoot extends StatefulWidget {\n  const ShopRoot({super.key, required this.child});\n  final Widget child;\n  @override\n  State<ShopRoot> createState() => _ShopRootState();\n}\n\nclass _ShopRootState extends State<ShopRoot> {\n  int _count = 0;\n  @override\n  Widget build(BuildContext context) => CartScope(\n      count: _count, onAdd: () => setState(() => _count++), child: widget.child);\n}\n\nclass CartBadge extends StatelessWidget {\n  const CartBadge({super.key});\n  @override\n  Widget build(BuildContext context) => Badge(label: Text('${CartScope.of(context).count}'), child: const Icon(Icons.shopping_cart));\n}",
+      "explanation": "InheritedWidget تغییرناپذیر است؛ برای همین یک StatefulWidget (`ShopRoot`) آن را با مقدار جدید دوباره می‌سازد. `CartBadge` هر جای درخت باشد، با هر خرید به‌روز می‌شود."
+     },
+     "mistakes": [
+      "`of(context)` را با contextِ بالای خودِ InheritedWidget صدا می‌زنی (مثلاً همان جایی که آن را ساختی) و `null` می‌گیری.",
+      "سعی می‌کنی فیلد InheritedWidget را مستقیم تغییر دهی؛ باید یک StatefulWidget بالای آن مقدار جدید بسازد.",
+      "`updateShouldNotify` را همیشه `true` برمی‌گردانی و همه‌ی وابسته‌ها حتی بدون تغییر داده rebuild می‌شوند."
+     ],
+     "bestPractices": [
+      "یک متد ایستای `of(context)` بنویس تا استفاده‌کننده‌ها با جزئیات lookup درگیر نشوند.",
+      "در `updateShouldNotify` فقط فیلدهایی را مقایسه کن که روی نمایش اثر دارند.",
+      "برای پروژه‌ی واقعی از Provider استفاده کن؛ InheritedWidget را برای فهم مکانیزم و موارد خیلی ساده نگه دار."
+     ],
+     "relatedTerms": [
+      "build-context",
+      "state-management",
+      "provider"
+     ],
+     "tryIt": "یک `LocaleScope` بساز که زبان اپ (`fa` یا `en`) را نگه دارد. دکمه‌ای در صفحه‌ی تنظیمات زبان را عوض کند و یک `Text` در صفحه‌ی دیگر «سلام» یا «Hello» نشان دهد. با `debugPrint` در `build` ببین کدام ویجت‌ها rebuild می‌شوند."
+    },
+    {
+     "title": "Provider",
+     "estimatedMinutes": 30,
+     "what": "Provider مثل صندوق‌دار مرکزی فروشگاه است: همه‌ی بخش‌ها به او سر می‌زنند و وقتی موجودی عوض شود، به کسانی که منتظرند خبر می‌دهد. پکیج `provider` روی InheritedWidget ساخته شده و کار با آن را ساده می‌کند.\n\nمنطق را در یک کلاس `ChangeNotifier` می‌نویسی، با `ChangeNotifierProvider` بالای درخت می‌گذاری و با `context.watch` (برای نمایش) یا `context.read` (برای صدا زدن متد) به آن دسترسی داری.",
+     "why": "وقتی سبد خرید، کاربر واردشده و تنظیمات در چند صفحه لازم است، `setState` و عبور callback جواب نمی‌دهد. Provider منطق را از UI جدا می‌کند، تست آن را آسان می‌کند و ساده‌ترین قدم بعد از setState در بیشتر تیم‌های Flutter است.",
+     "simpleExample": {
+      "language": "dart",
+      "code": "import 'package:flutter/material.dart';\nimport 'package:provider/provider.dart';\nclass Counter extends ChangeNotifier {\n  int value = 0;\n  void increment() {\n    value++;\n    notifyListeners(); // tell watchers to rebuild\n  }\n}\nvoid main() => runApp(ChangeNotifierProvider(\n    create: (_) => Counter(), child: const MaterialApp(home: CounterText())));\nclass CounterText extends StatelessWidget {\n  const CounterText({super.key});\n  @override\n  Widget build(BuildContext context) => TextButton(\n      onPressed: () => context.read<Counter>().increment(),\n      child: Text('${context.watch<Counter>().value}'));\n}",
+      "explanation": "`create` نمونه را یک‌بار می‌سازد و Provider خودش dispose می‌کند. `watch` ویجت را مشترک می‌کند تا بعد از هر `notifyListeners` دوباره build شود؛ `read` در `onPressed` فقط متد را صدا می‌زند."
+     },
+     "realExample": {
+      "language": "dart",
+      "code": "import 'package:flutter/material.dart';\nimport 'package:provider/provider.dart';\n\nclass CartModel extends ChangeNotifier {\n  final Map<String, int> _items = {}; // name -> price (toman)\n  Map<String, int> get items => Map.unmodifiable(_items);\n  int get total => _items.values.fold(0, (a, b) => a + b);\n  void add(String name, int price) {\n    _items[name] = price;\n    notifyListeners();\n  }\n}\n\nclass TotalText extends StatelessWidget {\n  const TotalText({super.key});\n  @override\n  Widget build(BuildContext context) {\n    // Rebuilds only when total changes.\n    final total = context.select<CartModel, int>((c) => c.total);\n    return Text('جمع: $total تومان');\n  }\n}\n\nclass BuyButton extends StatelessWidget {\n  const BuyButton({super.key, required this.name, required this.price});\n  final String name;\n  final int price;\n  @override\n  Widget build(BuildContext context) => FilledButton(\n      onPressed: () => context.read<CartModel>().add(name, price),\n      child: const Text('افزودن به سبد'));\n}",
+      "explanation": "`BuyButton` با `read` فقط متد را صدا می‌زند و با تغییر سبد rebuild نمی‌شود. `TotalText` با `select` فقط به `total` گوش می‌دهد. فهرست با `Map.unmodifiable` از تغییر بیرونی محافظت شده است."
+     },
+     "mistakes": [
+      "`context.watch` را داخل `onPressed` می‌نویسی؛ در callback باید `context.read` استفاده کنی.",
+      "بعد از تغییر داده `notifyListeners()` را فراموش می‌کنی و UI عوض نمی‌شود.",
+      "Provider را در همان `build`ی می‌سازی که با همان context آن را `watch` می‌کنی؛ آن context بالای Provider است و خطای ProviderNotFound می‌گیری."
+     ],
+     "bestPractices": [
+      "برای نمایش `watch` یا `select`، برای رویدادها `read`؛ این قاعده را در code review چک کن.",
+      "فیلدهای مدل را private نگه دار و فقط از طریق متدهایی که `notifyListeners` صدا می‌زنند تغییر بده.",
+      "Provider را فقط به اندازه‌ی لازم بالا ببر: سبد خرید بالای کل اپ، فرم یک صفحه فقط بالای همان صفحه."
+     ],
+     "relatedTerms": [
+      "provider",
+      "state-management",
+      "build-context"
+     ],
+     "tryIt": "یک `FavoritesModel` با `ChangeNotifier` بساز که شناسه‌ی کتاب‌های محبوب را نگه دارد. در فهرست کتاب‌ها دکمه‌ی قلب با `read` کتاب را اضافه یا حذف کند و در AppBar تعداد محبوب‌ها با `select` نمایش داده شود."
+    }
+   ]
+  },
+  {
+   "course": "flutter-290",
+   "lessons": [
+    {
+     "title": "فاز اول: نیازمندی‌ها، صفحات و مدل داده",
+     "estimatedMinutes": 45,
+     "what": "هیچ بنّایی بدون نقشه دیوار نمی‌چیند. در این پروژه یک اپ «مدیریت کارها» می‌سازی: فهرست کارها، افزودن و ویرایش با فرم، علامت‌زدن انجام‌شده‌ها و فیلتر. فاز اول نقشه‌کشی است.\n\nخروجی این فاز سه چیز است: فهرست کوتاه نیازمندی‌ها (User Story)، طرح دستیِ سه صفحه (فهرست، فرم، جزئیات) و کلاس مدل `Task` که بقیه‌ی پروژه روی آن بنا می‌شود.",
+     "why": "دانشجویی که مستقیم کد می‌زند، وسط کار می‌فهمد «تاریخ سررسید» را فراموش کرده و باید نصف صفحه‌ها را عوض کند. یک ساعت طراحی اول کار، چند روز بازنویسی را حذف می‌کند و در مصاحبه‌ی کاری هم دقیقاً همین را از تو می‌پرسند.",
+     "simpleExample": {
+      "language": "markdown",
+      "code": "## User Stories — Task Manager\n- As a user, I can add a task with title, due date and priority.\n- As a user, I can mark a task as done.\n- As a user, I can filter tasks: all / active / done.\n- As a user, I can edit or delete a task.\n\n## Screens\n1. TaskListPage  (list + filter chips + FAB)\n2. TaskFormPage  (add / edit, validation)\n3. TaskDetailPage",
+      "explanation": "هر User Story یک قابلیت قابل‌آزمون است. فهرست صفحات کمک می‌کند قبل از کدنویسی بدانی چند مسیر و چند فرم لازم داری. این فایل را در `README.md` پروژه نگه دار."
+     },
+     "realExample": {
+      "language": "dart",
+      "code": "enum Priority { low, normal, high }\n\nclass Task {\n  const Task({\n    required this.id,\n    required this.title,\n    required this.due,\n    this.priority = Priority.normal,\n    this.done = false,\n  });\n\n  final String id;\n  final String title;\n  final DateTime due;\n  final Priority priority;\n  final bool done;\n\n  Task copyWith({String? title, DateTime? due, Priority? priority, bool? done}) {\n    return Task(\n      id: id,\n      title: title ?? this.title,\n      due: due ?? this.due,\n      priority: priority ?? this.priority,\n      done: done ?? this.done,\n    );\n  }\n\n  bool get isOverdue => !done && due.isBefore(DateTime.now());\n}",
+      "explanation": "مدل تغییرناپذیر است: برای علامت‌زدن یک کار، `copyWith(done: true)` نسخه‌ی تازه می‌سازد. `isOverdue` منطق «کار عقب‌افتاده» را یک‌جا نگه می‌دارد تا در UI تکرار نشود."
+     },
+     "mistakes": [
+      "بدون فهرست نیازمندی شروع می‌کنی و هر روز یک قابلیت تازه اضافه می‌کنی؛ پروژه هیچ‌وقت «تمام» نمی‌شود.",
+      "فیلدهای مدل را قابل‌تغییر (`var`) می‌نویسی و بعد در Provider نمی‌فهمی چه کسی و کِی داده را عوض کرده است.",
+      "از `id` صرف‌نظر می‌کنی و کارها را با عنوان پیدا می‌کنی؛ دو کار با عنوان «خرید نان» همه‌چیز را خراب می‌کند."
+     ],
+     "bestPractices": [
+      "نیازمندی‌ها را در `README.md` بنویس و هر User Story را بعداً به یک commit یا Pull Request وصل کن.",
+      "مدل را `final` و با `copyWith` بنویس تا تغییرات قابل‌پیگیری باشند.",
+      "طرح صفحات را روی کاغذ یا Figma بکش و درخت Widget هر صفحه را کنارش یادداشت کن."
+     ],
+     "relatedTerms": [
+      "immutability",
+      "oop",
+      "state-management"
+     ],
+     "tryIt": "تحویلی این فاز: یک مخزن Git با `README.md` شامل حداقل ۵ User Story و فهرست صفحات، عکس طرح دستی سه صفحه، و فایل `lib/models/task.dart` با `copyWith`. اولین commit را با پیام روشن ثبت کن."
+    },
+    {
+     "title": "فاز دوم: state با Provider",
+     "estimatedMinutes": 45,
+     "what": "حالا که نقشه آماده است، «مغز» اپ را می‌سازی: کلاسی به نام `TaskStore` که فهرست کارها را نگه می‌دارد و متدهای افزودن، ویرایش، حذف و علامت‌زدن دارد.\n\nاین کلاس `ChangeNotifier` است و با `ChangeNotifierProvider` بالای `MaterialApp` قرار می‌گیرد تا هر سه صفحه به یک منبع داده دسترسی داشته باشند. هنوز هیچ UI پیچیده‌ای نمی‌سازی؛ اول منطق.",
+     "why": "اگر منطق را داخل صفحه‌ها بنویسی، فیلتر در یک صفحه کار می‌کند و در صفحه‌ی دیگر نه. جدا کردن منطق در یک Store یعنی می‌توانی آن را بدون اجرای اپ تست کنی و صفحه‌ها فقط نمایش‌دهنده بمانند.",
+     "simpleExample": {
+      "language": "dart",
+      "code": "enum TaskFilter { all, active, done }\n\nclass Task {\n  const Task(this.id, this.title, {this.done = false});\n  final String id;\n  final String title;\n  final bool done;\n}\n\nList<Task> applyFilter(List<Task> tasks, TaskFilter f) => switch (f) {\n      TaskFilter.all => tasks,\n      TaskFilter.active => tasks.where((t) => !t.done).toList(),\n      TaskFilter.done => tasks.where((t) => t.done).toList(),\n    };",
+      "explanation": "فیلتر یک تابع خالص است: ورودی فهرست و نوع فیلتر، خروجی فهرست جدید. `switch` روی enum در Dart ۳ کامل‌بودن حالت‌ها را چک می‌کند؛ اگر حالتی جا بماند، کامپایلر هشدار می‌دهد."
+     },
+     "realExample": {
+      "language": "dart",
+      "code": "import 'package:flutter/foundation.dart';\n\nenum TaskFilter { all, active, done }\n\nclass Task {\n  const Task(this.id, this.title, {this.done = false});\n  final String id, title;\n  final bool done;\n}\n\nclass TaskStore extends ChangeNotifier {\n  final List<Task> _tasks = [];\n  TaskFilter filter = TaskFilter.all;\n\n  List<Task> get visible => switch (filter) {\n        TaskFilter.all => List.unmodifiable(_tasks),\n        TaskFilter.active => _tasks.where((t) => !t.done).toList(),\n        TaskFilter.done => _tasks.where((t) => t.done).toList(),\n      };\n\n  void add(String title) => _update(() => _tasks\n      .add(Task(DateTime.now().microsecondsSinceEpoch.toString(), title)));\n  void toggle(String id) => _update(() {\n        final i = _tasks.indexWhere((t) => t.id == id);\n        if (i != -1) _tasks[i] = Task(id, _tasks[i].title, done: !_tasks[i].done);\n      });\n  void setFilter(TaskFilter f) => _update(() => filter = f);\n  void _update(VoidCallback change) {\n    change();\n    notifyListeners(); // every change ends here\n  }\n}",
+      "explanation": "فهرست اصلی private است و بیرون فقط `visible` را می‌بیند. همه‌ی تغییرها از `_update` می‌گذرند، پس `notifyListeners` هیچ‌وقت فراموش نمی‌شود. در `main` کافی است `ChangeNotifierProvider(create: (_) => TaskStore(), child: const App())` بنویسی."
+     },
+     "mistakes": [
+      "`List<Task>` را public برمی‌گردانی و صفحه‌ها مستقیم `store.tasks.add(...)` می‌زنند؛ `notifyListeners` صدا زده نمی‌شود و UI عوض نمی‌شود.",
+      "برای هر صفحه یک `TaskStore` جدا می‌سازی و کاری که در فرم اضافه شد در فهرست دیده نمی‌شود.",
+      "فیلتر را هم در Store و هم با `setState` در صفحه نگه می‌داری و این دو از هم جدا می‌شوند."
+     ],
+     "bestPractices": [
+      "یک Store، یک Provider بالای `MaterialApp`؛ همه‌ی صفحه‌ها از همان می‌خوانند.",
+      "قبل از ساخت UI، برای `add`، `toggle` و فیلتر Unit Test بنویس.",
+      "هر قابلیت را در یک branch جدا بساز و با Pull Request به main ادغام کن."
+     ],
+     "relatedTerms": [
+      "provider",
+      "state-management",
+      "unit-test"
+     ],
+     "tryIt": "تحویلی این فاز: فایل `lib/state/task_store.dart` با متدهای `add`، `update`، `remove`، `toggle` و `setFilter`، ثبت Provider در `main.dart`، و حداقل ۴ Unit Test سبز در `test/task_store_test.dart`."
+    },
+    {
+     "title": "فاز سوم: صفحات، فرم و فیلتر",
+     "estimatedMinutes": 60,
+     "what": "وقت ساختن چیزی است که کاربر می‌بیند. صفحه‌ی فهرست با `ListView.builder` و ردیف فیلترها (همه / فعال / انجام‌شده)، صفحه‌ی فرم با اعتبارسنجی عنوان، و رفت‌وبرگشت بین صفحات با `Navigator`.\n\nصفحه‌ها فقط از Store می‌خوانند (`watch`) و متدهایش را صدا می‌زنند (`read`)؛ هیچ منطقی داخل UI تکرار نمی‌شود. اپ را راست‌به‌چپ و با متن‌های فارسی بساز.",
+     "why": "اپی که منطق خوب دارد ولی فرمش بدون اعتبارسنجی است، کار خالی ذخیره می‌کند. صفحه‌ای که بعد از ذخیره به فهرست برنمی‌گردد یا فیلترش با برگشتن ریست می‌شود، اولین چیزی است که داور پروژه می‌بیند.",
+     "simpleExample": {
+      "language": "dart",
+      "code": "import 'package:flutter/material.dart';\n\nenum TaskFilter { all, active, done }\n\nconst labels = {TaskFilter.all: 'همه', TaskFilter.active: 'فعال', TaskFilter.done: 'انجام‌شده'};\n\nWidget filterBar(TaskFilter current, ValueChanged<TaskFilter> onSelect) {\n  return SegmentedButton<TaskFilter>(\n    segments: [\n      for (final f in TaskFilter.values) ButtonSegment(value: f, label: Text(labels[f]!)),\n    ],\n    selected: {current},\n    onSelectionChanged: (s) => onSelect(s.first),\n  );\n}",
+      "explanation": "`SegmentedButton` برای انتخاب یکی از چند فیلتر مناسب است. مقدار فعلی و callback از بیرون می‌آیند، پس این تکه به Store وابسته نیست و هر جا قابل استفاده است."
+     },
+     "realExample": {
+      "language": "dart",
+      "code": "import 'package:flutter/material.dart';\n\nclass TaskFormPage extends StatefulWidget {\n  const TaskFormPage({super.key, this.initial});\n  final String? initial;\n  @override\n  State<TaskFormPage> createState() => _TaskFormPageState();\n}\n\nclass _TaskFormPageState extends State<TaskFormPage> {\n  final _formKey = GlobalKey<FormState>();\n  late final _title = TextEditingController(text: widget.initial);\n  @override\n  void dispose() {\n    _title.dispose();\n    super.dispose();\n  }\n\n  void _save() {\n    if (_formKey.currentState!.validate()) Navigator.pop(context, _title.text.trim());\n  }\n  @override\n  Widget build(BuildContext context) => Scaffold(\n        appBar: AppBar(title: Text(widget.initial == null ? 'کار جدید' : 'ویرایش کار')),\n        body: Form(\n          key: _formKey,\n          child: TextFormField(controller: _title, decoration: const InputDecoration(labelText: 'عنوان'),\n              validator: (v) => (v ?? '').trim().length < 3 ? 'عنوان حداقل ۳ حرف باشد' : null),\n        ),\n        floatingActionButton: FloatingActionButton(onPressed: _save, child: const Icon(Icons.check)),\n      );\n}",
+      "explanation": "فرم افزودن و ویرایش در یک صفحه. `validator` عنوان کوتاه را رد می‌کند و `Navigator.pop` عنوان را به صفحه‌ی فهرست برمی‌گرداند؛ آنجا با `final t = await Navigator.push(...)` آن را به Store می‌دهی."
+     },
+     "mistakes": [
+      "`TextEditingController` را داخل `build` می‌سازی؛ با هر rebuild متن تایپ‌شده پاک می‌شود.",
+      "بعد از `await Navigator.push` بدون چک `context.mounted` از context استفاده می‌کنی.",
+      "فهرست را با `Column` و `for` می‌سازی؛ با ۵۰ کار اسکرول کند و با ۱۰ کار overflow می‌گیری."
+     ],
+     "bestPractices": [
+      "هر صفحه را در فایل جدا زیر `lib/pages/` بگذار و نامش را با `Page` تمام کن.",
+      "برای کار عقب‌افتاده رنگ هشدار از `Theme.of(context).colorScheme.error` بگیر، نه رنگ ثابت.",
+      "حالت خالی را طراحی کن: وقتی کاری نیست، پیام «هنوز کاری اضافه نکرده‌ای» و یک دکمه نشان بده."
+     ],
+     "relatedTerms": [
+      "navigation-routing",
+      "provider",
+      "stateful-widget"
+     ],
+     "tryIt": "تحویلی این فاز: سه صفحه‌ی فهرست، فرم و جزئیات که با Store کار می‌کنند، فیلتر سه‌حالته، اعتبارسنجی عنوان، حالت خالی و اپ راست‌به‌چپ. یک ویدیوی ۶۰ ثانیه‌ای از افزودن، ویرایش، علامت‌زدن و فیلتر ضبط کن."
+    },
+    {
+     "title": "فاز چهارم: تست، تحویل و ارائه",
+     "estimatedMinutes": 45,
+     "what": "پروژه‌ای که فقط روی لپ‌تاپ خودت اجرا شود، هنوز تحویل نشده است. در این فاز کد را تمیز می‌کنی، تست می‌نویسی، فایل APK می‌سازی و در ۵ دقیقه پروژه را ارائه می‌دهی.\n\nداور سه چیز را می‌سنجد: آیا همه‌ی User Storyها کار می‌کنند؟ آیا کد خوانا و بدون هشدار analyzer است؟ آیا می‌توانی تصمیم‌هایت را توضیح بدهی؟",
+     "why": "در مصاحبه‌های کاری ایران، نمونه‌کار GitHub اولین چیزی است که دیده می‌شود. مخزنی با README خوب، تست سبز و commitهای مرتب، از ده پروژه‌ی نیمه‌کاره ارزشمندتر است.",
+     "simpleExample": {
+      "language": "bash",
+      "code": "# Final checklist before delivery\nflutter analyze            # zero issues\ndart format .              # consistent style\nflutter test               # all tests green\nflutter build apk --release\ngit tag v1.0.0 && git push --tags",
+      "explanation": "این پنج فرمان را به ترتیب اجرا کن. اگر `flutter analyze` هشدار دارد یا تستی قرمز است، تحویل نده. تگ `v1.0.0` نسخه‌ی تحویلی را در Git علامت می‌زند."
+     },
+     "realExample": {
+      "language": "dart",
+      "code": "import 'package:flutter/foundation.dart';\nimport 'package:flutter_test/flutter_test.dart';\n\nclass TaskStore extends ChangeNotifier {\n  final List<String> _done = [], _all = [];\n  List<String> get active => _all.where((t) => !_done.contains(t)).toList();\n  void add(String t) {\n    _all.add(t);\n    notifyListeners();\n  }\n\n  void toggle(String t) {\n    _done.contains(t) ? _done.remove(t) : _done.add(t);\n    notifyListeners();\n  }\n}\n\nvoid main() {\n  test('new task is active', () {\n    final store = TaskStore()..add('خرید نان');\n    expect(store.active, ['خرید نان']);\n  });\n\n  test('toggle hides task from active and notifies', () {\n    var notified = 0;\n    final store = TaskStore()..add('تمدید بلیت مترو');\n    store.addListener(() => notified++);\n    store.toggle('تمدید بلیت مترو');\n    expect(store.active, isEmpty);\n    expect(notified, 1);\n  });\n}",
+      "explanation": "نمونه‌ی ساده‌شده‌ی تست Store. تست دوم علاوه بر نتیجه، چک می‌کند `notifyListeners` دقیقاً یک‌بار صدا زده شود؛ همان باگی که UI را بی‌حرکت نگه می‌دارد."
+     },
+     "mistakes": [
+      "README فقط یک خط «Task Manager» دارد؛ داور نمی‌داند اپ چه می‌کند و چطور اجرایش کند.",
+      "همه‌ی کار را در یک commit با پیام «final» ثبت می‌کنی و تاریخچه‌ی Git هیچ داستانی نمی‌گوید.",
+      "در ارائه کد را خط‌به‌خط می‌خوانی به‌جای اینکه اول اپ را اجرا کنی و بعد یک تصمیم فنی را توضیح دهی."
+     ],
+     "bestPractices": [
+      "در README اسکرین‌شات، روش اجرا، فهرست قابلیت‌ها و یک بخش «چیزهایی که یاد گرفتم» بگذار.",
+      "ارائه را این‌طور بچین: دموی زنده (۲ دقیقه)، معماری و Provider (۲ دقیقه)، یک چالش و راه‌حلش (۱ دقیقه).",
+      "قبل از ارائه اپ را روی یک گوشی واقعی نصب و امتحان کن، نه فقط شبیه‌ساز."
+     ],
+     "relatedTerms": [
+      "unit-test",
+      "git-branch",
+      "pull-request"
+     ],
+     "tryIt": "تحویلی نهایی: لینک مخزن GitHub با README کامل و اسکرین‌شات، حداقل ۶ تست سبز، `flutter analyze` بدون خطا، فایل APK در بخش Releases، و اسلاید یا یادداشت ارائه‌ی ۵ دقیقه‌ای."
+    }
+   ]
+  },
+  {
+   "course": "flutter-310",
+   "lessons": [
+    {
+     "title": "Cubit: قدم اول به سمت BLoC",
+     "estimatedMinutes": 30,
+     "what": "Cubit مثل باجه‌ی بلیت مترو است: تو متدی را صدا می‌زنی («یک بلیت بده») و باجه یک state تازه بیرون می‌دهد. UI فقط به stateها گوش می‌دهد و خودش منطقی ندارد.\n\nدر پکیج `flutter_bloc`، کلاس `Cubit<State>` یک state اولیه می‌گیرد و با `emit` state جدید منتشر می‌کند. در UI با `BlocProvider` آن را می‌سازی و با `BlocBuilder` یا `context.watch` نمایشش می‌دهی.",
+     "why": "وقتی صفحه‌ای سه حالت «در حال بارگذاری»، «خطا» و «داده» دارد، مدیریتش با چند `bool` در `setState` خیلی زود بی‌نظم می‌شود: loading و error هم‌زمان true! Cubit منطق را از ویجت جدا و هر حالت را صریح می‌کند و با `bloc_test` به‌راحتی تست می‌شود.",
+     "simpleExample": {
+      "language": "dart",
+      "code": "import 'package:flutter_bloc/flutter_bloc.dart';\n\nclass SeatCubit extends Cubit<int> {\n  SeatCubit() : super(1); // initial state\n\n  void increment() {\n    if (state < 6) emit(state + 1);\n  }\n\n  void decrement() {\n    if (state > 1) emit(state - 1);\n  }\n}",
+      "explanation": "Cubit تعداد صندلی بلیت اتوبوس را بین ۱ تا ۶ نگه می‌دارد. `state` مقدار فعلی و `emit` تنها راه تغییر آن است. قانون «حداکثر ۶» در Cubit است، نه در دکمه‌ها."
+     },
+     "realExample": {
+      "language": "dart",
+      "code": "import 'package:flutter/material.dart';\nimport 'package:flutter_bloc/flutter_bloc.dart';\n\nsealed class ProductsState {}\nclass ProductsLoading extends ProductsState {}\nclass ProductsLoaded extends ProductsState {\n  ProductsLoaded(this.names);\n  final List<String> names;\n}\nclass ProductsError extends ProductsState {}\n\nclass ProductsCubit extends Cubit<ProductsState> {\n  ProductsCubit(this._fetch) : super(ProductsLoading());\n  final Future<List<String>> Function() _fetch;\n\n  Future<void> load() async {\n    emit(ProductsLoading());\n    try {\n      emit(ProductsLoaded(await _fetch()));\n    } catch (_) {\n      emit(ProductsError());\n    }\n  }\n}\n\nWidget productsView() => BlocBuilder<ProductsCubit, ProductsState>(\n      builder: (context, state) => switch (state) {\n        ProductsLoading() => const Center(child: CircularProgressIndicator()),\n        ProductsError() => TextButton(onPressed: () => context.read<ProductsCubit>().load(), child: const Text('تلاش دوباره')),\n        ProductsLoaded(:final names) => ListView(children: [for (final n in names) ListTile(title: Text(n))]),\n      },\n    );",
+      "explanation": "با `sealed class` هر state یک نوع جداست و `switch` مجبورت می‌کند همه‌ی حالت‌ها را نمایش دهی. Cubit را بالای صفحه با `BlocProvider(create: (_) => ProductsCubit(api.fetch)..load())` می‌سازی."
+     },
+     "mistakes": [
+      "state را mutable می‌کنی (مثلاً `state.names.add(...)` و بعد `emit(state)`)؛ state برابر قبلی است و UI عوض نمی‌شود.",
+      "`BuildContext` یا ویجت را به Cubit می‌دهی تا SnackBar نشان دهد؛ Cubit نباید Flutter UI را بشناسد.",
+      "بعد از بسته شدن Cubit (خروج از صفحه) در یک Future طولانی `emit` می‌کنی؛ قبلش `if (isClosed) return;` بنویس."
+     ],
+     "bestPractices": [
+      "هر حالت صفحه را یک کلاس جدا در `sealed class` تعریف کن تا حالت ناممکن مثل «loading و error باهم» ساخته نشود.",
+      "وابستگی‌ها (مثل تابع دریافت داده یا Repository) را از سازنده‌ی Cubit بده تا در تست جایگزین شوند.",
+      "برای کارهای یک‌باره مثل SnackBar یا رفتن به صفحه‌ی بعد از `BlocListener` استفاده کن، نه `BlocBuilder`."
+     ],
+     "relatedTerms": [
+      "bloc",
+      "state-management",
+      "immutability"
+     ],
+     "tryIt": "یک `WalletCubit` بساز که موجودی کیف پول را به تومان نگه دارد با متدهای `charge(amount)` و `pay(amount)`. اگر موجودی کافی نیست، state خطا با پیام «موجودی کافی نیست» منتشر شود. صفحه‌ای با `BlocBuilder` برای نمایش آن بساز."
+    },
+    {
+     "title": "BLoC: مدیریت وضعیت مبتنی بر Event",
+     "estimatedMinutes": 35,
+     "what": "اگر Cubit باجه است، BLoC «صندوق نامه» است: UI به‌جای صدا زدن متد، یک Event می‌فرستد (مثل «شماره ثبت شد») و BLoC برای هر نوع Event یک handler دارد که stateهای تازه `emit` می‌کند.\n\nدر `flutter_bloc` نسخه‌ی ۹ برای هر Event با `on<EventType>((event, emit) async {...})` یک handler ثبت می‌کنی و از UI با `bloc.add(event)` آن را می‌فرستی.",
+     "why": "در صفحه‌هایی مثل ورود با کد پیامکی یا جست‌وجوی زنده، ترتیب و زمان رویدادها مهم است. BLoC هر تغییر را به یک Event مشخص ربط می‌دهد، پس در log و تست دقیقاً می‌بینی «چه اتفاقی، چه state‌ای ساخت». در تیم‌های بزرگ همین قابلیت ردیابی، دلیل انتخاب BLoC است.",
+     "simpleExample": {
+      "language": "dart",
+      "code": "import 'package:flutter_bloc/flutter_bloc.dart';\n\nsealed class CounterEvent {}\nclass Incremented extends CounterEvent {}\nclass Reset extends CounterEvent {}\n\nclass CounterBloc extends Bloc<CounterEvent, int> {\n  CounterBloc() : super(0) {\n    on<Incremented>((event, emit) => emit(state + 1));\n    on<Reset>((event, emit) => emit(0));\n  }\n}\n\n// UI: context.read<CounterBloc>().add(Incremented());",
+      "explanation": "هر Event یک کلاس است و در سازنده برایش handler ثبت می‌شود. UI هیچ‌وقت state را مستقیم عوض نمی‌کند؛ فقط Event اضافه می‌کند."
+     },
+     "realExample": {
+      "language": "dart",
+      "code": "import 'package:flutter_bloc/flutter_bloc.dart';\n\nsealed class LoginEvent {}\nclass PhoneSubmitted extends LoginEvent { PhoneSubmitted(this.phone); final String phone; }\n\nsealed class LoginState {}\nclass LoginIdle extends LoginState {}\nclass LoginSending extends LoginState {}\nclass OtpSent extends LoginState { OtpSent(this.phone); final String phone; }\nclass LoginFailed extends LoginState { LoginFailed(this.message); final String message; }\n\nclass LoginBloc extends Bloc<LoginEvent, LoginState> {\n  LoginBloc(this._sendOtp) : super(LoginIdle()) {\n    on<PhoneSubmitted>(_onSubmitted);\n  }\n  final Future<void> Function(String phone) _sendOtp;\n  Future<void> _onSubmitted(PhoneSubmitted e, Emitter<LoginState> emit) async {\n    if (!RegExp(r'^09\\d{9}$').hasMatch(e.phone)) {\n      return emit(LoginFailed('شماره موبایل معتبر نیست'));\n    }\n    emit(LoginSending());\n    try {\n      await _sendOtp(e.phone);\n      emit(OtpSent(e.phone));\n    } catch (_) {\n      emit(LoginFailed('ارسال پیامک ناموفق بود، دوباره تلاش کن'));\n    }\n  }\n}",
+      "explanation": "BLoC صفحه‌ی ورود با شماره موبایل: اعتبارسنجی، ارسال کد و مدیریت خطا همه در یک handler است. در UI با `BlocListener` وقتی `OtpSent` آمد به صفحه‌ی کد تأیید برو."
+     },
+     "mistakes": [
+      "`emit` را بعد از پایان handler صدا می‌زنی (مثلاً در یک callback یا `then`)؛ BLoC خطا می‌دهد. همه‌چیز را با `await` در خود handler بنویس.",
+      "برای هر کلیک یک Event کلی مثل `ButtonPressed` می‌سازی؛ Eventها باید معنای کسب‌وکاری داشته باشند (`PhoneSubmitted`).",
+      "هنوز از API قدیمی `mapEventToState` استفاده می‌کنی؛ از نسخه‌ی ۸ به بعد حذف شده و باید `on<Event>` بنویسی."
+     ],
+     "bestPractices": [
+      "Eventها را با زمان گذشته نام‌گذاری کن (`PhoneSubmitted`، `OrderCancelled`)؛ یعنی «چه اتفاقی افتاد».",
+      "برای تست از `blocTest` در پکیج `bloc_test` استفاده کن و دنباله‌ی stateهای مورد انتظار را در `expect` بنویس.",
+      "اگر منطق فقط «متد صدا بزن، state بگیر» است، Cubit کافی است؛ BLoC را برای جریان‌های پیچیده نگه دار."
+     ],
+     "relatedTerms": [
+      "bloc",
+      "state-management",
+      "stream"
+     ],
+     "tryIt": "یک `SearchBloc` برای جست‌وجوی ایستگاه‌های مترو بساز: Event `QueryChanged(text)`، stateهای `Idle`، `Loading`، `Results(list)` و `Empty`. از یک فهرست ثابت ۱۰ ایستگاهی جست‌وجو کن و برایش دو `blocTest` بنویس."
+    },
+    {
+     "title": "Riverpod",
+     "estimatedMinutes": 35,
+     "what": "Riverpod مثل انبار مرکزیِ کالاهای برچسب‌دار است: هر داده یک «provider» سراسری با برچسب خودش دارد و هر ویجت با `ref.watch` آن را برمی‌دارد. برخلاف Provider به `BuildContext` و جای ویجت در درخت وابسته نیست.\n\nدر `flutter_riverpod` نسخه‌ی ۳، state قابل‌تغییر را با کلاس `Notifier` و `NotifierProvider` می‌نویسی و داده‌ی async را با `FutureProvider`. کل اپ باید داخل `ProviderScope` باشد.",
+     "why": "در Provider، اگر ویجتی بالاتر از Provider بخواهد داده را بخواند، ProviderNotFound می‌گیری؛ Riverpod این خطا را در زمان کامپایل حذف می‌کند. ترکیب providerها (مثلاً سبد خرید وابسته به کاربر واردشده) و override کردن‌شان در تست هم بسیار ساده‌تر است.",
+     "simpleExample": {
+      "language": "dart",
+      "code": "import 'package:flutter/material.dart';\nimport 'package:flutter_riverpod/flutter_riverpod.dart';\n\nclass Counter extends Notifier<int> {\n  @override\n  int build() => 0; // initial state\n  void increment() => state++;\n}\n\nfinal counterProvider = NotifierProvider<Counter, int>(Counter.new);\n\nclass CounterText extends ConsumerWidget {\n  const CounterText({super.key});\n  @override\n  Widget build(BuildContext context, WidgetRef ref) => TextButton(\n      onPressed: () => ref.read(counterProvider.notifier).increment(),\n      child: Text('${ref.watch(counterProvider)}'));\n}",
+      "explanation": "`build` state اولیه را برمی‌گرداند و تغییر `state` خودکار شنونده‌ها را خبر می‌کند. در UI `ref.watch` برای نمایش و `ref.read(...notifier)` برای صدا زدن متد است. در `main` بنویس: `runApp(const ProviderScope(child: App()))`."
+     },
+     "realExample": {
+      "language": "dart",
+      "code": "import 'package:flutter/material.dart';\nimport 'package:flutter_riverpod/flutter_riverpod.dart';\n\nclass Order {\n  const Order(this.id, this.total);\n  final int id;\n  final int total; // toman\n}\n\nFuture<List<Order>> fetchOrders() async {\n  await Future.delayed(const Duration(seconds: 1)); // fake network\n  return const [Order(1024, 350000), Order(1025, 120000)];\n}\n\nfinal ordersProvider = FutureProvider<List<Order>>((ref) => fetchOrders());\n\nclass OrdersPage extends ConsumerWidget {\n  const OrdersPage({super.key});\n\n  @override\n  Widget build(BuildContext context, WidgetRef ref) {\n    final orders = ref.watch(ordersProvider);\n    return switch (orders) {\n      AsyncData(:final value) => ListView(children: [\n          for (final o in value) ListTile(title: Text('سفارش ${o.id}'), subtitle: Text('${o.total} تومان')),\n        ]),\n      AsyncError() => TextButton(\n          onPressed: () => ref.invalidate(ordersProvider), child: const Text('تلاش دوباره')),\n      _ => const Center(child: CircularProgressIndicator()),\n    };\n  }\n}",
+      "explanation": "`FutureProvider` سه حالت loading، error و data را در یک `AsyncValue` می‌دهد و با `switch` همه را نمایش می‌دهی. `ref.invalidate` provider را از نو اجرا می‌کند؛ مثل دکمه‌ی «تلاش دوباره» در اپ‌های واقعی."
+     },
+     "mistakes": [
+      "در `onPressed` از `ref.watch` استفاده می‌کنی؛ در callbackها همیشه `ref.read` بنویس.",
+      "`ProviderScope` را دور `runApp` فراموش می‌کنی و در اولین `ref.watch` خطا می‌گیری.",
+      "هنوز `StateNotifierProvider` و `StateProvider` می‌نویسی؛ در Riverpod ۳ این‌ها legacy هستند و باید `Notifier` استفاده کنی."
+     ],
+     "bestPractices": [
+      "providerها را به‌صورت متغیر `final` سراسری تعریف کن؛ state واقعی داخل `ProviderScope` زندگی می‌کند، نه در متغیر سراسری.",
+      "در تست با `ProviderScope(overrides: [...])` یا `ProviderContainer` پیاده‌سازی جعلی بده.",
+      "برای خواندن بخشی از state و rebuild کمتر از `ref.watch(provider.select((s) => ...))` استفاده کن."
+     ],
+     "relatedTerms": [
+      "state-management",
+      "dependency-injection",
+      "future"
+     ],
+     "tryIt": "یک `CartNotifier` با Riverpod بساز که فهرست کالاها (نام و قیمت تومانی) را نگه دارد. یک `Provider` جدا جمع کل را از آن حساب کند. AppBar فقط جمع کل و صفحه فهرست کالاها را `watch` کند."
+    },
+    {
+     "title": "Immutability و انتخاب راهکار مناسب",
+     "estimatedMinutes": 30,
+     "what": "state خوب مثل فیش بانکی است: بعد از صدور عوضش نمی‌کنی؛ اگر چیزی تغییر کرد، فیش تازه صادر می‌شود. در BLoC و Riverpod، state را تغییرناپذیر (immutable) می‌سازی و با `copyWith` نسخه‌ی جدید درست می‌کنی.\n\nپکیج `equatable` مقایسه‌ی دو state را بر اساس محتوا ممکن می‌کند، تا BLoC بفهمد state واقعاً عوض شده یا نه. در پایان این درس یاد می‌گیری کِی setState، Provider، BLoC یا Riverpod انتخاب کنی.",
+     "why": "اگر state را درجا تغییر بدهی و همان شیء را دوباره emit کنی، BLoC آن را برابر قبلی می‌بیند و UI عوض نمی‌شود. انتخاب راهکار اشتباه هم هزینه دارد: BLoC برای یک فرم دو فیلدی، کد را سه برابر می‌کند.",
+     "simpleExample": {
+      "language": "dart",
+      "code": "import 'package:equatable/equatable.dart';\n\nclass CartState extends Equatable {\n  const CartState({this.items = const [], this.discount = 0});\n  final List<String> items;\n  final int discount;\n\n  CartState copyWith({List<String>? items, int? discount}) =>\n      CartState(items: items ?? this.items, discount: discount ?? this.discount);\n\n  @override\n  List<Object?> get props => [items, discount];\n}\n\n// Wrong: state.items.add('چای');  Right:\n// emit(state.copyWith(items: [...state.items, 'چای']));",
+      "explanation": "`copyWith` نسخه‌ی تازه می‌سازد و `[...state.items, 'چای']` یک فهرست جدید است. `props` به Equatable می‌گوید کدام فیلدها در مقایسه‌ی برابری حساب شوند."
+     },
+     "realExample": {
+      "language": "text",
+      "code": "| Situation                               | Choose             |\n|-----------------------------------------|--------------------|\n| Toggle, tab, form field on one screen   | setState           |\n| Small app, a few shared models (cart)   | Provider           |\n| Big team, strict event log, many flows  | BLoC / Cubit       |\n| Compile-safe DI, async data, testing    | Riverpod           |\n\nRules of thumb:\n- Start with the simplest tool that works.\n- One approach per project; do not mix three.\n- Keep state immutable in every approach.\n- Business logic never lives inside build().",
+      "explanation": "جدول تصمیم‌گیری: از ساده‌ترین ابزار شروع کن و فقط وقتی دردی واقعی (اشتراک state، تست، اندازه‌ی تیم) پیدا شد ابزار سنگین‌تر بیاور. مهم‌تر از ابزار، یکدست بودن در کل پروژه است."
+     },
+     "mistakes": [
+      "فهرست داخل state را با `add` یا `removeAt` درجا تغییر می‌دهی و انتظار داری `BlocBuilder` rebuild شود.",
+      "در کلاس Equatable یکی از فیلدها را در `props` جا می‌اندازی؛ تغییر آن فیلد دیده نمی‌شود و باگ پنهان می‌سازی.",
+      "در یک پروژه Provider، BLoC و Riverpod را هم‌زمان استفاده می‌کنی و هم‌تیمی‌ها نمی‌دانند state کجا زندگی می‌کند."
+     ],
+     "bestPractices": [
+      "همه‌ی فیلدهای state را `final` و سازنده را `const` کن.",
+      "برای تغییر فهرست‌ها همیشه فهرست جدید بساز: `[...old, item]` یا `old.where(...).toList()`.",
+      "انتخاب ابزار state management را در README یا یک سند تصمیم (ADR) کوتاه بنویس تا تیم دلیلش را بداند."
+     ],
+     "relatedTerms": [
+      "immutability",
+      "bloc",
+      "state-management"
+     ],
+     "tryIt": "کلاس `OrderState` با Equatable بساز: فهرست اقلام، کد تخفیف و وضعیت ارسال. `copyWith` و یک تست بنویس که نشان دهد دو state با محتوای یکسان برابرند. بعد در دو خط بنویس برای اپ تاکسی اینترنتی کدام ابزار را انتخاب می‌کنی و چرا."
+    }
+   ]
+  },
+  {
+   "course": "flutter-320",
+   "lessons": [
+    {
+     "title": "Navigator: رفتن، برگشتن و پس دادن نتیجه",
+     "estimatedMinutes": 25,
+     "what": "صفحه‌های اپ مثل دسته‌ی بشقاب‌اند: هر صفحه‌ی جدید روی قبلی گذاشته می‌شود و دکمه‌ی برگشت، بشقاب بالایی را برمی‌دارد. `Navigator` همین پشته (stack) از Routeهاست.\n\n`Navigator.push` صفحه‌ی جدید را روی پشته می‌گذارد و یک `Future` برمی‌گرداند؛ وقتی صفحه با `Navigator.pop(context, result)` بسته شد، آن Future با نتیجه کامل می‌شود. مثل انتخاب آدرس تحویل و برگشت به سبد خرید.",
+     "why": "بدون فهم پشته، کاربر بعد از پرداخت با دکمه‌ی برگشت دوباره به صفحه‌ی پرداخت می‌رسد، یا داده را با متغیر سراسری بین صفحه‌ها جابه‌جا می‌کنی. `pushReplacement` و نتیجه‌ی `pop` این مشکل‌ها را تمیز حل می‌کنند.",
+     "simpleExample": {
+      "language": "dart",
+      "code": "import 'package:flutter/material.dart';\n\nclass ProductPage extends StatelessWidget {\n  const ProductPage({super.key, required this.name});\n  final String name;\n\n  @override\n  Widget build(BuildContext context) =>\n      Scaffold(appBar: AppBar(title: Text(name)));\n}\n\nvoid openProduct(BuildContext context) {\n  Navigator.push(context,\n      MaterialPageRoute(builder: (_) => const ProductPage(name: 'گوشی موبایل')));\n}",
+      "explanation": "داده از سازنده به صفحه‌ی جدید می‌رسد؛ ساده و type-safe. `AppBar` خودکار دکمه‌ی برگشت را اضافه می‌کند و در اپ راست‌به‌چپ، فلش آن هم برعکس می‌شود."
+     },
+     "realExample": {
+      "language": "dart",
+      "code": "import 'package:flutter/material.dart';\n\nclass AddressPicker extends StatelessWidget {\n  const AddressPicker({super.key});\n  static const _addresses = ['تهران، ونک، خیابان ملاصدرا', 'کرج، گوهردشت، بلوار موذن'];\n\n  @override\n  Widget build(BuildContext context) => Scaffold(\n        appBar: AppBar(title: const Text('انتخاب آدرس')),\n        body: ListView(children: [\n          for (final a in _addresses)\n            ListTile(title: Text(a), onTap: () => Navigator.pop(context, a)),\n        ]),\n      );\n}\n\nclass CheckoutButton extends StatelessWidget {\n  const CheckoutButton({super.key});\n\n  Future<void> _pick(BuildContext context) async {\n    final address = await Navigator.push<String>(\n        context, MaterialPageRoute(builder: (_) => const AddressPicker()));\n    if (address == null || !context.mounted) return; // user pressed back\n    ScaffoldMessenger.of(context)\n        .showSnackBar(SnackBar(content: Text('ارسال به: $address')));\n  }\n\n  @override\n  Widget build(BuildContext context) =>\n      FilledButton(onPressed: () => _pick(context), child: const Text('انتخاب آدرس'));\n}",
+      "explanation": "صفحه‌ی آدرس نتیجه را با `pop` برمی‌گرداند. اگر کاربر دکمه‌ی برگشت را بزند، نتیجه `null` است. بعد از `await` با `context.mounted` مطمئن می‌شوی صفحه هنوز باز است."
+     },
+     "mistakes": [
+      "نتیجه‌ی `Navigator.push` را `null`-check نمی‌کنی؛ دکمه‌ی برگشت سیستم همیشه می‌تواند `null` برگرداند.",
+      "بعد از پرداخت موفق از `push` استفاده می‌کنی و کاربر با برگشت دوباره به فرم پرداخت می‌رسد؛ `pushAndRemoveUntil` لازم است.",
+      "بعد از `await` بدون `context.mounted` از `context` استفاده می‌کنی و گاهی خطای context نامعتبر می‌گیری."
+     ],
+     "bestPractices": [
+      "داده را از سازنده‌ی صفحه بده، نه با متغیر سراسری.",
+      "نوع نتیجه را مشخص کن: `Navigator.push<String>(...)` تا بدانی چه چیزی برمی‌گردد.",
+      "بعد از ورود یا پرداخت با `pushReplacement` یا `pushAndRemoveUntil` پشته را تمیز کن."
+     ],
+     "relatedTerms": [
+      "navigation-routing",
+      "future",
+      "build-context"
+     ],
+     "tryIt": "صفحه‌ی «انتخاب شهر» بساز که فهرست ۵ شهر ایران را نشان دهد و با لمس، نام شهر را به صفحه‌ی قبل برگرداند. صفحه‌ی اصلی شهر انتخابی را نشان دهد و اگر کاربر بدون انتخاب برگشت، «شهری انتخاب نشده» بنویسد."
+    },
+    {
+     "title": "Named Route و onGenerateRoute",
+     "estimatedMinutes": 25,
+     "what": "به‌جای اینکه هر بار آدرس کامل خانه‌ای را توضیح بدهی، می‌گویی «پلاک ۱۲». Named Route هم به هر صفحه یک نام مثل `/cart` می‌دهد تا با `Navigator.pushNamed(context, '/cart')` به آن بروی.\n\nبرای صفحه‌هایی که ورودی دارند (مثل صفحه‌ی محصول با شناسه)، `onGenerateRoute` در `MaterialApp` نام و `arguments` را می‌گیرد و Route مناسب را می‌سازد.",
+     "why": "وقتی `MaterialPageRoute` در ده جای اپ پخش شده باشد، تغییر یک صفحه یعنی گشتن در کل پروژه. نام‌ها همه‌ی مسیرها را یک‌جا جمع می‌کنند. البته Flutter برای اپ‌های جدید Named Routeهای ساده را توصیه نمی‌کند و go_router را پیشنهاد می‌دهد؛ درس بعد.",
+     "simpleExample": {
+      "language": "dart",
+      "code": "import 'package:flutter/material.dart';\n\nvoid main() => runApp(MaterialApp(\n      initialRoute: '/',\n      routes: {\n        '/': (context) => const Scaffold(body: Center(child: Text('خانه'))),\n        '/cart': (context) => const Scaffold(body: Center(child: Text('سبد خرید'))),\n      },\n    ));\n\n// Anywhere: Navigator.pushNamed(context, '/cart');",
+      "explanation": "جدول `routes` نام هر مسیر را به سازنده‌ی صفحه وصل می‌کند. `initialRoute` صفحه‌ی شروع است. برای صفحه‌های بدون ورودی همین کافی است."
+     },
+     "realExample": {
+      "language": "dart",
+      "code": "import 'package:flutter/material.dart';\n\nclass Routes {\n  static const home = '/';\n  static const product = '/product';\n}\n\nclass ProductPage extends StatelessWidget {\n  const ProductPage({super.key, required this.id});\n  final int id;\n  @override\n  Widget build(BuildContext context) =>\n      Scaffold(appBar: AppBar(title: Text('محصول $id')));\n}\n\nRoute<dynamic> onGenerateRoute(RouteSettings settings) {\n  switch (settings.name) {\n    case Routes.product:\n      final id = settings.arguments as int; // typed argument\n      return MaterialPageRoute(settings: settings, builder: (_) => ProductPage(id: id));\n    default:\n      return MaterialPageRoute(\n          builder: (_) => const Scaffold(body: Center(child: Text('صفحه پیدا نشد'))));\n  }\n}\n\nvoid main() => runApp(const MaterialApp(onGenerateRoute: onGenerateRoute));\n\n// Navigator.pushNamed(context, Routes.product, arguments: 42);",
+      "explanation": "نام مسیرها ثابت‌اند تا غلط تایپی نداشته باشی. `onGenerateRoute` آرگومان را به نوع درست تبدیل می‌کند و برای نام ناشناخته صفحه‌ی «پیدا نشد» می‌دهد، به‌جای کرش."
+     },
+     "mistakes": [
+      "نام مسیر را هر بار به‌صورت رشته‌ی خام می‌نویسی (`'/prodcut'`)؛ یک غلط تایپی تا زمان اجرا دیده نمی‌شود.",
+      "`arguments` را بدون بررسی نوع cast می‌کنی و با ارسال نوع اشتباه، اپ در زمان اجرا کرش می‌کند.",
+      "فکر می‌کنی Named Route لینک وب و deep link کامل را مدیریت می‌کند؛ برای آن go_router لازم است."
+     ],
+     "bestPractices": [
+      "همه‌ی نام‌ها را در یک کلاس `Routes` به‌صورت `static const` نگه دار.",
+      "برای مسیر ناشناخته همیشه صفحه‌ی خطای دوستانه برگردان.",
+      "در اپ جدید، به‌خصوص اگر وب یا deep link داری، مستقیم go_router را انتخاب کن."
+     ],
+     "relatedTerms": [
+      "navigation-routing",
+      "build-context"
+     ],
+     "tryIt": "برای اپ کتاب‌خوانی سه مسیر `/`، `/book` و `/settings` بساز. `/book` یک شناسه‌ی `int` بگیرد و عنوان کتاب را نشان دهد. مسیر ناشناخته را هم امتحان کن که صفحه‌ی «پیدا نشد» بیاید."
+    },
+    {
+     "title": "go_router و مسیرهای تو در تو",
+     "estimatedMinutes": 35,
+     "what": "go_router مسیریابی را مثل آدرس وب می‌کند: `/shop/product/42`. هر `GoRoute` یک تکه‌ی آدرس است و مسیرهای فرزند داخل `routes` والدشان قرار می‌گیرند؛ پس با برگشت از محصول، به فروشگاه می‌رسی.\n\nبا `context.go` به یک آدرس می‌روی، پارامترها را از `state.pathParameters` می‌خوانی و با `StatefulShellRoute` یک نوار پایین (BottomNavigationBar) می‌سازی که هر تب پشته‌ی جدای خودش را دارد.",
+     "why": "اپ‌های واقعی فروشگاهی تب «خانه»، «سبد» و «پروفایل» دارند و کاربر انتظار دارد با عوض کردن تب، جایش در هر تب حفظ شود. پیاده‌سازی این با Navigator خام سخت است. go_router همچنین با `redirect` صفحه‌های نیازمند ورود را محافظت می‌کند.",
+     "simpleExample": {
+      "language": "dart",
+      "code": "import 'package:flutter/material.dart';\nimport 'package:go_router/go_router.dart';\n\nfinal router = GoRouter(routes: [\n  GoRoute(\n    path: '/',\n    builder: (context, state) => const Scaffold(body: Text('فروشگاه')),\n    routes: [\n      GoRoute(\n        path: 'product/:id', // child of '/', full path: /product/42\n        builder: (context, state) =>\n            Scaffold(body: Text('محصول ${state.pathParameters['id']}')),\n      ),\n    ],\n  ),\n]);\n// MaterialApp.router(routerConfig: router); context.go('/product/42');",
+      "explanation": "مسیر فرزند بدون `/` اول نوشته می‌شود و به والد اضافه می‌شود. `:id` پارامتر است و از `state.pathParameters` خوانده می‌شود. در `MaterialApp.router` فقط `routerConfig` را بده."
+     },
+     "realExample": {
+      "language": "dart",
+      "code": "import 'package:flutter/material.dart';\nimport 'package:go_router/go_router.dart';\n\nbool isLoggedIn = false; // replace with your auth state\nWidget page(String t) => Scaffold(body: Center(child: Text(t)));\n\nfinal router = GoRouter(\n  initialLocation: '/home',\n  redirect: (context, state) => // null = no redirect\n      state.matchedLocation.startsWith('/profile') && !isLoggedIn ? '/login' : null,\n  routes: [\n    GoRoute(path: '/login', builder: (context, state) => page('ورود با شماره موبایل')),\n    StatefulShellRoute.indexedStack(\n      builder: (context, state, shell) => Scaffold(\n        body: shell,\n        bottomNavigationBar: NavigationBar(\n          selectedIndex: shell.currentIndex,\n          onDestinationSelected: shell.goBranch,\n          destinations: const [\n            NavigationDestination(icon: Icon(Icons.home), label: 'خانه'),\n            NavigationDestination(icon: Icon(Icons.person), label: 'پروفایل'),\n          ],\n        ),\n      ),\n      branches: [\n        StatefulShellBranch(routes: [GoRoute(path: '/home', builder: (c, s) => page('خانه'))]),\n        StatefulShellBranch(routes: [GoRoute(path: '/profile', builder: (c, s) => page('پروفایل'))]),\n      ],\n    ),\n  ],\n);",
+      "explanation": "هر `StatefulShellBranch` یک تب با پشته‌ی مستقل است و `indexedStack` state تب‌ها را نگه می‌دارد. `redirect` قبل از هر مسیریابی اجرا می‌شود و کاربر واردنشده را از پروفایل به صفحه‌ی ورود می‌فرستد."
+     },
+     "mistakes": [
+      "مسیر فرزند را با `/` شروع می‌کنی (`'/product/:id'` داخل `routes` والد) و go_router خطا می‌دهد؛ فقط مسیرهای سطح اول با `/` شروع می‌شوند.",
+      "`context.go` و `context.push` را یکی می‌دانی؛ `go` پشته را بر اساس آدرس از نو می‌سازد، `push` روی پشته اضافه می‌کند.",
+      "در `redirect` همیشه یک مسیر برمی‌گردانی (حتی وقتی لازم نیست) و حلقه‌ی بی‌پایان redirect می‌سازی."
+     ],
+     "bestPractices": [
+      "آدرس‌ها را مثل وب طراحی کن: اسم‌های کوتاه، پارامتر در مسیر و فیلترها در query مثل `?sort=cheap`.",
+      "برای تب‌های پایین از `StatefulShellRoute.indexedStack` استفاده کن تا جای کاربر در هر تب حفظ شود.",
+      "اگر auth عوض می‌شود، `refreshListenable` را به GoRouter بده تا `redirect` دوباره بررسی شود."
+     ],
+     "relatedTerms": [
+      "navigation-routing",
+      "build-context"
+     ],
+     "tryIt": "اپ فروشگاه با دو تب «خانه» و «سبد» بساز. در تب خانه از `/home` به `/home/product/:id` برو، به تب سبد برو و برگرد؛ باید هنوز روی صفحه‌ی محصول باشی. مسیر `/checkout` را با `redirect` فقط برای کاربر واردشده باز کن."
+    },
+    {
+     "title": "Deep Link",
+     "estimatedMinutes": 30,
+     "what": "پیامکی می‌رسد: «سفارش شما ارسال شد، پیگیری: `shop.example.ir/orders/1024`». کاربر لمس می‌کند و به‌جای مرورگر، مستقیم صفحه‌ی همان سفارش در اپ باز می‌شود. این Deep Link است.\n\nدر اندروید با App Links و در iOS با Universal Links، سیستم‌عامل آدرس را به اپ می‌دهد. اگر مسیریابی اپ با go_router آدرس‌محور باشد، همان آدرس بدون کد اضافه به صفحه‌ی درست می‌رسد.",
+     "why": "بدون Deep Link، لینک کمپین تخفیف یا پیامک پیگیری کاربر را به صفحه‌ی اول اپ می‌برد و او باید خودش سفارش را پیدا کند؛ بیشتر کاربرها همان‌جا رها می‌کنند. در عین حال هر لینک ورودی، ورودیِ کنترل‌نشده است و باید اعتبارسنجی شود.",
+     "simpleExample": {
+      "language": "json",
+      "code": "[\n  {\n    \"relation\": [\"delegate_permission/common.handle_all_urls\"],\n    \"target\": {\n      \"namespace\": \"android_app\",\n      \"package_name\": \"ir.example.shop\",\n      \"sha256_cert_fingerprints\": [\"AB:CD:...\"]\n    }\n  }\n]",
+      "explanation": "فایل `assetlinks.json` روی دامنه در مسیر `/.well-known/` قرار می‌گیرد و ثابت می‌کند این اپ صاحب دامنه است. بدون آن، اندروید لینک را در مرورگر یا با پنجره‌ی انتخاب باز می‌کند."
+     },
+     "realExample": {
+      "language": "dart",
+      "code": "import 'package:flutter/material.dart';\nimport 'package:go_router/go_router.dart';\n\nclass OrderPage extends StatelessWidget {\n  const OrderPage({super.key, required this.id, this.source});\n  final int id;\n  final String? source;\n  @override\n  Widget build(BuildContext context) =>\n      Scaffold(appBar: AppBar(title: Text('پیگیری سفارش $id')));\n}\n\nfinal router = GoRouter(\n  routes: [\n    GoRoute(path: '/', builder: (c, s) => const Scaffold(body: Text('خانه'))),\n    GoRoute(\n      path: '/orders/:id',\n      redirect: (context, state) =>\n          int.tryParse(state.pathParameters['id']!) == null ? '/' : null,\n      builder: (context, state) => OrderPage(\n        id: int.parse(state.pathParameters['id']!),\n        source: state.uri.queryParameters['ref'], // e.g. ?ref=sms\n      ),\n    ),\n  ],\n  errorBuilder: (context, state) =>\n      const Scaffold(body: Center(child: Text('این لینک معتبر نیست'))),\n);",
+      "explanation": "لینک `https://shop.example.ir/orders/1024?ref=sms` مستقیم به `OrderPage` می‌رسد. شناسه‌ی غیرعددی با `redirect` به خانه می‌رود و مسیر ناشناخته `errorBuilder` را نشان می‌دهد، نه کرش."
+     },
+     "mistakes": [
+      "پارامتر لینک را بدون بررسی با `int.parse` می‌خوانی؛ یک لینک دست‌کاری‌شده مثل `/orders/abc` اپ را کرش می‌کند.",
+      "صفحه‌ی deep link را طوری می‌سازی که فقط با `push` از صفحه‌ی قبل کار کند؛ وقتی اپ مستقیم از لینک باز شود، داده‌ی لازم را ندارد.",
+      "به لینک ورودی اعتماد می‌کنی و بدون چک ورود، صفحه‌ی اطلاعات حساب را باز می‌کنی؛ مسیرهای حساس باید پشت `redirect` باشند."
+     ],
+     "bestPractices": [
+      "هر صفحه‌ای که لینک دارد، داده‌اش را فقط از پارامترهای آدرس بگیرد و خودش آن را بارگذاری کند.",
+      "deep link را با `adb shell am start -a android.intent.action.VIEW -d <url>` روی اندروید تست کن.",
+      "از `https` و App Links به‌جای scheme دلخواه مثل `myshop://` استفاده کن تا اپ دیگری نتواند لینک را بدزدد."
+     ],
+     "relatedTerms": [
+      "navigation-routing",
+      "rest-api"
+     ],
+     "tryIt": "مسیر `/tickets/:code` برای «بلیت مترو» بساز که کد بلیت را نشان دهد و کد نامعتبر (غیر ۸ رقمی) را به خانه بفرستد. با فرمان `adb` لینک را روی شبیه‌ساز اندروید باز کن و از صفحه‌ی بازشده اسکرین‌شات بگیر."
+    }
+   ]
+  }
+ ]
+}

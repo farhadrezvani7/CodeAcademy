@@ -1,0 +1,1190 @@
+{
+ "courses": [
+  {
+   "course": "dart-101",
+   "lessons": [
+    {
+     "title": "متغیرها و انواع داده",
+     "estimatedMinutes": 20,
+     "what": "فرض کن در یک فروشگاه اینترنتی روی کتاب برچسب قیمت می‌زنی. متغیر همان برچسب است: یک اسم که به یک مقدار اشاره می‌کند، مثل `price = 185000`.\n\nدر Dart هر متغیر نوع دارد: `int` عدد صحیح، `double` اعشاری، `String` متن و `bool` درست/نادرست. با `var` خود Dart نوع را از مقدار اول حدس می‌زند و بعد عوض نمی‌شود. `final` یعنی فقط یک بار مقدار می‌گیرد و `const` یعنی مقدارش همان موقع کامپایل معلوم است.",
+     "why": "اگر نوع‌ها روشن نباشند، ممکن است متن «۱۸۵ هزار» را با عدد جمع کنی و برنامه وسط خرید کاربر خراب شود. Dart این اشتباه را همان لحظه‌ی نوشتن کد نشانت می‌دهد. `final` هم جلوی تغییر ناخواسته را می‌گیرد؛ مثلاً کد ملی مشتری نباید وسط برنامه عوض شود.",
+     "simpleExample": {
+      "language": "dart",
+      "code": "void main() {\n  final String name = 'سارا';\n  var age = 21; // inferred as int\n  const double vatRate = 0.10;\n  bool isStudent = true;\n\n  age = 22; // ok: var can change\n  // age = 'twenty'; // compile error: String is not int\n\n  print('$name, $age years, student: $isStudent');\n  print('VAT: ${vatRate * 100}%');\n}",
+      "explanation": "`age` با `var` تعریف شده و Dart نوعش را `int` حدس می‌زند؛ پس عدد تازه قبول می‌کند ولی رشته نه. خط آخر `VAT: 10.0%` چاپ می‌کند چون حاصل ضرب یک `double` است."
+     },
+     "realExample": {
+      "language": "dart",
+      "code": "void main() {\n  const vatPercent = 10; // Iran VAT\n  final String product = 'هدفون بی‌سیم';\n  final int unitPrice = 1250000; // Toman\n  var quantity = 1;\n  var hasDiscountCode = false;\n\n  quantity = 2; // user tapped +\n  hasDiscountCode = true;\n\n  var subtotal = unitPrice * quantity;\n  if (hasDiscountCode) {\n    subtotal = subtotal - 100000;\n  }\n  final vat = subtotal * vatPercent ~/ 100;\n  final payable = subtotal + vat;\n\n  print('$product × $quantity');\n  print('جمع: $subtotal تومان');\n  print('مالیات: $vat تومان');\n  print('قابل پرداخت: $payable تومان');\n}",
+      "explanation": "قیمت‌ها `int` هستند چون تومان اعشار ندارد و `double` در حساب پول خطای گرد کردن می‌سازد. `~/` تقسیم صحیح است. خط آخر خروجی: `قابل پرداخت: 2640000 تومان`."
+     },
+     "mistakes": [
+      "نوشتن `const now = DateTime.now();`؛ مقداری که در زمان اجرا ساخته می‌شود فقط با `final` نگه داشته می‌شود، نه `const`.",
+      "خیال این‌که `var` یعنی «بی‌نوع»؛ `var x = 5;` برای همیشه `int` است و `x = 'پنج';` خطای کامپایل می‌دهد.",
+      "نگه داشتن قیمت در `double`؛ مثلاً `0.1 + 0.2` می‌شود `0.30000000000000004`. پول را `int` تومان نگه دار."
+     ],
+     "bestPractices": [
+      "پیش‌فرضت `final` باشد؛ فقط وقتی مقدار واقعاً عوض می‌شود سراغ `var` برو.",
+      "ثابت‌های واقعی مثل نرخ مالیات را `const` کن و یک جا تعریفشان کن، نه پخش در کد.",
+      "اسم گویا بگذار: `unitPrice` و `isStudent` به‌جای `p` و `flag`؛ برای bool از پیشوند `is` یا `has` استفاده کن."
+     ],
+     "relatedTerms": [
+      "variable",
+      "immutability"
+     ],
+     "tryIt": "برنامه‌ای بنویس که نام، سن و معدل یک دانشجو را نگه دارد (کدام `final` و کدام `var`؟). معدل را به ۱۶٫۵ تغییر بده و چاپ کن: `مریم - معدل: 16.5 - مشروط: false` (مشروط یعنی معدل زیر ۱۲)."
+    },
+    {
+     "title": "توابع",
+     "estimatedMinutes": 25,
+     "what": "تابع مثل دکمه‌ی «محاسبه‌ی کرایه» در اپ تاکسی اینترنتی است: مسافت و زمان را می‌دهی و مبلغ را پس می‌گیری. یک بار می‌نویسی و هر جا لازم شد صدایش می‌زنی.\n\nدر Dart تابع نوع خروجی، اسم و پارامتر دارد: `int add(int a, int b)`. پارامترها می‌توانند موقعیتی، اختیاری `[ ]` یا نام‌دار `{ }` باشند. تابع یک‌خطی را با `=>` کوتاه می‌نویسی.",
+     "why": "بدون تابع، فرمول مالیات را در ده جای برنامه کپی می‌کنی. روزی که نرخ عوض شود، یکی را جا می‌اندازی و فاکتورها اشتباه می‌شوند. تابع یعنی یک منبع حقیقت، کد کوتاه‌تر و تست ساده‌تر.",
+     "simpleExample": {
+      "language": "dart",
+      "code": "int addVat(int price) => price + price * 10 ~/ 100;\n\nString greet(String name, {bool formal = false}) {\n  return formal ? 'سلام جناب $name' : 'سلام $name!';\n}\n\nvoid main() {\n  print(addVat(200000)); // 220000\n  print(greet('رضا')); // سلام رضا!\n  print(greet('رضا', formal: true)); // سلام جناب رضا\n}",
+      "explanation": "`addVat` یک تابع یک‌خطی با `=>` است. `formal` پارامتر نام‌دار با مقدار پیش‌فرض است؛ اگر ندهی `false` حساب می‌شود و موقع صدا زدن اسمش را می‌نویسی: `formal: true`."
+     },
+     "realExample": {
+      "language": "dart",
+      "code": "int calculateFare({\n  required double distanceKm,\n  required int minutes,\n  bool isNight = false,\n}) {\n  const baseFare = 15000; // Toman\n  const perKm = 4500;\n  const perMinute = 700;\n\n  var fare = baseFare + (distanceKm * perKm).round() + minutes * perMinute;\n  if (isNight) fare = (fare * 1.2).round();\n  return roundUpToThousand(fare);\n}\n\nint roundUpToThousand(int amount) => (amount / 1000).ceil() * 1000;\n\nString formatToman(int amount) {\n  final digits = amount.toString();\n  final out = StringBuffer();\n  for (var i = 0; i < digits.length; i++) {\n    if (i > 0 && (digits.length - i) % 3 == 0) out.write(',');\n    out.write(digits[i]);\n  }\n  return '$out تومان';\n}\n\nvoid main() {\n  final fare = calculateFare(distanceKm: 8.4, minutes: 22, isNight: true);\n  print('کرایه: ${formatToman(fare)}');\n}",
+      "explanation": "پارامترهای نام‌دار با `required` فراخوانی را خوانا می‌کنند. هر تابع فقط یک کار دارد: محاسبه، گرد کردن یا قالب‌بندی. خروجی: `کرایه: 82,000 تومان`."
+     },
+     "mistakes": [
+      "تابعی که هم حساب می‌کند، هم چاپ می‌کند و هم فایل می‌نویسد؛ تست و استفاده‌ی دوباره‌اش سخت می‌شود.",
+      "پارامتر نام‌دار غیر nullable بدون `required` یا مقدار پیش‌فرض؛ analyzer خطا می‌دهد.",
+      "چند پارامتر موقعیتی هم‌نوع مثل `fare(8, 22, 1)`؛ جابه‌جا دادنشان را کسی نمی‌فهمد. نام‌دارشان کن."
+     ],
+     "bestPractices": [
+      "اسم تابع را با فعل شروع کن: `calculateFare`، `formatToman`، `isValidMobile`.",
+      "نوع خروجی و پارامترها را صریح بنویس؛ برای بدنه‌ی یک‌خطی از `=>` استفاده کن.",
+      "تابع خالص بنویس (بدون چاپ و بدون تغییر متغیر بیرونی) تا با یک `print` یا تست ساده بررسی‌اش کنی."
+     ],
+     "relatedTerms": [
+      "function",
+      "variable"
+     ],
+     "tryIt": "تابع `bool isValidMobile(String phone)` بنویس که فقط وقتی `true` بدهد که رشته ۱۱ رقم باشد و با `09` شروع شود. برای `'09121234567'` باید `true` و برای `'9121234567'` و `'0912abc4567'` باید `false` چاپ شود. (راهنما: `int.tryParse`)"
+    },
+    {
+     "title": "Collections: List، Map و Set",
+     "estimatedMinutes": 25,
+     "what": "سبد خرید یک فروشگاه اینترنتی را تصور کن: فهرست مرتب کالاها `List` است، جدول «کالا ← قیمت» `Map` است و مجموعه‌ی شهرهای دارای ارسال رایگان که تکراری ندارد `Set` است.\n\nهر سه generic هستند: `List<String>`، `Map<String, int>` و `Set<String>`. با `where`، `map` و `fold` بدون حلقه‌ی دستی فیلتر، تبدیل و جمع می‌زنی.",
+     "why": "داده‌ی واقعی تقریباً هیچ‌وقت یک مقدار تنها نیست: لیست سفارش‌ها، قیمت‌ها، مخاطبین. انتخاب اشتباه هزینه دارد؛ `contains` روی `List` باید همه‌ی عضوها را بگردد ولی `Set` و کلید `Map` تقریباً فوری جواب می‌دهند.",
+     "simpleExample": {
+      "language": "dart",
+      "code": "void main() {\n  final cart = <String>['نان', 'شیر', 'پنیر'];\n  final prices = <String, int>{'نان': 12000, 'شیر': 38000, 'پنیر': 95000};\n  final freeShippingCities = <String>{'تهران', 'کرج'};\n\n  cart.add('شیر');\n  freeShippingCities.add('تهران'); // already there, ignored\n\n  print(cart.length); // 4\n  print(prices['پنیر']); // 95000\n  print(prices['کره']); // null\n  print(freeShippingCities.length); // 2\n}",
+      "explanation": "`List` ترتیب و تکراری را نگه می‌دارد، پس «شیر» دو بار هست. `Set` عضو تکراری را نادیده می‌گیرد. خواندن کلید ناموجود از `Map` خطا نمی‌دهد و `null` برمی‌گرداند."
+     },
+     "realExample": {
+      "language": "dart",
+      "code": "class Expense {\n  final String category;\n  final int amount; // Toman\n  const Expense(this.category, this.amount);\n}\n\nvoid main() {\n  const expenses = [\n    Expense('خوراک', 1800000),\n    Expense('حمل‌ونقل', 450000),\n    Expense('خوراک', 950000),\n    Expense('قبض', 620000),\n    Expense('حمل‌ونقل', 300000),\n  ];\n\n  final total = expenses.fold<int>(0, (sum, e) => sum + e.amount);\n\n  final byCategory = <String, int>{};\n  for (final e in expenses) {\n    byCategory[e.category] = (byCategory[e.category] ?? 0) + e.amount;\n  }\n\n  final bigOnes =\n      expenses.where((e) => e.amount >= 900000).map((e) => e.category).toSet();\n\n  print('جمع ماه: $total');\n  byCategory.forEach((cat, sum) => print('$cat: $sum'));\n  print('هزینه‌های بزرگ: $bigOnes');\n}",
+      "explanation": "`fold` همه را جمع می‌زند (`4120000`)، `Map` هزینه‌ها را دسته‌بندی می‌کند و `where` و `toSet` دسته‌های پرخرج را بدون تکرار می‌دهد: `{خوراک}`. `?? 0` یعنی «اگر کلید نبود، صفر» (درس بعد)."
+     },
+     "mistakes": [
+      "خیال این‌که `prices['کره']` خطا می‌دهد؛ `null` برمی‌گرداند و اگر چکش نکنی، جای دیگری مشکل می‌سازد.",
+      "حذف عضو از لیست داخل `for-in` روی همان لیست؛ `ConcurrentModificationError` می‌گیری. از `removeWhere` استفاده کن.",
+      "فراموش کردن این‌که `where` و `map` یک `Iterable` تنبل می‌دهند؛ برای داشتن لیست، `toList()` لازم است."
+     ],
+     "bestPractices": [
+      "نوع را مشخص کن: `<String, int>{}` به‌جای `{}` خالی که `Map<dynamic, dynamic>` می‌شود.",
+      "برای «آیا وجود دارد؟» روی داده‌ی زیاد، `Set` یا کلید `Map` را به `List.contains` ترجیح بده.",
+      "از collection-if و spread استفاده کن: `[...base, if (isVip) 'ارسال رایگان']`."
+     ],
+     "relatedTerms": [
+      "collections",
+      "generics"
+     ],
+     "tryIt": "لیستی از ۵ نمره بساز: `[17, 12.5, 9, 19, 14]`. با `where` تعداد قبولی‌ها (۱۰ و بالاتر) و با `fold` میانگین را حساب کن و با `toStringAsFixed(1)` چاپ کن. خروجی مورد انتظار: `قبولی: 4 نفر، میانگین: 14.3`."
+    },
+    {
+     "title": "Null Safety",
+     "estimatedMinutes": 25,
+     "what": "فرم ثبت‌نام را در نظر بگیر: نام الزامی است ولی «کد معرف» اختیاری. در Dart این تفاوت در خود نوع دیده می‌شود: `String` هرگز `null` نیست، اما `String?` می‌تواند خالی (`null`) باشد.\n\nکامپایلر نمی‌گذارد روی `String?` بدون بررسی کار کنی. ابزارهایت: `if (x != null)`، عملگر `?.`، مقدار پیش‌فرض با `??` و `!` که یعنی «مطمئنم null نیست» و اگر باشد برنامه خطا می‌دهد.",
+     "why": "خطای null سال‌ها رایج‌ترین علت کرش اپ‌ها بود: کاربر فیلدی را خالی گذاشته و برنامه وسط پرداخت بسته می‌شود. Null Safety این خطا را از زمان اجرا به زمان نوشتن کد می‌آورد؛ یعنی قبل از این‌که به دست کاربر برسد.",
+     "simpleExample": {
+      "language": "dart",
+      "code": "String describe(String? code) {\n  if (code == null) return 'بدون کد معرف';\n  return 'کد $code (${code.length} حرف)'; // code is String here\n}\n\nvoid main() {\n  String name = 'علی';\n  final codes = {'سارا': 'SARA1405'};\n  String? referralCode = codes[name]; // no code for Ali: null\n\n  // name = null; // compile error\n  print(referralCode?.length); // null\n  print(referralCode ?? 'ندارد'); // ندارد\n  print(describe(referralCode)); // بدون کد معرف\n  print(describe('ALI1405')); // کد ALI1405 (7 حرف)\n  print(name.length); // 3\n}",
+      "explanation": "بعد از `if (code == null) return`، کامپایلر می‌داند `code` یک `String` است (type promotion) و `code.length` مجاز می‌شود. `?.` روی null خودش null می‌دهد و `??` مقدار جایگزین."
+     },
+     "realExample": {
+      "language": "dart",
+      "code": "class Profile {\n  final String fullName;\n  final String? email; // optional\n  final String? nationalCode; // optional\n  const Profile({required this.fullName, this.email, this.nationalCode});\n}\n\nbool isValidNationalCode(String code) {\n  if (!RegExp(r'^\\d{10}$').hasMatch(code)) return false;\n  final d = code.split('').map(int.parse).toList();\n  var sum = 0;\n  for (var i = 0; i < 9; i++) {\n    sum += d[i] * (10 - i);\n  }\n  final r = sum % 11;\n  return r < 2 ? d[9] == r : d[9] == 11 - r;\n}\n\nString summary(Profile p) {\n  final email = p.email?.trim() ?? 'ثبت نشده';\n  final code = p.nationalCode; // local copy so it can be promoted\n  final status = code == null\n      ? 'وارد نشده'\n      : (isValidNationalCode(code) ? 'معتبر' : 'نامعتبر');\n  return '${p.fullName} | ایمیل: $email | کد ملی: $status';\n}\n\nvoid main() {\n  print(summary(const Profile(fullName: 'مریم احمدی')));\n  print(summary(const Profile(fullName: 'رضا کریمی', nationalCode: '0012345679')));\n}",
+      "explanation": "فیلدهای اختیاری `String?` هستند و هر جا خوانده شوند، تکلیف null باید روشن شود. ایمیل با `?.` و `??` و کد ملی با چک `== null` که بعدش `code` خودبه‌خود `String` می‌شود. خروجی دوم: `کد ملی: معتبر`."
+     },
+     "mistakes": [
+      "پاشیدن `!` همه‌جا برای ساکت کردن کامپایلر؛ خطا را به زمان اجرا برمی‌گردانی: `Null check operator used on a null value`.",
+      "`String?` کردن همه‌ی فیلدها «برای احتیاط»؛ بعد همه‌جا مجبوری null را چک کنی. فقط چیز واقعاً اختیاری nullable باشد.",
+      "انتظار promotion روی فیلد public کلاس مثل `p.nationalCode`؛ کار نمی‌کند. اول در متغیر محلی بریز."
+     ],
+     "bestPractices": [
+      "به‌جای `!`، با `if (x == null) return ...;` زود خارج شو تا بقیه‌ی کد با نوع غیر nullable کار کند.",
+      "برای مقدار پیش‌فرض از `??` و برای «فقط اگر خالی است مقدار بده» از `??=` استفاده کن.",
+      "`late` را فقط وقتی بنویس که مطمئنی قبل از خواندن مقدار می‌گیرد؛ وگرنه `LateInitializationError` می‌گیری."
+     ],
+     "relatedTerms": [
+      "null-safety",
+      "variable"
+     ],
+     "tryIt": "تابع `String displayName(String? first, String? last)` بنویس: اگر هر دو باشند `'سارا رضایی'`، اگر فقط یکی باشد همان، و اگر هیچ‌کدام نباشد `'کاربر مهمان'` برگرداند. بدون `!` بنویس و هر چهار حالت را چاپ کن."
+    }
+   ]
+  },
+  {
+   "course": "dart-190",
+   "lessons": [
+    {
+     "title": "فاز ۱ — نیازمندی‌ها: «حساب‌کتاب» چه می‌کند؟",
+     "estimatedMinutes": 30,
+     "what": "قبل از هر خط کد باید بدانی دقیقاً چه می‌سازی. پروژه‌ی سال اول تو ابزار خط فرمانی به اسم «حساب‌کتاب» است: هزینه‌های روزانه را ثبت می‌کند، در فایل نگه می‌دارد و آخر ماه گزارش می‌دهد.\n\nدر این فاز فقط می‌نویسی: کاربر چه دستورهایی می‌زند، چه ورودی‌ای معتبر است و دقیقاً چه خروجی‌ای می‌بیند. تحویلی این فاز یک README است، نه کد.",
+     "why": "پروژه‌ای که نیازمندی روشن ندارد هیچ‌وقت تمام نمی‌شود؛ هر روز قابلیت تازه‌ای به ذهنت می‌رسد و هیچ‌کدام کامل نمی‌شود. فهرست روشن «چه چیزی داخل است و چه چیزی نیست» کمک می‌کند در دو هفته یک نسخه‌ی کامل و کارکردنی تحویل بدهی.",
+     "simpleExample": {
+      "language": "markdown",
+      "code": "# حساب‌کتاب\n\nابزار خط فرمان ثبت هزینه‌های شخصی.\n\n## دستورها\n- `add <amount> <category>` ثبت هزینه (مبلغ به تومان)\n- `list` نمایش همه‌ی هزینه‌ها\n- `report <yyyy-mm>` جمع هزینه‌ی یک ماه به تفکیک دسته\n\n## قواعد\n- مبلغ عدد صحیح مثبت است؛ ارقام فارسی هم پذیرفته می‌شود.\n- داده در فایل `expenses.json` کنار برنامه ذخیره می‌شود.\n\n## خارج از محدوده (نسخه‌ی ۱)\n- چند کاربر، رمز عبور، همگام‌سازی\n- تاریخ شمسی (برای نسخه‌ی ۲)",
+      "explanation": "README هم سند نیازمندی است و هم راهنمای کاربر. بخش «خارج از محدوده» به اندازه‌ی دستورها مهم است: جلوی بزرگ شدن بی‌پایان پروژه را می‌گیرد."
+     },
+     "realExample": {
+      "language": "text",
+      "code": "$ dart run bin/hesab.dart add 185000 خوراک\nثبت شد: 185,000 تومان (خوراک)\n\n$ dart run bin/hesab.dart add abc خوراک\nمبلغ نامعتبر است: abc\n\n$ dart run bin/hesab.dart list\n1. 2026-09-28  خوراک      185,000\n2. 2026-09-28  حمل‌ونقل    40,000\n\n$ dart run bin/hesab.dart report 2026-09\nخوراک: 185,000\nحمل‌ونقل: 40,000\nجمع: 225,000 تومان",
+      "explanation": "پیش از کد، خروجی دقیق هر دستور را بنویس، حتی پیام خطا. این متن بعداً مبنای تست‌هایت می‌شود: اگر برنامه دقیقاً همین را چاپ کرد، کارت درست است."
+     },
+     "mistakes": [
+      "شروع با کد و «بعداً می‌بینیم»؛ وسط کار می‌فهمی فرمت فایل و دستورها با هم نمی‌خوانند.",
+      "نیازمندی مبهم مثل «گزارش خوب بدهد»؛ بنویس کدام گزارش، با چه ورودی و چه خروجی.",
+      "ننوشتن حالت‌های خطا (مبلغ منفی، دستور ناقص، نبودن فایل)؛ بعداً همین‌ها برنامه را خراب می‌کنند."
+     ],
+     "bestPractices": [
+      "برای هر دستور یک نمونه‌ی دقیق ورودی و خروجی بنویس؛ همین‌ها بعداً تست‌های تو هستند.",
+      "نسخه‌ی ۱ را کوچک نگه دار: سه دستور کامل بهتر از ده دستور نیمه‌کاره است.",
+      "پروژه را از روز اول با `dart create -t console hesab` بساز و README را commit کن."
+     ],
+     "relatedTerms": [
+      "unit-test",
+      "function"
+     ],
+     "tryIt": "تحویلی فاز ۱: پروژه را با `dart create -t console hesab` بساز و `README.md` را با سه دستور `add`، `list` و `report`، قواعد اعتبارسنجی، دست‌کم ۲ پیام خطا با متن دقیق و بخش «خارج از محدوده» بنویس و commit کن."
+    },
+    {
+     "title": "فاز ۲ — طراحی: مدل داده و منطق گزارش",
+     "estimatedMinutes": 35,
+     "what": "حالا نقشه را می‌کشی. هر هزینه یک شیء `Expense` است با مبلغ، دسته و تاریخ. کل داده یک `List<Expense>` است که به JSON تبدیل و در فایل ذخیره می‌شود.\n\nکد را سه تکه کن: مدل در `lib/expense.dart`، منطق گزارش در `lib/report.dart` و ورودی/خروجی خط فرمان در `bin/hesab.dart`. هر تکه فقط کار خودش را می‌کند.",
+     "why": "اگر خواندن فایل، محاسبه‌ی گزارش و چاپ همه در `main` قاطی شوند، هر تغییر کوچک همه‌چیز را خراب می‌کند و تست نوشتن ممکن نیست. با جدا کردن مدل و منطق، می‌توانی بعداً فایل JSON را با دیتابیس عوض کنی بدون این‌که گزارش‌گیری دست بخورد.",
+     "simpleExample": {
+      "language": "dart",
+      "code": "class Expense {\n  final int amount; // Toman\n  final String category;\n  final DateTime date;\n\n  Expense(this.amount, this.category, this.date);\n\n  Map<String, dynamic> toJson() =>\n      {'amount': amount, 'category': category, 'date': date.toIso8601String()};\n\n  factory Expense.fromJson(Map<String, dynamic> j) => Expense(\n        j['amount'] as int,\n        j['category'] as String,\n        DateTime.parse(j['date'] as String),\n      );\n}",
+      "explanation": "`toJson` شیء را به `Map` تبدیل می‌کند تا `jsonEncode` بتواند ذخیره‌اش کند و `fromJson` کار برعکس را. تاریخ به رشته‌ی ISO مثل `2026-09-28T00:00:00.000` تبدیل می‌شود چون JSON نوع تاریخ ندارد."
+     },
+     "realExample": {
+      "language": "dart",
+      "code": "class Expense {\n  final int amount;\n  final String category;\n  final DateTime date;\n  Expense(this.amount, this.category, this.date);\n}\n\n// Pure logic: no file, no print. Easy to test.\nMap<String, int> totalsByCategory(List<Expense> all, int year, int month) {\n  final totals = <String, int>{};\n  for (final e in all) {\n    if (e.date.year != year || e.date.month != month) continue;\n    totals[e.category] = (totals[e.category] ?? 0) + e.amount;\n  }\n  return totals;\n}\n\nvoid main() {\n  final data = [\n    Expense(185000, 'خوراک', DateTime(2026, 9, 3)),\n    Expense(40000, 'حمل‌ونقل', DateTime(2026, 9, 5)),\n    Expense(320000, 'خوراک', DateTime(2026, 9, 20)),\n    Expense(900000, 'قبض', DateTime(2026, 8, 30)),\n  ];\n  print(totalsByCategory(data, 2026, 9));\n}",
+      "explanation": "منطق گزارش نه فایل می‌خواند نه چاپ می‌کند؛ فقط داده می‌گیرد و نتیجه می‌دهد، پس بدون فایل قابل تست است. قبض ماه ۸ حساب نمی‌شود و خروجی `{خوراک: 505000, حمل‌ونقل: 40000}` است."
+     },
+     "mistakes": [
+      "نگه داشتن مبلغ به‌صورت `String` مثل `'185,000'`؛ جمع زدن و مرتب کردن را ناممکن می‌کند. `int` تومان نگه دار.",
+      "ذخیره‌ی تاریخ با قالب دلخواه مثل `'7/3'`؛ بعداً قابل مرتب‌سازی و parse نیست. از `toIso8601String()` استفاده کن.",
+      "صدا زدن `print` یا خواندن فایل داخل تابع گزارش؛ دیگر نمی‌شود آن را جدا تست کرد."
+     ],
+     "bestPractices": [
+      "ساختار را از اول جدا کن: `lib/` برای مدل و منطق، `bin/hesab.dart` فقط برای ورودی و خروجی.",
+      "قبل از نوشتن کد فایل، منطق را با داده‌ی ساختگی در `main` امتحان کن.",
+      "فیلدهای مدل را `final` کن؛ ویرایش هزینه یعنی ساختن شیء تازه، نه دستکاری شیء قدیمی."
+     ],
+     "relatedTerms": [
+      "json-serialization",
+      "collections",
+      "function"
+     ],
+     "tryIt": "تحویلی فاز ۲: `lib/expense.dart` (کلاس `Expense` با `toJson` و `fromJson`) و `lib/report.dart` (تابع `totalsByCategory`). با ۴ هزینه‌ی ساختگی امتحانش کن تا خروجی `{خوراک: 505000, حمل‌ونقل: 40000}` بگیری و commit کن."
+    },
+    {
+     "title": "فاز ۳ — پیاده‌سازی: ورودی کاربر و ذخیره در فایل",
+     "estimatedMinutes": 45,
+     "what": "وقت ساختن است. برنامه‌ی خط فرمان ورودی را از `args` در `main(List<String> args)` می‌گیرد: `dart run bin/hesab.dart add 185000 خوراک` یعنی `args` برابر `['add', '185000', 'خوراک']`.\n\nبرای ذخیره از `dart:io` استفاده می‌کنی: `readAsStringSync` برای خواندن و `writeAsStringSync` برای نوشتن فایل. `dart:convert` هم با `jsonEncode` و `jsonDecode` لیست را به متن و برعکس تبدیل می‌کند.",
+     "why": "ورودی کاربر همیشه آن چیزی نیست که انتظار داری: «۱۸۵۰۰۰» با ارقام فارسی، کلمه‌ی «abc» یا دستور ناقص. اگر اعتبارسنجی نکنی، برنامه با `FormatException` می‌ترکد یا بدتر، داده‌ی خراب در فایل می‌نویسد و گزارش‌های بعدی هم خراب می‌شوند.",
+     "simpleExample": {
+      "language": "dart",
+      "code": "int? parseAmount(String input) {\n  const fa = '۰۱۲۳۴۵۶۷۸۹';\n  var normalized = input.trim().replaceAll(',', '');\n  for (var i = 0; i < 10; i++) {\n    normalized = normalized.replaceAll(fa[i], '$i');\n  }\n  final value = int.tryParse(normalized);\n  return (value != null && value > 0) ? value : null;\n}\n\nvoid main() {\n  print(parseAmount('185000')); // 185000\n  print(parseAmount('۱۸۵۰۰۰')); // 185000\n  print(parseAmount('185,000')); // 185000\n  print(parseAmount('-5')); // null\n  print(parseAmount('abc')); // null\n}",
+      "explanation": "`int.tryParse` برخلاف `int.parse` به‌جای پرتاب خطا `null` می‌دهد. قبلش ارقام فارسی و ویرگول را یکسان می‌کنیم چون کاربر ایرانی ممکن است با کیبورد فارسی تایپ کند."
+     },
+     "realExample": {
+      "language": "dart",
+      "code": "import 'dart:convert';\nimport 'dart:io';\n\nfinal dataFile = File('expenses.json');\n\nList<dynamic> load() => dataFile.existsSync()\n    ? jsonDecode(dataFile.readAsStringSync()) as List<dynamic>\n    : [];\n\nvoid main(List<String> args) {\n  final items = load();\n  switch (args) {\n    case ['add', final amountText, final category]:\n      final amount = int.tryParse(amountText);\n      if (amount == null || amount <= 0) {\n        stderr.writeln('مبلغ نامعتبر است: $amountText');\n        exit(1);\n      }\n      final date = DateTime.now().toIso8601String();\n      items.add({'amount': amount, 'category': category, 'date': date});\n      dataFile.writeAsStringSync(jsonEncode(items));\n      print('ثبت شد: $amount تومان ($category)');\n    case ['list']:\n      for (final (i, e) in items.indexed) {\n        print('${i + 1}. ${e['category']}: ${e['amount']}');\n      }\n    default:\n      stderr.writeln('usage: hesab add <amount> <category> | list');\n      exit(64);\n  }\n}",
+      "explanation": "`switch` روی `args` با الگوی لیست هم دستور را تشخیص می‌دهد و هم مقدارها را در متغیر می‌ریزد. خطا به `stderr` می‌رود و کد خروج غیر صفر می‌شود. در نسخه‌ی نهایی `int.tryParse` را با `parseAmount` عوض کن."
+     },
+     "mistakes": [
+      "`int.parse` روی ورودی کاربر؛ با «abc» برنامه با `FormatException` می‌ترکد. `int.tryParse` و پیام خطای روشن بهتر است.",
+      "خواندن `args[1]` بدون چک طول؛ با دستور ناقص `RangeError` می‌گیری. الگوی لیست در `switch` این را خودش چک می‌کند.",
+      "چاپ پیام خطا با `print` و خروج با کد `0`؛ اسکریپت‌های دیگر نمی‌فهمند کار شکست خورده است."
+     ],
+     "bestPractices": [
+      "پیام خطا را با `stderr.writeln` بنویس و با `exit` یا `exitCode` کد غیر صفر برگردان.",
+      "ارقام فارسی و ویرگول را قبل از parse یکسان کن؛ کاربر ایرانی `۱۸۵۰۰۰` هم تایپ می‌کند.",
+      "بعد از هر `add` فایل `expenses.json` را باز کن و ببین داده درست ذخیره شده است."
+     ],
+     "relatedTerms": [
+      "json-serialization",
+      "null-safety",
+      "collections"
+     ],
+     "tryIt": "تحویلی فاز ۳: `add` و `list` کار کنند. اجرا کن: `add 185000 خوراک`، `add ۴۰۰۰۰ حمل‌ونقل` و `add abc خوراک`. باید دو هزینه در `expenses.json` ذخیره شود و سومی «مبلغ نامعتبر است» بدهد و `echo $?` عدد `1` چاپ کند."
+    },
+    {
+     "title": "فاز ۴ — تحویل: گزارش، تست و README نهایی",
+     "estimatedMinutes": 45,
+     "what": "فاز آخر: دستور `report` و تحویل. گزارش باید خوانا باشد: مبلغ‌ها با جداکننده‌ی هزارگان (`1,250,000`)، دسته‌ها از بیشترین به کمترین و جمع کل در انتها.\n\nتحویل یعنی هر کس مخزن را clone کند، فقط با README بتواند برنامه را اجرا کند. چند Unit Test هم برای `parseAmount` و قالب‌بندی مبلغ می‌نویسی تا تغییرهای بعدی چیزی را بی‌صدا خراب نکنند.",
+     "why": "پروژه‌ای که فقط روی لپ‌تاپ خودت کار می‌کند، تحویل نشده است. داور README را می‌خواند، دستور را اجرا می‌کند و اگر خروجی با توضیح نخواند، کار را ناتمام می‌داند. تست‌ها هم نشان می‌دهند به کیفیت کارت اهمیت می‌دهی.",
+     "simpleExample": {
+      "language": "dart",
+      "code": "String formatToman(int amount) {\n  final digits = amount.toString();\n  final out = StringBuffer();\n  for (var i = 0; i < digits.length; i++) {\n    if (i > 0 && (digits.length - i) % 3 == 0) out.write(',');\n    out.write(digits[i]);\n  }\n  return out.toString();\n}\n\nvoid main() {\n  final totals = {'حمل‌ونقل': 40000, 'خوراک': 505000, 'قبض': 1250000};\n  final sorted = totals.entries.toList()\n    ..sort((a, b) => b.value.compareTo(a.value));\n  for (final e in sorted) print('${e.key}: ${formatToman(e.value)}');\n  final sum = totals.values.fold(0, (a, b) => a + b);\n  print('جمع: ${formatToman(sum)} تومان');\n}",
+      "explanation": "`entries` جفت‌های کلید و مقدار را می‌دهد و `sort` نزولی مرتبشان می‌کند. خروجی: `قبض: 1,250,000`، `خوراک: 505,000`، `حمل‌ونقل: 40,000` و در آخر `جمع: 1,795,000 تومان`."
+     },
+     "realExample": {
+      "language": "dart",
+      "code": "import 'package:test/test.dart';\n\n// In the project: import 'package:hesab/parse.dart';\nint? parseAmount(String input) {\n  const fa = '۰۱۲۳۴۵۶۷۸۹';\n  var s = input.trim().replaceAll(',', '');\n  for (var i = 0; i < 10; i++) {\n    s = s.replaceAll(fa[i], '$i');\n  }\n  final v = int.tryParse(s);\n  return (v != null && v > 0) ? v : null;\n}\n\nString formatToman(int amount) => amount\n    .toString()\n    .replaceAllMapped(RegExp(r'\\B(?=(\\d{3})+(?!\\d))'), (_) => ',');\n\nvoid main() {\n  group('parseAmount', () {\n    test('accepts Persian digits', () => expect(parseAmount('۴۰۰۰۰'), 40000));\n    test('rejects text, zero and negatives', () {\n      expect(parseAmount('abc'), isNull);\n      expect(parseAmount('0'), isNull);\n      expect(parseAmount('-5'), isNull);\n    });\n  });\n  test('formatToman adds thousands separators', () {\n    expect(formatToman(1250000), '1,250,000');\n    expect(formatToman(999), '999');\n  });\n}",
+      "explanation": "تست‌ها در `test/hesab_test.dart` می‌نشینند و با `dart test` اجرا می‌شوند. هر تست رفتاری را که در README قول دادی چک می‌کند؛ اگر روزی `parseAmount` خراب شود، تست قرمز می‌شود."
+     },
+     "mistakes": [
+      "README بدون دستور اجرا یا با خروجی متفاوت از برنامه‌ی واقعی؛ داور همان قدم اول گیر می‌کند.",
+      "commit کردن `expenses.json` شخصی خودت در مخزن؛ آن را به `.gitignore` اضافه کن.",
+      "تست نوشتن فقط برای ورودی درست؛ ورودی خالی، صفر، منفی و ارقام فارسی را هم تست کن."
+     ],
+     "bestPractices": [
+      "قبل از تحویل، مخزن را در پوشه‌ای تازه clone کن و فقط با README اجرایش کن.",
+      "`dart format .` و `dart analyze` را اجرا کن تا هیچ هشداری نماند.",
+      "در README یک نمونه‌ی واقعی خروجی `report` بگذار تا خواننده بداند چه انتظاری داشته باشد."
+     ],
+     "relatedTerms": [
+      "unit-test",
+      "collections",
+      "debugging"
+     ],
+     "tryIt": "تحویلی نهایی: `report 2026-09` دسته‌ها را از بیشترین مبلغ مرتب و جمع کل را با جداکننده چاپ کند، `dart test` دست‌کم ۴ تست سبز داشته باشد و README به‌روز باشد. مخزن را push کن و لینکش را تحویل بده."
+    }
+   ]
+  },
+  {
+   "course": "dart-201",
+   "lessons": [
+    {
+     "title": "کلاس و سازنده",
+     "estimatedMinutes": 30,
+     "what": "کلاس قالب کیک است و شیء کیکی که با آن می‌پزی. کلاس `BankAccount` می‌گوید هر حساب صاحب و موجودی دارد؛ حساب علی و حساب سارا دو شیء از همین کلاس‌اند.\n\nسازنده (constructor) شیء را می‌سازد. Dart چند شکل دارد: سازنده‌ی معمولی با `this.field`، سازنده‌ی نام‌دار مثل `BankAccount.empty()`، سازنده‌ی `const` برای شیء ثابت و `factory` که می‌تواند شیء را از JSON یا کش بسازد.",
+     "why": "بدون کلاس، اطلاعات یک حساب در چند متغیر پراکنده است و هر کسی می‌تواند موجودی را مستقیم منفی کند. کلاس داده و قواعدش را کنار هم نگه می‌دارد: موجودی فقط از راه `deposit` و `withdraw` عوض می‌شود و قاعده‌ی «برداشت بیش از موجودی ممنوع» همیشه رعایت می‌شود.",
+     "simpleExample": {
+      "language": "dart",
+      "code": "class BankAccount {\n  final String owner;\n  int _balance; // private to this file (library)\n\n  BankAccount(this.owner, [this._balance = 0]);\n  BankAccount.empty(String owner) : this(owner);\n  int get balance => _balance;\n\n  void deposit(int amount) {\n    if (amount <= 0) throw ArgumentError('amount must be positive');\n    _balance += amount;\n  }\n}\n\nvoid main() {\n  final acc = BankAccount.empty('سارا')..deposit(500000);\n  print('${acc.owner}: ${acc.balance}'); // سارا: 500000\n}",
+      "explanation": "`_balance` با زیرخط خصوصی است و بیرون فقط از راه getter خوانده می‌شود. سازنده‌ی نام‌دار `empty` با `: this(owner)` سازنده‌ی اصلی را صدا می‌زند و `..` روی همان شیء `deposit` را اجرا می‌کند."
+     },
+     "realExample": {
+      "language": "dart",
+      "code": "class Product {\n  final String title;\n  final int price; // Toman\n  final int discountPercent;\n\n  const Product({required this.title, required this.price, this.discountPercent = 0})\n      : assert(discountPercent >= 0 && discountPercent <= 100);\n\n  factory Product.fromJson(Map<String, dynamic> json) => Product(\n        title: json['title'] as String,\n        price: json['price'] as int,\n        discountPercent: json['discount'] as int? ?? 0,\n      );\n\n  int get finalPrice => price - price * discountPercent ~/ 100;\n\n  Product copyWith({int? price, int? discountPercent}) => Product(\n        title: title,\n        price: price ?? this.price,\n        discountPercent: discountPercent ?? this.discountPercent,\n      );\n\n  @override\n  String toString() => '$title: $finalPrice تومان';\n}\n\nvoid main() {\n  final p = Product.fromJson({'title': 'کتاب Dart', 'price': 240000, 'discount': 15});\n  print(p); // کتاب Dart: 204000 تومان\n  print(p.copyWith(discountPercent: 30)); // کتاب Dart: 168000 تومان\n}",
+      "explanation": "`assert` در سازنده قاعده‌ی تخفیف را در حالت debug چک می‌کند. `factory` از JSON سرور شیء می‌سازد و `copyWith` به‌جای تغییر شیء، نسخه‌ی تازه با تخفیف جدید برمی‌گرداند."
+     },
+     "mistakes": [
+      "فیلد public قابل تغییر مثل `int balance;`؛ هر جای کد می‌تواند منفی‌اش کند. خصوصی‌اش کن و از متد عبور بده.",
+      "خیال این‌که `_` یعنی خصوصی برای کلاس؛ در Dart خصوصی برای کل فایل (library) است، نه فقط کلاس.",
+      "override کردن `==` بدون `hashCode`؛ شیء‌ها در `Set` و کلید `Map` رفتار عجیبی پیدا می‌کنند."
+     ],
+     "bestPractices": [
+      "فیلدها را `final` و سازنده را `const` کن مگر دلیل داری؛ برای تغییر، `copyWith` بنویس.",
+      "برای ساختن از JSON یا حالت خاص، سازنده‌ی نام‌دار یا `factory` بساز، نه تابع سراسری.",
+      "`toString` را override کن تا `print` و دیباگ خوانا شوند."
+     ],
+     "relatedTerms": [
+      "oop",
+      "immutability"
+     ],
+     "tryIt": "به `BankAccount` متد `withdraw` اضافه کن که اگر مبلغ بیش از موجودی بود `StateError` پرتاب کند. حساب رضا را با ۱ میلیون تومان بساز، ۳۰۰ هزار برداشت کن (`موجودی: 700000`) و برداشت ۲ میلیون را با `try/catch` بگیر و «موجودی کافی نیست» چاپ کن."
+    },
+    {
+     "title": "وراثت، کلاس انتزاعی و interface",
+     "estimatedMinutes": 30,
+     "what": "در اپ فروشگاه، کارت بانکی، کیف پول و پرداخت در محل همه «روش پرداخت»‌اند ولی هر کدام به شکل خودش پول را می‌گیرد. کلاس انتزاعی `PaymentMethod` قرارداد را می‌گوید: «هر روش پرداخت یک `pay` دارد».\n\nبا `extends` از کلاس دیگر ارث می‌بری و کدش را دوباره استفاده می‌کنی. با `implements` فقط قول می‌دهی همان عضوها را داری و همه را خودت می‌نویسی. در Dart هر کلاس خودبه‌خود یک interface ضمنی هم هست.",
+     "why": "بدون این قرارداد، صفحه‌ی پرداخت پر از `if (type == 'card') ... else if` می‌شود و افزودن روش جدید یعنی دست بردن در همه‌جا. با کلاس انتزاعی، روش جدید فقط یک کلاس تازه است و صفحه‌ی پرداخت دست نمی‌خورد.",
+     "simpleExample": {
+      "language": "dart",
+      "code": "abstract class PaymentMethod {\n  bool pay(int amount); // no body: subclasses must implement\n}\nclass Wallet extends PaymentMethod {\n  int balance;\n  Wallet(this.balance);\n  @override\n  bool pay(int amount) {\n    if (amount > balance) return false;\n    balance -= amount;\n    return true;\n  }\n}\n\nvoid main() {\n  final PaymentMethod m = Wallet(150000);\n  print('${m.pay(120000)} ${m.pay(50000)}'); // true false\n}",
+      "explanation": "از `PaymentMethod` مستقیم نمی‌شود شیء ساخت چون انتزاعی است و `Wallet` باید `pay` را پیاده کند. پرداخت اول موجودی را به ۳۰ هزار می‌رساند، پس دومی `false` است."
+     },
+     "realExample": {
+      "language": "dart",
+      "code": "abstract class PaymentMethod {\n  String get title;\n  bool pay(int amount);\n  String receipt(int amount) => '$title: $amount تومان'; // shared\n}\n\nclass BankCard extends PaymentMethod {\n  final String cardNumber;\n  BankCard(this.cardNumber);\n  @override\n  String get title => 'کارت **** ${cardNumber.substring(12)}';\n  @override\n  bool pay(int amount) => amount <= 50000000; // daily limit\n}\n\nclass CashOnDelivery implements PaymentMethod {\n  @override\n  String get title => 'پرداخت در محل';\n  @override\n  bool pay(int amount) => amount <= 5000000;\n  @override\n  String receipt(int amount) => '$title (نقدی): $amount تومان';\n}\n\nvoid checkout(PaymentMethod method, int amount) =>\n    print(method.pay(amount) ? method.receipt(amount) : '${method.title}: ناموفق');\n\nvoid main() {\n  checkout(BankCard('1234567812345678'), 1850000); // کارت **** 5678: 1850000 تومان\n  checkout(CashOnDelivery(), 7200000); // پرداخت در محل: ناموفق\n}",
+      "explanation": "`BankCard` با `extends` متد `receipt` را به ارث می‌برد. `CashOnDelivery` با `implements` فقط قرارداد را قبول کرده، پس حتی `receipt` را هم باید خودش بنویسد. `checkout` فقط `PaymentMethod` را می‌شناسد."
+     },
+     "mistakes": [
+      "وراثت فقط برای استفاده‌ی دوباره از کد، مثل `class Order extends User`؛ فقط وقتی رابطه‌ی «هست یک» برقرار است ارث ببر.",
+      "ننوشتن `@override`؛ اگر اسم متد را اشتباه بنویسی (`pai`)، به‌جای بازنویسی یک متد تازه ساخته‌ای و کسی خبردار نمی‌شود.",
+      "انتظار ارث بردن کد با `implements`؛ هیچ پیاده‌سازی‌ای نمی‌آید و باید همه‌ی عضوها را خودت بنویسی."
+     ],
+     "bestPractices": [
+      "کد را به نوع انتزاعی (`PaymentMethod`) وابسته کن نه کلاس مشخص (`BankCard`)؛ تست و تعویض ساده می‌شود.",
+      "زنجیره‌ی وراثت را کوتاه نگه دار (یک یا دو سطح)؛ برای رفتار مشترک بین کلاس‌های بی‌ربط سراغ mixin برو.",
+      "برای مجموعه‌ی بسته‌ی زیرکلاس‌ها `sealed class` بنویس تا `switch` کامل بودن حالت‌ها را چک کند."
+     ],
+     "relatedTerms": [
+      "oop",
+      "solid"
+     ],
+     "tryIt": "روش `InstallmentPlan` (اقساطی) بساز که `extends PaymentMethod` باشد و مبلغ را به ۴ قسط تقسیم کند. `receipt` را override کن تا برای ۲٬۴۰۰٬۰۰۰ تومان چاپ کند: `اقساط: 4 قسط 600000 تومانی`. آن را به `checkout` بده."
+    },
+    {
+     "title": "Mixin",
+     "estimatedMinutes": 25,
+     "what": "بعضی رفتارها مال یک خانواده‌ی خاص نیستند: «ثبت لاگ» یا «اعتبارسنجی» هم به سفارش می‌خورد، هم به کاربر، هم به فرم آدرس. mixin تکه‌ای از رفتار است که با `with` به هر کلاسی اضافه می‌کنی.\n\nهر کلاس فقط از یک کلاس `extends` می‌کند ولی می‌تواند چند mixin بگیرد: `class Order with Loggable, Validatable`. با `mixin X on Base` هم می‌گویی این mixin فقط روی زیرکلاس‌های `Base` قابل استفاده است.",
+     "why": "بدون mixin یا متد لاگ را در ده کلاس کپی می‌کنی، یا یک کلاس پدر غول‌آسا می‌سازی که همه از آن ارث ببرند، حتی اگر نصف متدهایش به کارشان نیاید. mixin رفتار را تکه‌تکه و قابل ترکیب می‌کند.",
+     "simpleExample": {
+      "language": "dart",
+      "code": "mixin Loggable {\n  final List<String> logs = [];\n  void log(String message) => logs.add('[$runtimeType] $message');\n}\n\nclass Order with Loggable {\n  void submit() => log('سفارش ثبت شد');\n}\nclass User with Loggable {\n  void login() => log('ورود موفق');\n}\n\nvoid main() {\n  final order = Order()..submit();\n  final user = User()..login();\n  print(order.logs); // [[Order] سفارش ثبت شد]\n  print(user.logs); // [[User] ورود موفق]\n}",
+      "explanation": "`Order` و `User` هیچ پدر مشترکی ندارند ولی هر دو با `with Loggable` صاحب فیلد `logs` و متد `log` شده‌اند. هر شیء لیست لاگ مخصوص خودش را دارد."
+     },
+     "realExample": {
+      "language": "dart",
+      "code": "abstract class FormModel {\n  Map<String, String> get fields;\n}\n\nmixin IranianValidators {\n  bool isValidMobile(String v) => RegExp(r'^09\\d{9}$').hasMatch(v);\n  bool isValidPostalCode(String v) => RegExp(r'^\\d{10}$').hasMatch(v);\n}\nmixin FormValidation on FormModel { // needs `fields`\n  final errors = <String>[];\n  void checkRequired() => fields.forEach((name, value) {\n        if (value.trim().isEmpty) errors.add('$name الزامی است');\n      });\n  void check(bool ok, String message) {\n    if (!ok) errors.add(message);\n  }\n}\n\nclass AddressForm extends FormModel with IranianValidators, FormValidation {\n  AddressForm(this.mobile, this.postalCode);\n  final String mobile, postalCode;\n  @override\n  Map<String, String> get fields => {'موبایل': mobile, 'کد پستی': postalCode};\n\n  bool validate() {\n    errors.clear();\n    checkRequired();\n    check(isValidMobile(mobile), 'موبایل باید ۱۱ رقم و با ۰۹ شروع شود');\n    check(isValidPostalCode(postalCode), 'کد پستی باید ۱۰ رقم باشد');\n    return errors.isEmpty;\n  }\n}",
+      "explanation": "`IranianValidators` به هیچ کلاسی وابسته نیست، ولی `FormValidation` به `fields` نیاز دارد و با `on FormModel` محدود شده است. برای `AddressForm('0912345678', '')` سه خطا جمع می‌شود."
+     },
+     "mistakes": [
+      "ساختن mixin برای چیزی که واقعاً «هست یک» است؛ اگر `Wallet` یک `PaymentMethod` است، `extends` درست است.",
+      "دو mixin با متد هم‌نام؛ آخرین mixin در فهرست `with` برنده است، پس ترتیب را آگاهانه بچین.",
+      "نوشتن سازنده در mixin؛ mixin سازنده ندارد و analyzer خطا می‌دهد. به فیلدها مقدار اولیه بده."
+     ],
+     "bestPractices": [
+      "هر mixin یک توانایی کوچک و مشخص باشد و اسمش صفت باشد: `Loggable`، `Validatable`.",
+      "وقتی mixin به عضوی از کلاس میزبان نیاز دارد، با `on` محدودش کن تا روی کلاس اشتباه ننشیند.",
+      "state زیاد داخل mixin نگذار؛ رفتار در mixin، داده در خود کلاس."
+     ],
+     "relatedTerms": [
+      "mixin",
+      "oop"
+     ],
+     "tryIt": "mixin `Discountable` با متد `int applyDiscount(int price, int percent)` بساز و به کلاس‌های `Book` و `Course` اضافه کن. برای کتاب ۲۰۰ هزار تومانی با ۲۵٪ تخفیف باید `150000` و برای دوره‌ی ۱ میلیونی با ۱۰٪ تخفیف `900000` چاپ شود."
+    },
+    {
+     "title": "Generics",
+     "estimatedMinutes": 30,
+     "what": "یک جعبه‌ی «فقط کتاب» را تصور کن: هرچیز غیر کتاب را قبول نمی‌کند و وقتی چیزی برمی‌داری مطمئنی کتاب است. Generics همین کار را با نوع‌ها می‌کند: `List<Book>` فقط کتاب نگه می‌دارد.\n\nخودت هم می‌توانی کلاس و تابع generic بسازی: `class Box<T>` یا `T maxOf<T>(...)`. با `T extends Comparable` نوع را محدود می‌کنی تا فقط نوع‌های قابل مقایسه پذیرفته شوند.",
+     "why": "بدون Generics یا برای هر نوع یک کلاس جدا می‌نویسی (`UserCache`، `ProductCache`…) یا از `dynamic` استفاده می‌کنی و ایمنی نوع از دست می‌رود؛ خطاهایی که کامپایلر باید بگیرد، در زمان اجرا دست کاربر می‌رسد.",
+     "simpleExample": {
+      "language": "dart",
+      "code": "class Box<T> {\n  final T value;\n  Box(this.value);\n  Box<R> map<R>(R Function(T) f) => Box(f(value));\n}\n\nT maxOf<T extends Comparable<Object>>(List<T> items) =>\n    items.reduce((a, b) => a.compareTo(b) >= 0 ? a : b);\n\nvoid main() {\n  final price = Box(185000); // Box<int>\n  final label = price.map((p) => '$p تومان'); // Box<String>\n  print(label.value); // 185000 تومان\n  print(maxOf([17.5, 19.25, 12.0])); // 19.25\n  print(maxOf(['2026-01-05', '2026-03-01'])); // 2026-03-01\n}",
+      "explanation": "`map` روی `Box<int>` یک `Box<String>` می‌سازد و نوع‌ها را خود Dart استنباط می‌کند. `maxOf` با هر نوع قابل مقایسه کار می‌کند؛ رشته‌ی تاریخ ISO هم درست مقایسه می‌شود."
+     },
+     "realExample": {
+      "language": "dart",
+      "code": "sealed class Result<T> {\n  const Result();\n}\n\nclass Success<T> extends Result<T> {\n  final T data;\n  const Success(this.data);\n}\n\nclass Failure<T> extends Result<T> {\n  final String message;\n  const Failure(this.message);\n}\n\nResult<int> parsePrice(String input) {\n  final v = int.tryParse(input);\n  return v == null ? Failure('قیمت نامعتبر: $input') : Success(v);\n}\n\nvoid main() {\n  for (final input in ['250000', 'abc']) {\n    final text = switch (parsePrice(input)) {\n      Success(:final data) => 'قیمت: $data تومان',\n      Failure(:final message) => 'خطا: $message',\n    };\n    print(text);\n  }\n}",
+      "explanation": "`Result<T>` برای هر نوع داده (قیمت، کاربر، لیست سفارش) یک شکل پاسخ «موفق یا خطا» می‌دهد. چون `sealed` است، `switch` مجبور است هر دو حالت را پوشش دهد. خروجی: `قیمت: 250000 تومان` و `خطا: قیمت نامعتبر: abc`."
+     },
+     "mistakes": [
+      "استفاده از `dynamic` یا `List` بی‌نوع؛ `item.titel` با غلط املایی کامپایل می‌شود و در زمان اجرا می‌ترکد.",
+      "قید `T extends Comparable<T>` برای `List<int>`؛ `T` به `num` استنباط می‌شود و `reduce` در اجرا خطای نوع می‌دهد؛ `Comparable<Object>` بنویس.",
+      "generic کردن کلاسی که فقط با یک نوع کار می‌کند؛ پیچیدگی بی‌دلیل است. اول مشخص بنویس، بعد عمومی کن."
+     ],
+     "bestPractices": [
+      "اسم پارامتر نوع را قراردادی بگذار: `T` برای نوع کلی، `E` برای عضو، `K` و `V` برای کلید و مقدار.",
+      "برای پاسخ «موفق یا خطا» یک `Result<T>` بساز تا همه‌ی Repositoryها یک شکل جواب بدهند.",
+      "لیست خالی را با نوع بساز: `<Product>[]`؛ `[]` بی‌نوع `List<dynamic>` می‌شود."
+     ],
+     "relatedTerms": [
+      "generics",
+      "collections"
+     ],
+     "tryIt": "کلاس `Paginated<T>` با `List<T> items`، `int page` و متد `Paginated<R> map<R>(R Function(T) f)` بساز. صفحه‌ای از قیمت‌ها `[120000, 85000]` بساز و با `map` به رشته تبدیلشان کن. خروجی `items`: `[120000 تومان, 85000 تومان]`."
+    }
+   ]
+  },
+  {
+   "course": "dart-301",
+   "lessons": [
+    {
+     "title": "Event Loop: یک آشپز، دو صف",
+     "estimatedMinutes": 30,
+     "what": "آشپزخانه‌ی رستورانی با یک آشپز را تصور کن. آشپز منتظر جوش آمدن آب نمی‌ماند؛ کار بعدی را برمی‌دارد و وقتی آب جوش آمد برمی‌گردد. Dart هم روی یک رشته اجرا می‌شود و Event Loop همین آشپز است.\n\nدو صف دارد: صف microtask (کارهای فوری مثل ادامه‌ی یک Future تمام‌شده) و صف event (تایمر، I/O، لمس کاربر). اول کد همگام فعلی تمام می‌شود، بعد کل صف microtask خالی می‌شود و فقط بعد از آن یک event اجرا می‌شود.",
+     "why": "اگر ترتیب اجرا را نفهمی، باگ‌های عجیب می‌بینی: مقداری که «باید» ست شده باشد هنوز خالی است، یا حلقه‌ای سنگین که دو ثانیه همه‌چیز را قفل می‌کند چون Event Loop نمی‌تواند به کار بعدی برسد. در Flutter همین یعنی فریم از دست رفته و صفحه‌ی لرزان.",
+     "simpleExample": {
+      "language": "dart",
+      "code": "import 'dart:async';\n\nvoid main() {\n  print('1 sync start');\n  Future(() => print('5 event: Future()'));\n  Timer.run(() => print('6 event: Timer.run'));\n  scheduleMicrotask(() => print('3 microtask'));\n  Future.value(0).then((_) => print('4 microtask: then'));\n  print('2 sync end');\n}",
+      "explanation": "کد همگام همیشه اول تمام می‌شود (۱ و ۲). بعد کل صف microtask خالی می‌شود (۳ و ۴) و فقط پس از آن eventها به ترتیب ورود اجرا می‌شوند (۵ و ۶). `Future(...)` یعنی «در صف event بگذار»."
+     },
+     "realExample": {
+      "language": "dart",
+      "code": "import 'dart:async';\n\nint slowSum(int n) {\n  var s = 0;\n  for (var i = 0; i < n; i++) {\n    s += i % 7;\n  }\n  return s;\n}\n\nFuture<void> main() async {\n  final sw = Stopwatch()..start();\n  Timer(const Duration(milliseconds: 100), () {\n    print('timer fired at ${sw.elapsedMilliseconds} ms (wanted 100)');\n  });\n\n  // `async` does not help: this loop blocks the only thread.\n  final result = slowSum(500000000);\n  print('sum=$result done at ${sw.elapsedMilliseconds} ms');\n\n  // Yield to the event loop: now the timer can finally run.\n  await Future<void>.delayed(Duration.zero);\n  print('after yielding at ${sw.elapsedMilliseconds} ms');\n}",
+      "explanation": "تایمر ۱۰۰ میلی‌ثانیه‌ای تا پایان حلقه اجرا نمی‌شود، چون تنها رشته مشغول است؛ بسته به سرعت سیستم، یکی دو ثانیه دیرتر می‌رسد. در اپ Flutter همین اتفاق برای فریم‌ها و لمس کاربر می‌افتد. راه‌حل در درس Isolate."
+     },
+     "mistakes": [
+      "خیال این‌که `Future(() => ...)` یعنی اجرا در رشته‌ی دیگر؛ همان کد بعداً روی همان رشته‌ی اصلی اجرا می‌شود.",
+      "حلقه‌ی سنگین همگام داخل تابع `async`؛ `async` بودن تابع آن را غیرمسدودکننده نمی‌کند.",
+      "زنجیره‌ی بی‌پایان microtask؛ صف event هیچ‌وقت نوبت نمی‌گیرد و تایمرها و ورودی کاربر گیر می‌کنند."
+     ],
+     "bestPractices": [
+      "کار CPU‌سنگین بیش از چند میلی‌ثانیه را با `Isolate.run` از رشته‌ی اصلی بیرون ببر.",
+      "`scheduleMicrotask` را کم و آگاهانه به کار ببر؛ برای «بعداً» معمولاً `Future` یا `await` کافی است.",
+      "وقتی ترتیب اجرا گیجت کرد، مثل مثال بالا با `print` شماره‌دار آزمایشش کن."
+     ],
+     "relatedTerms": [
+      "event-loop",
+      "future",
+      "isolate"
+     ],
+     "tryIt": "بدون اجرا پیش‌بینی کن چه چاپ می‌شود: `print('A'); Future.delayed(Duration.zero, () => print('B')); Future.microtask(() => print('C')); print('D');`. بعد اجرا کن. جواب درست `A D C B` است؛ دلیلش را در یک جمله با کلمه‌های microtask و event بنویس."
+    },
+    {
+     "title": "Future و async/await",
+     "estimatedMinutes": 35,
+     "what": "در رستوران سفارش می‌دهی و رسید شماره‌دار می‌گیری. غذا هنوز حاضر نیست ولی رسید قول می‌دهد بعداً یا غذا می‌رسد یا خبر «تمام شد». `Future<T>` همان رسید است: قول یک مقدار از نوع `T` یا یک خطا.\n\nبا `await` داخل تابع `async` منتظر نتیجه می‌مانی بی‌آن‌که Event Loop قفل شود. خطا را با `try/catch` معمولی می‌گیری و با `Future.wait` چند درخواست مستقل را هم‌زمان می‌فرستی.",
+     "why": "تقریباً هر کار واقعی اپ ناهمزمان است: گرفتن منو از سرور، خواندن فایل، پرداخت. اگر `await` یادت برود خطا گم می‌شود؛ اگر درخواست‌های مستقل را پشت سر هم `await` کنی، کاربر سه برابر بیشتر منتظر صفحه‌ی اصلی می‌ماند.",
+     "simpleExample": {
+      "language": "dart",
+      "code": "Future<int> fetchPrice(String item) async {\n  await Future<void>.delayed(const Duration(milliseconds: 300));\n  if (item.isEmpty) throw ArgumentError('item is empty');\n  return 185000;\n}\n\nFuture<void> main() async {\n  final price = await fetchPrice('پیتزا');\n  print('قیمت: $price'); // قیمت: 185000\n\n  try {\n    await fetchPrice('');\n  } on ArgumentError catch (e) {\n    print('خطا: ${e.message}'); // خطا: item is empty\n  }\n}",
+      "explanation": "`await` اجرای `main` را تا آماده شدن قیمت نگه می‌دارد ولی Event Loop آزاد است. خطای داخل تابع `async` در Future قرار می‌گیرد و `try/catch` دور `await` آن را می‌گیرد."
+     },
+     "realExample": {
+      "language": "dart",
+      "code": "import 'dart:async';\n\nFuture<T> fakeApi<T>(T value, int ms) =>\n    Future.delayed(Duration(milliseconds: ms), () => value);\n\nFuture<void> loadHomePage() async {\n  final sw = Stopwatch()..start();\n  // Independent requests: start all, then wait for all.\n  final (banners, menu, wallet) = await (\n    fakeApi(['تخفیف ۳۰٪ ناهار'], 400),\n    fakeApi(['کباب', 'قورمه‌سبزی'], 600),\n    fakeApi(250000, 300),\n  ).wait;\n  print('loaded in ~${sw.elapsedMilliseconds} ms'); // ~600, not 1300\n  print('$banners $menu کیف پول: $wallet');\n}\n\nFuture<void> main() async {\n  await loadHomePage();\n  try {\n    await fakeApi('slow', 3000).timeout(const Duration(seconds: 1));\n  } on TimeoutException {\n    print('سرور جواب نداد؛ دوباره تلاش کن');\n  }\n}",
+      "explanation": "سه درخواست مستقل با هم شروع می‌شوند و `.wait` روی record منتظر همه می‌ماند؛ زمان کل برابر کندترین (حدود ۶۰۰ میلی‌ثانیه) است نه جمعشان. `timeout` هم جلوی انتظار بی‌پایان را می‌گیرد."
+     },
+     "mistakes": [
+      "صدا زدن تابع `async` بدون `await`؛ خطایش هیچ‌جا گرفته نمی‌شود و ترتیب به‌هم می‌ریزد. lint `unawaited_futures` را روشن کن.",
+      "`await` پشت سر هم برای درخواست‌های مستقل؛ زمان‌ها جمع می‌شوند. آن‌ها را با `Future.wait` یا `.wait` موازی کن.",
+      "`try/catch` دور Futureی که `await` نشده؛ خطا بعداً رخ می‌دهد و `catch` هرگز آن را نمی‌بیند."
+     ],
+     "bestPractices": [
+      "نوع خروجی را صریح بنویس: `Future<void>` برای تابع `async` بی‌خروجی، نه `void`.",
+      "برای هر درخواست شبکه `timeout` بگذار و پیام خطای قابل‌فهم به کاربر نشان بده.",
+      "خطاهای مشخص را جدا بگیر (`on TimeoutException`، `on FormatException`) و `catch` کلی را آخر بگذار."
+     ],
+     "relatedTerms": [
+      "future",
+      "async-await",
+      "event-loop"
+     ],
+     "tryIt": "تابع `Future<int> fetchBalance(String userId)` بنویس که بعد از ۵۰۰ میلی‌ثانیه `1200000` برگرداند و برای `userId` خالی `StateError` پرتاب کند. موجودی سه کاربر را موازی بگیر و چاپ کن `جمع: 3600000` (در حدود ۵۰۰ میلی‌ثانیه، نه ۱۵۰۰). بعد خطای کاربر خالی را بگیر."
+    },
+    {
+     "title": "Stream و StreamController",
+     "estimatedMinutes": 35,
+     "what": "Future یک بسته‌ی پستی است: یک بار می‌رسد. Stream اشتراک روزنامه است: شماره‌های تازه پشت سر هم می‌رسند تا اشتراک را لغو کنی. وضعیت سفارش غذا (ثبت، در حال پخت، پیک در راه)، موقعیت راننده‌ی تاکسی و پیام‌های چت همه Stream هستند.\n\nبا `await for` یا `listen` داده‌ها را می‌گیری. با تابع `async*` یا `StreamController` خودت Stream می‌سازی: `add` داده می‌فرستد، `addError` خطا و `close` پایان را اعلام می‌کند.",
+     "why": "بدون Stream برای فهمیدن تغییرات باید مدام از سرور بپرسی که هم باتری می‌خورد هم دیر خبردار می‌شوی. اگر `listen` کنی و اشتراک را `cancel` نکنی، بعد از بسته شدن صفحه هم کد اجرا می‌شود و حافظه نشت می‌کند.",
+     "simpleExample": {
+      "language": "dart",
+      "code": "Stream<String> orderStatus() async* {\n  const steps = ['ثبت شد', 'در حال پخت', 'پیک در راه', 'تحویل شد'];\n  for (final step in steps) {\n    await Future<void>.delayed(const Duration(milliseconds: 300));\n    yield step;\n  }\n}\n\nFuture<void> main() async {\n  await for (final status in orderStatus()) {\n    print('سفارش: $status');\n  }\n  print('پایان');\n}",
+      "explanation": "تابع `async*` با هر `yield` یک مقدار در Stream می‌فرستد. `await for` تک‌تک مقدارها را می‌گیرد و وقتی Stream تمام شد از حلقه بیرون می‌آید؛ برای همین «پایان» آخر از همه چاپ می‌شود."
+     },
+     "realExample": {
+      "language": "dart",
+      "code": "import 'dart:async';\n\nclass CartService {\n  final _controller = StreamController<int>.broadcast();\n  int _total = 0;\n  Stream<int> get totalStream => _controller.stream;\n\n  void add(int price) {\n    if (price <= 0) {\n      _controller.addError(ArgumentError('invalid price: $price'));\n      return;\n    }\n    _total += price;\n    _controller.add(_total);\n  }\n\n  Future<void> dispose() => _controller.close();\n}\n\nFuture<void> main() async {\n  final cart = CartService();\n  final sub = cart.totalStream\n      .where((t) => t >= 500000)\n      .map((t) => 'ارسال رایگان فعال شد ($t تومان)')\n      .listen(print, onError: (Object e) => print('خطا: $e'));\n\n  cart..add(320000)..add(-1)..add(250000);\n  await Future<void>.delayed(Duration.zero); // let events arrive\n\n  await sub.cancel();\n  await cart.dispose();\n}",
+      "explanation": "`broadcast` اجازه می‌دهد چند صفحه هم‌زمان گوش بدهند. `where` و `map` مثل List روی Stream هم کار می‌کنند و خطا از آن‌ها عبور می‌کند. خروجی: یک خطا و بعد `ارسال رایگان فعال شد (570000 تومان)`."
+     },
+     "mistakes": [
+      "دو بار `listen` روی Stream تک‌مشترکه؛ خطای `Bad state: Stream has already been listened to` می‌گیری. `broadcast` بساز.",
+      "`cancel` نکردن `StreamSubscription` در `dispose` ویجت؛ بعد از بستن صفحه هم callback اجرا می‌شود.",
+      "`close` نکردن `StreamController`؛ حلقه‌ی `await for` شنونده هیچ‌وقت تمام نمی‌شود."
+     ],
+     "bestPractices": [
+      "`StreamController` را خصوصی نگه دار و فقط `stream` را بیرون بده تا کسی از بیرون `add` نکند.",
+      "همیشه `onError` بده یا `await for` را در `try/catch` بگذار؛ خطای گرفته‌نشده‌ی Stream برنامه را خراب می‌کند.",
+      "برای جست‌وجو هم‌زمان با تایپ، رویدادها را debounce کن تا با هر حرف یک درخواست به سرور نرود."
+     ],
+     "relatedTerms": [
+      "stream",
+      "async-await",
+      "future"
+     ],
+     "tryIt": "با `async*` یک `Stream<int>` بساز که شمارش معکوس ارسال دوباره‌ی کد تأیید پیامکی را از ۵ تا ۱ با فاصله‌ی ۱ ثانیه بفرستد. با `listen` چاپ کن `ارسال دوباره تا 5 ثانیه` و … و در `onDone` چاپ کن `حالا می‌توانی کد را دوباره بخواهی`."
+    },
+    {
+     "title": "Isolate و Isolate.run",
+     "estimatedMinutes": 35,
+     "what": "اگر آشپز (رشته‌ی اصلی) خودش بخواهد پنجاه کیلو پیاز پوست بکند، سفارش‌های دیگر معطل می‌مانند. پس کمک‌آشپزی در آشپزخانه‌ی جدا می‌گیرد. Isolate همان کمک‌آشپز است: حافظه‌ی جدا و Event Loop خودش را دارد.\n\nIsolateها حافظه‌ی مشترک ندارند و فقط با پیام حرف می‌زنند. ساده‌ترین راه `Isolate.run` است: یک تابع می‌دهی، در Isolate تازه اجرا می‌شود و نتیجه به‌صورت Future برمی‌گردد.",
+     "why": "`async/await` کار سنگین را سبک نمی‌کند؛ فقط انتظار را مدیریت می‌کند. parse کردن JSON چندمگابایتی کاتالوگ فروشگاه یا پردازش عکس روی رشته‌ی اصلی، فریم‌ها را از دست می‌دهد و صفحه می‌لرزد. Isolate این کار را به هسته‌ی دیگری از CPU می‌برد.",
+     "simpleExample": {
+      "language": "dart",
+      "code": "import 'dart:isolate';\n\nint countPrimes(int limit) {\n  var count = 0;\n  for (var n = 2; n <= limit; n++) {\n    var isPrime = true;\n    for (var d = 2; d * d <= n; d++) {\n      if (n % d == 0) { isPrime = false; break; }\n    }\n    if (isPrime) count++;\n  }\n  return count;\n}\n\nFuture<void> main() async {\n  final count = await Isolate.run(() => countPrimes(2000000));\n  print('primes: $count'); // primes: 148933\n}",
+      "explanation": "محاسبه در Isolate جدا انجام می‌شود و رشته‌ی اصلی در این مدت آزاد است. `Isolate.run` خودش Isolate را می‌سازد، نتیجه را برمی‌گرداند و آن را می‌بندد."
+     },
+     "realExample": {
+      "language": "dart",
+      "code": "import 'dart:convert';\nimport 'dart:isolate';\n\nclass Product {\n  final String title;\n  final int price;\n  Product(this.title, this.price);\n\n  factory Product.fromJson(Map<String, dynamic> j) =>\n      Product(j['title'] as String, j['price'] as int);\n}\n\n// Runs inside the new isolate.\nList<Product> parseCatalog(String body) {\n  final list = jsonDecode(body) as List<dynamic>;\n  return list.map((e) => Product.fromJson(e as Map<String, dynamic>)).toList();\n}\n\nFuture<List<Product>> loadCatalog(String body) =>\n    Isolate.run(() => parseCatalog(body));\n\nFuture<void> main() async {\n  // Fake 50k-item response from the shop API.\n  final body = jsonEncode([\n    for (var i = 0; i < 50000; i++) {'title': 'کالا $i', 'price': 10000 + i},\n  ]);\n\n  final products = await loadCatalog(body);\n  final cheap = products.where((p) => p.price < 10100).length;\n  print('${products.length} products, $cheap cheap'); // 50000 products, 100 cheap\n}",
+      "explanation": "فقط رشته‌ی JSON به Isolate فرستاده و لیست `Product` برگردانده می‌شود؛ parse سنگین آنجا انجام می‌شود. در Flutter تابع `compute` همین کار را با همین منطق انجام می‌دهد."
+     },
+     "mistakes": [
+      "Isolate برای کار سبک مثل parse یک JSON ده‌خطی؛ هزینه‌ی ساختن Isolate و کپی داده از خود کار بیشتر است.",
+      "closure‌ای به `Isolate.run` بدهی که شیء غیرقابل‌ارسال مثل `Socket` را capture کرده؛ خطای زمان اجرا می‌گیری.",
+      "انتظار دیدن تغییر یک متغیر سراسری از داخل Isolate در رشته‌ی اصلی؛ هر Isolate حافظه‌ی جدای خودش را دارد."
+     ],
+     "bestPractices": [
+      "اول با DevTools ثابت کن کار سنگین است (بیش از یک فریم، حدود ۱۶ میلی‌ثانیه)، بعد سراغ Isolate برو.",
+      "برای کار یک‌باره `Isolate.run` (یا `compute` در Flutter) کافی است؛ `Isolate.spawn` را برای کارگر همیشگی بگذار.",
+      "ورودی و خروجی Isolate را ساده و کوچک نگه دار (رشته، لیست، کلاس داده) تا هزینه‌ی کپی کم باشد."
+     ],
+     "relatedTerms": [
+      "isolate",
+      "event-loop",
+      "performance-profiling"
+     ],
+     "tryIt": "یک `Timer.periodic` بساز که هر ۱۰۰ میلی‌ثانیه `tick` چاپ کند. بعد `countPrimes(5000000)` را یک بار مستقیم و یک بار با `Isolate.run` اجرا کن. ببین در حالت مستقیم `tick`ها تا پایان محاسبه قطع می‌شوند ولی با Isolate ادامه دارند."
+    }
+   ]
+  },
+  {
+   "course": "dart-601",
+   "lessons": [
+    {
+     "title": "ساخت REST API با Dart",
+     "estimatedMinutes": 40,
+     "what": "سرور مثل پیشخوان نانوایی است: درخواست می‌رسد («دو بربری»)، پردازش می‌شود و پاسخ برمی‌گردد. با Dart می‌توانی همین پیشخوان را بسازی؛ `dart:io` کلاس `HttpServer` را دارد و package پرکاربرد `shelf` آن را با Handler و Middleware مرتب‌تر می‌کند.\n\nمزیت بزرگ: تیم Flutter همان زبان، همان مدل‌ها و همان ابزار تست را در سمت سرور هم به کار می‌برد.",
+     "why": "اپ موبایل بدون API فقط یک پوسته است. وقتی سرور هم Dart باشد، مدل `Order` و قواعدی مثل اعتبارسنجی شماره موبایل یک بار نوشته می‌شوند. اگر کلاینت و سرور این قواعد را جدا بنویسند، دیر یا زود با هم فرق می‌کنند و باگ‌های سخت‌یاب می‌سازند.",
+     "simpleExample": {
+      "language": "dart",
+      "code": "import 'dart:convert';\nimport 'dart:io';\n\nFuture<void> main() async {\n  final server = await HttpServer.bind(InternetAddress.loopbackIPv4, 8080);\n  print('listening on http://localhost:8080');\n\n  await for (final req in server) {\n    if (req.method == 'GET' && req.uri.path == '/health') {\n      req.response.headers.contentType = ContentType.json;\n      req.response.write(jsonEncode({'status': 'ok'}));\n    } else {\n      req.response.statusCode = HttpStatus.notFound;\n    }\n    await req.response.close();\n  }\n}",
+      "explanation": "`HttpServer` خودش یک Stream از درخواست‌هاست و با `await for` هر درخواست را می‌گیری. `curl localhost:8080/health` پاسخ `{\"status\":\"ok\"}` می‌دهد و هر مسیر دیگر `404` است."
+     },
+     "realExample": {
+      "language": "dart",
+      "code": "import 'dart:convert';\nimport 'dart:io';\n\nfinal orders = <Map<String, dynamic>>[];\nfinal mobilePattern = RegExp(r'^09\\d{9}$');\n\nFuture<void> handle(HttpRequest req) async {\n  final res = req.response..headers.contentType = ContentType.json;\n  try {\n    switch ((req.method, req.uri.path)) {\n      case ('GET', '/orders'):\n        res.write(jsonEncode(orders));\n      case ('POST', '/orders'):\n        final body = jsonDecode(await utf8.decodeStream(req));\n        if (body is! Map<String, dynamic> || body['total'] is! int ||\n            !mobilePattern.hasMatch('${body['mobile']}')) {\n          res..statusCode = HttpStatus.badRequest..write(jsonEncode({'error': 'total یا mobile نامعتبر است'}));\n          break;\n        }\n        orders.add({...body, 'id': orders.length + 1});\n        res..statusCode = HttpStatus.created..write(jsonEncode(orders.last));\n      default:\n        res.statusCode = HttpStatus.notFound;\n    }\n  } on FormatException {\n    res.statusCode = HttpStatus.badRequest; // body was not valid JSON\n  }\n  await res.close();\n}\n\nFuture<void> main() async =>\n    (await HttpServer.bind(InternetAddress.anyIPv4, 8080)).listen(handle);",
+      "explanation": "`switch` روی record (متد، مسیر) مسیرها را خوانا می‌کند. ورودی قبل از ذخیره چک می‌شود و خطا با کد `400` برمی‌گردد، نه با کرش سرور. داده فعلاً در حافظه است و با ری‌استارت پاک می‌شود."
+     },
+     "mistakes": [
+      "اعتماد به بدنه‌ی درخواست؛ `body['total'] as int` بدون چک، با یک JSON خراب کل handler را می‌ترکاند.",
+      "`close` نکردن `response`؛ کلاینت تا timeout منتظر می‌ماند و اتصال‌ها روی هم تلنبار می‌شوند.",
+      "`bind` روی `loopbackIPv4` داخل Docker؛ سرور از بیرون کانتینر در دسترس نیست. `anyIPv4` لازم است."
+     ],
+     "bestPractices": [
+      "برای پروژه‌ی واقعی از `shelf` و `shelf_router` استفاده کن تا لاگ، CORS و احراز هویت Middleware شوند.",
+      "کد وضعیت درست بده: `201` ساخت، `400` ورودی بد، `404` نبودن و `500` فقط برای خطای خود سرور.",
+      "پورت را از متغیر محیطی بخوان: `int.parse(Platform.environment['PORT'] ?? '8080')`."
+     ],
+     "relatedTerms": [
+      "rest-api",
+      "json-serialization",
+      "stream"
+     ],
+     "tryIt": "مسیر `GET /price?amount=250000` بساز که مبلغ را با مالیات ۱۰٪ برگرداند (`req.uri.queryParameters`). `curl 'localhost:8080/price?amount=250000'` باید `{\"amount\":250000,\"vat\":25000,\"total\":275000}` بدهد و `amount=abc` کد `400`."
+    },
+    {
+     "title": "مدل مشترک بین اپ و سرور",
+     "estimatedMinutes": 35,
+     "what": "فرض کن اپ و سرور هر کدام کلاس `Order` خودشان را دارند. روزی سرور اسم فیلد را از `total` به `totalPrice` عوض می‌کند و اپ بی‌صدا مبلغ صفر نشان می‌دهد. راه‌حل: یک package مشترک مثل `shop_models` که هم اپ Flutter و هم سرور به آن وابسته‌اند.\n\nاین package فقط Dart خالص است: مدل‌ها، `toJson`/`fromJson` و قواعد اعتبارسنجی. نه `dart:io` دارد و نه Flutter.",
+     "why": "قرارداد API وقتی فقط در ذهن آدم‌ها باشد، می‌شکند. با مدل مشترک، تغییر اسم یک فیلد همان لحظه در هر دو طرف خطای کامپایل می‌دهد، نه باگ در دست کاربر. تست‌های مدل هم یک بار نوشته می‌شوند و هر دو طرف از آن سود می‌برند.",
+     "simpleExample": {
+      "language": "yaml",
+      "code": "# Repo layout:\n#   app/                    Flutter app\n#   server/                 Dart server\n#   packages/shop_models/   pure Dart models\n\n# app/pubspec.yaml\nname: shop_app\nenvironment:\n  sdk: ^3.5.0\ndependencies:\n  flutter:\n    sdk: flutter\n  shop_models:\n    path: ../packages/shop_models\n\n# server/pubspec.yaml uses the same line:\n#   shop_models:\n#     path: ../packages/shop_models",
+      "explanation": "وابستگی `path` یعنی هر دو پروژه مستقیم از همان پوشه‌ی محلی استفاده می‌کنند و هر تغییر در مدل فوراً در هر دو دیده می‌شود. برای مخزن‌های بزرگ‌تر، pub workspace همین را مرتب‌تر انجام می‌دهد."
+     },
+     "realExample": {
+      "language": "dart",
+      "code": "// packages/shop_models/lib/order.dart: pure Dart, no Flutter, no dart:io.\nclass OrderItem {\n  final String title;\n  final int unitPrice, quantity; // Toman\n  const OrderItem(this.title, this.unitPrice, this.quantity);\n  int get subtotal => unitPrice * quantity;\n  Map<String, dynamic> toJson() =>\n      {'title': title, 'unitPrice': unitPrice, 'quantity': quantity};\n  factory OrderItem.fromJson(Map<String, dynamic> j) =>\n      OrderItem(j['title'] as String, j['unitPrice'] as int, j['quantity'] as int);\n}\n\nclass Order {\n  static const vatPercent = 10;\n  final String mobile;\n  final List<OrderItem> items;\n  const Order(this.mobile, this.items);\n  int get subtotal => items.fold<int>(0, (s, i) => s + i.subtotal);\n  int get total => subtotal + subtotal * vatPercent ~/ 100;\n\n  // Same rules in the app form and in the server handler.\n  List<String> validate() => [\n        if (!RegExp(r'^09\\d{9}$').hasMatch(mobile)) 'شماره موبایل نامعتبر است',\n        if (items.isEmpty) 'سبد خرید خالی است',\n      ];\n\n  Map<String, dynamic> toJson() =>\n      {'mobile': mobile, 'items': [for (final i in items) i.toJson()]};\n  factory Order.fromJson(Map<String, dynamic> j) => Order(j['mobile'] as String, [\n        for (final e in j['items'] as List) OrderItem.fromJson(e as Map<String, dynamic>)\n      ]);\n}",
+      "explanation": "همین فایل در اپ برای اعتبارسنجی فرم و در سرور برای چک درخواست استفاده می‌شود؛ پس قاعده‌ی موبایل و مالیات هیچ‌وقت دو نسخه نمی‌شود. برای دو پرس کباب ۲۸۰ هزاری، `total` برابر `616000` است."
+     },
+     "mistakes": [
+      "import کردن `package:flutter` یا `dart:io` در package مدل‌ها؛ دیگر در سرور یا وب قابل استفاده نیست.",
+      "تغییر اسم فیلد JSON بدون نسخه‌بندی API؛ نسخه‌های قدیمی اپ که کاربران آپدیت نکرده‌اند خراب می‌شوند.",
+      "گذاشتن منطق دیتابیس یا HTTP در مدل مشترک؛ این package باید فقط داده و قاعده‌ی خالص باشد."
+     ],
+     "bestPractices": [
+      "برای مدل‌ها تست رفت‌وبرگشت بنویس: `Order.fromJson(o.toJson())` باید همان داده را بدهد.",
+      "در مخزن‌های چند‌package‌ای از pub workspace در `pubspec.yaml` ریشه استفاده کن تا همه یک‌جا resolve شوند.",
+      "فیلد جدید را اختیاری و با مقدار پیش‌فرض اضافه کن تا کلاینت‌های قدیمی نشکنند."
+     ],
+     "relatedTerms": [
+      "json-serialization",
+      "clean-architecture",
+      "rest-api"
+     ],
+     "tryIt": "پوشه‌ی `packages/shop_models` را با کلاس `Order` بالا و یک تست رفت‌وبرگشت بساز و با `path` به سرور وصلش کن. در `POST /orders` به‌جای چک دستی از `order.validate()` استفاده کن؛ سبد خالی باید `400` با پیام «سبد خرید خالی است» بدهد."
+    },
+    {
+     "title": "استقرار سرویس Dart",
+     "estimatedMinutes": 35,
+     "what": "سرورت روی لپ‌تاپ کار می‌کند؛ حالا باید روی یک سرور واقعی (مثلاً VPS در دیتاسنتر داخلی) همیشه روشن بماند. Dart مزیت بزرگی دارد: `dart compile exe` کل برنامه را به یک فایل اجرایی مستقل تبدیل می‌کند که بدون نصب Dart اجرا می‌شود.\n\nمعمولاً این فایل را در image داکر می‌گذاری: مرحله‌ی اول با image رسمی Dart کامپایل می‌کند و مرحله‌ی دوم image بسیار سبکی است که فقط فایل اجرایی را دارد.",
+     "why": "«روی سیستم من کار می‌کند» جمله‌ی آشنای شب انتشار است. Docker محیط اجرا را همه‌جا یکسان می‌کند و فایل کامپایل‌شده سریع بالا می‌آید و حافظه‌ی کمی می‌گیرد؛ یعنی هزینه‌ی سرور کمتر و ری‌استارت در چند ثانیه.",
+     "simpleExample": {
+      "language": "bash",
+      "code": "# Compile to a self-contained native executable\ndart compile exe bin/server.dart -o build/server\n\n# Run it without the Dart SDK\nPORT=8080 ./build/server\n\n# Check it from another terminal\ncurl -i http://localhost:8080/health",
+      "explanation": "فایل `build/server` معمولاً برای همان سیستم‌عامل و معماری‌ای ساخته می‌شود که روی آن build کردی؛ پس برای سرور لینوکسی ساده‌ترین راه build داخل Docker است."
+     },
+     "realExample": {
+      "language": "text",
+      "code": "# Dockerfile: multi-stage build\nFROM dart:stable AS build\nWORKDIR /app\nCOPY pubspec.* ./\nRUN dart pub get\nCOPY . .\nRUN dart compile exe bin/server.dart -o bin/server\n\nFROM scratch\nCOPY --from=build /runtime/ /\nCOPY --from=build /app/bin/server /app/bin/server\nENV PORT=8080\nEXPOSE 8080\nCMD [\"/app/bin/server\"]\n\n# Build and run:\n#   docker build -t shop-server .\n#   docker run -d --restart unless-stopped -p 8080:8080 shop-server\n#   docker logs -f <container-id>",
+      "explanation": "مرحله‌ی اول با image کامل Dart کامپایل می‌کند. مرحله‌ی دوم از `scratch` (خالی) شروع می‌شود و فقط فایل اجرایی و کتابخانه‌های لازمش در `/runtime/` را برمی‌دارد؛ image نهایی چند مگابایت است."
+     },
+     "mistakes": [
+      "اجرای سرور با `dart run` در production؛ کندتر بالا می‌آید و کل SDK را روی سرور لازم دارد.",
+      "نوشتن رمز دیتابیس یا کلید API در کد یا Dockerfile؛ آن‌ها را از متغیر محیطی یا secret بخوان.",
+      "نداشتن مسیر `/health`؛ بدون آن نه می‌فهمی سرور زنده است و نه ری‌استارت خودکار درست کار می‌کند."
+     ],
+     "bestPractices": [
+      "با `--restart unless-stopped` یا systemd کاری کن سرور بعد از کرش یا ری‌بوت خودش بالا بیاید.",
+      "لاگ را روی خروجی استاندارد بنویس تا با `docker logs` در دسترس باشد.",
+      "build و تست را در CI خودکار کن تا هر image منتشرشده از کد تست‌شده ساخته شده باشد."
+     ],
+     "relatedTerms": [
+      "ci-cd",
+      "scalability",
+      "rest-api"
+     ],
+     "tryIt": "سرور `/health` درس اول را با `InternetAddress.anyIPv4` به‌روز کن، Dockerfile بالا را بنویس و image را build و با `docker run -p 8080:8080` اجرا کن. `curl localhost:8080/health` باید `{\"status\":\"ok\"}` بدهد. حجم image را با `docker images` یادداشت کن."
+    }
+   ]
+  },
+  {
+   "course": "pro-100",
+   "lessons": [
+    {
+     "title": "Commit و تاریخچه",
+     "estimatedMinutes": 25,
+     "what": "Git مثل «ذخیره‌ی بازی» برای کد است: هر commit یک نقطه‌ی ذخیره با توضیح است و هر وقت خواستی به آن برمی‌گردی. قبل از commit، تغییرها را با `git add` در staging area می‌گذاری؛ مثل چیدن وسایل در ساک پیش از بستن زیپ.\n\nچرخه‌ی روزانه: تغییر فایل، `git status`، `git add`، `git commit -m \"...\"` و `git log` برای دیدن تاریخچه.",
+     "why": "بدون Git پوشه‌ات پر می‌شود از `project-final` و `project-final2` و `project-akhari`. نمی‌دانی چه چیزی کی و چرا عوض شد و اگر کد امروز خراب شود، راه برگشت به دیروز نداری. commitهای کوچک یعنی خطر کم و برگشت آسان.",
+     "simpleExample": {
+      "language": "bash",
+      "code": "git config --global user.name \"Sara Rezaei\"\ngit config --global user.email \"sara@example.com\"\n\ngit init hesab && cd hesab\necho \"# حساب‌کتاب\" > README.md\ngit status              # README.md is untracked\ngit add README.md\ngit commit -m \"Add README\"\n\ngit log --oneline       # e.g. a1b2c3d Add README",
+      "explanation": "`git status` همیشه می‌گوید کجای چرخه‌ای. `git add` فایل را به staging می‌برد و `commit` از همان وضعیت عکس می‌گیرد. `log --oneline` هر commit را در یک خط با شناسه‌ی کوتاهش نشان می‌دهد."
+     },
+     "realExample": {
+      "language": "bash",
+      "code": "# See what changed since the last commit\ngit status\ngit diff                         # unstaged changes, line by line\n\n# Stage only what belongs to this commit, then review it\ngit add lib/report.dart\ngit diff --staged\ngit commit -m \"Sort report categories by amount\"\n\n# Throw away a messy, uncommitted edit (cannot be undone!)\ngit restore lib/main.dart\n\n# Unstage a file you added by mistake, and ignore it from now on\ngit restore --staged expenses.json\necho \"expenses.json\" >> .gitignore\n\n# Forgot a file in the last commit (only if not pushed yet)\ngit add test/report_test.dart\ngit commit --amend --no-edit\n\n# Full history of one file, with the changes\ngit log -p --follow lib/report.dart",
+      "explanation": "`git diff --staged` آخرین فرصت دیدن چیزی است که ثبت می‌شود. `git restore` تغییر commit‌نشده را دور می‌ریزد و `--staged` فقط فایل را از staging بیرون می‌آورد. `--amend` را فقط روی commit push‌نشده بزن."
+     },
+     "mistakes": [
+      "`git add .` کورکورانه؛ پوشه‌ی `build/`، رمزها یا فایل داده‌ی شخصی هم commit می‌شوند. اول `git status` را بخوان.",
+      "پیام commit بی‌معنی مثل `fix` یا `asdf`؛ شش ماه بعد هیچ‌کس، حتی خودت، نمی‌فهمد چه شد.",
+      "یک commit غول‌آسا در پایان هفته؛ اگر باگ داشته باشد نمی‌شود فقط بخش خراب را برگرداند."
+     ],
+     "bestPractices": [
+      "هر commit یک تغییر منطقی باشد و پیامش با فعل امری شروع شود: `Add VAT to invoice`.",
+      "از روز اول `.gitignore` بساز؛ برای Dart و Flutter پوشه‌های `.dart_tool/` و `build/` را نادیده بگیر.",
+      "قبل از هر commit `git diff --staged` بزن تا دقیقاً بدانی چه چیزی ثبت می‌شود."
+     ],
+     "relatedTerms": [
+      "git-branch",
+      "code-review"
+     ],
+     "tryIt": "مخزنی تازه بساز و سه commit جدا ثبت کن: README، فایل `bin/main.dart` که «سلام» چاپ کند، و `.gitignore`. `git log --oneline` باید دقیقاً ۳ خط نشان دهد. بعد تغییری خراب در `main.dart` بده و با `git restore` برش گردان؛ `git status` باید تمیز باشد."
+    },
+    {
+     "title": "Branch و Merge",
+     "estimatedMinutes": 25,
+     "what": "branch یک مسیر موازی برای کار است؛ مثل پیش‌نویسی جدا کنار نسخه‌ی اصلی. روی `main` همیشه کد سالم می‌ماند و قابلیت تازه، مثلاً «گزارش ماهانه»، را در branch `feature/monthly-report` می‌سازی.\n\nبا `git switch -c` branch می‌سازی و به آن می‌روی. وقتی کار تمام شد، به `main` برمی‌گردی و با `git merge` تغییرها را یکی می‌کنی. branch فقط یک اشاره‌گر سبک به یک commit است و ساختنش تقریباً هزینه‌ای ندارد.",
+     "why": "اگر همه روی `main` کار کنند، قابلیت نیمه‌کاره‌ی یک نفر کار کل تیم را خراب می‌کند و نمی‌شود نسخه‌ی سالم منتشر کرد. branch کمک می‌کند هم‌زمان روی چند کار باشی، کار خراب را بی‌دردسر دور بریزی و فقط کار تمام‌شده وارد `main` شود.",
+     "simpleExample": {
+      "language": "bash",
+      "code": "git switch -c feature/monthly-report    # create and switch\n# ...edit files...\ngit add lib/report.dart\ngit commit -m \"Add monthly report\"\n\ngit switch main\ngit merge feature/monthly-report        # fast-forward if main didn't move\ngit branch -d feature/monthly-report    # delete the merged branch\ngit branch                              # list local branches",
+      "explanation": "اگر از وقت ساختن branch کسی روی `main` commit نکرده باشد، merge فقط اشاره‌گر `main` را جلو می‌برد (fast-forward). وگرنه Git یک merge commit می‌سازد که دو مسیر را به هم وصل می‌کند."
+     },
+     "realExample": {
+      "language": "bash",
+      "code": "# Mid-feature, an urgent VAT bug is reported on main\ngit switch -c feature/national-code\n# ...half-done edits...\ngit stash push -m \"national code WIP\"   # park unfinished work\n\ngit switch main\ngit switch -c fix/vat-rounding\n# ...fix and test...\ngit commit -am \"Fix VAT rounding on invoices\"\ngit switch main\ngit merge --no-ff fix/vat-rounding       # keep a merge commit in history\n\n# Back to the feature, with the fix included\ngit switch feature/national-code\ngit merge main\ngit stash pop                            # restore unfinished work\n\ngit log --oneline --graph --all",
+      "explanation": "`stash` کار نیمه‌کاره را کنار می‌گذارد تا branch عوض کنی. رفع باگ در branch جدا ساخته و با `--no-ff` وارد `main` می‌شود. `merge main` آن را به feature هم می‌آورد و `--graph` تصویر شاخه‌ها را می‌کشد."
+     },
+     "mistakes": [
+      "`git checkout` برای همه‌کار؛ `git switch` برای branch و `git restore` برای فایل روشن‌ترند و اشتباه کمتری دارند.",
+      "branch عمرطولانی که هفته‌ها merge نمی‌شود؛ هر روز از `main` دورتر و conflictها بزرگ‌تر می‌شوند.",
+      "عوض کردن branch با تغییرهای commit‌نشده؛ Git یا جلویت را می‌گیرد یا تغییرها را با خودش به branch دیگر می‌برد."
+     ],
+     "bestPractices": [
+      "اسم branch را با پیشوند بگذار: `feature/`، `fix/`، `chore/` و بعد توضیح کوتاه انگلیسی.",
+      "branchها را کوچک و کوتاه‌عمر نگه دار؛ بهتر است ظرف یکی دو روز merge شوند.",
+      "بعد از merge، branch را با `git branch -d` پاک کن تا فهرست شاخه‌ها شلوغ نشود."
+     ],
+     "relatedTerms": [
+      "git-branch",
+      "pull-request"
+     ],
+     "tryIt": "در مخزن درس قبل branch `feature/greeting` بساز، پیام «سلام» را به «سلام، به حساب‌کتاب خوش آمدی» تغییر بده و commit کن. به `main` برگرد، merge کن و branch را پاک کن. `git log --oneline --graph` باید commit جدید را روی `main` نشان دهد."
+    },
+    {
+     "title": "حل Conflict",
+     "estimatedMinutes": 30,
+     "what": "علی و سارا هر دو خط نرخ مالیات را در یک فایل عوض کرده‌اند؛ علی نوشته `0.09` و سارا `0.10`. Git نمی‌تواند حدس بزند کدام درست است، پس merge را نگه می‌دارد و conflict اعلام می‌کند.\n\nدر فایل، علامت‌های `<<<<<<<`، `=======` و `>>>>>>>` دو نسخه را نشان می‌دهند. کار تو: تصمیم بگیری نسخه‌ی نهایی چیست، علامت‌ها را پاک کنی، `git add` بزنی و merge را کامل کنی.",
+     "why": "conflict خطا نیست؛ نشانه‌ی کار هم‌زمان تیم است. خطر واقعی حلِ عجولانه است: پاک کردن کار هم‌تیمی یا جا گذاشتن `<<<<<<<` در کد که build را می‌شکند. کسی که با آرامش conflict حل می‌کند، در تیم خیلی ارزشمند است.",
+     "simpleExample": {
+      "language": "text",
+      "code": "$ git merge feature/new-vat\nAuto-merging lib/tax.dart\nCONFLICT (content): Merge conflict in lib/tax.dart\nAutomatic merge failed; fix conflicts and then commit the result.\n\n# lib/tax.dart now contains:\n<<<<<<< HEAD\nconst vatRate = 0.09;\n=======\nconst vatRate = 0.10; // new VAT rate\n>>>>>>> feature/new-vat",
+      "explanation": "بین `<<<<<<< HEAD` و `=======` نسخه‌ی branch فعلی (`main`) است و بعد از آن تا `>>>>>>>` نسخه‌ی branchی که merge می‌کنی. نسخه‌ی درست را نگه دار و هر سه خط علامت را پاک کن."
+     },
+     "realExample": {
+      "language": "bash",
+      "code": "git merge feature/new-vat           # CONFLICT in lib/tax.dart\ngit status                          # shows \"both modified: lib/tax.dart\"\n\n# Option A: open the file, keep the right line, delete the markers\ncode lib/tax.dart\n\n# Option B: take one whole side of a file\ngit restore --theirs lib/tax.dart   # or --ours\n\n# Check that no markers are left and the code still works\ngit diff --check                    # warns about leftover markers\ndart analyze && dart test\n\ngit add lib/tax.dart\ngit commit                          # or: git merge --continue\n\n# Changed your mind before committing? Go back to before the merge:\n# git merge --abort",
+      "explanation": "`git status` فایل‌های درگیر را فهرست می‌کند. بعد از حل، analyzer و تست را اجرا کن؛ کدی که علامت ندارد هم ممکن است منطقش غلط باشد. تا قبل از commit، `merge --abort` همه‌چیز را به قبل از merge برمی‌گرداند."
+     },
+     "mistakes": [
+      "نگه داشتن کورکورانه‌ی نسخه‌ی خودت (`--ours`) بدون خواندن تغییر هم‌تیمی؛ کار او بی‌صدا حذف می‌شود.",
+      "commit کردن فایل با علامت‌های `<<<<<<<` باقی‌مانده؛ build می‌شکند. قبلش `git diff --check` بزن.",
+      "حل conflict بدون اجرای تست؛ دو تغییر درست ممکن است کنار هم منطق غلطی بسازند."
+     ],
+     "bestPractices": [
+      "وقتی مطمئن نیستی کدام نسخه درست است، از نویسنده‌ی تغییر دیگر بپرس؛ حدس نزن.",
+      "زود و زیاد `main` را در branchت merge کن تا conflictها کوچک بمانند.",
+      "از ابزار merge ادیتورت (مثل VS Code) استفاده کن که دو نسخه را کنار هم نشان می‌دهد."
+     ],
+     "relatedTerms": [
+      "git-branch",
+      "pull-request",
+      "code-review"
+     ],
+     "tryIt": "عمداً conflict بساز: در `main` خط مالیات را `0.09` و در branch `feature/vat` همان خط را `0.10` کن و هر دو را commit کن. merge کن، conflict را با نگه داشتن `0.10` حل کن و commit کن. در پایان `git diff --check` نباید چیزی چاپ کند."
+    },
+    {
+     "title": "کار با Remote: push، pull و fetch",
+     "estimatedMinutes": 30,
+     "what": "مخزن محلی روی لپ‌تاپ توست؛ remote نسخه‌ای روی سرور Git شرکت یا یک سرویس میزبانی کد است که تیم با آن همگام می‌شود. اسمش معمولاً `origin` است.\n\n`git clone` کپی کامل می‌گیرد، `git push` commitهایت را می‌فرستد، `git fetch` تغییرهای دیگران را فقط دانلود می‌کند و `git pull` یعنی fetch به‌علاوه‌ی merge (یا rebase) در branch فعلی.",
+     "why": "اگر کد فقط روی لپ‌تاپت باشد، یک خرابی هارد یعنی از دست رفتن ماه‌ها کار. remote هم پشتیبان است و هم محل همکاری. اگر پیش از شروع کار `pull` نکنی، روی کد قدیمی کار می‌کنی و موقع push با رد شدن و conflict روبه‌رو می‌شوی.",
+     "simpleExample": {
+      "language": "bash",
+      "code": "git remote add origin git@git.example.com:sara/hesab.git\ngit push -u origin main          # first push; -u remembers the upstream\n\n# Daily routine\ngit pull                         # get teammates' work first\ngit switch -c feature/export-csv\n# ...edit and test...\ngit commit -am \"Add CSV export\"\ngit push -u origin feature/export-csv",
+      "explanation": "`-u` یک بار ارتباط branch محلی و remote را ثبت می‌کند تا بعداً فقط `git push` و `git pull` بزنی. branch تازه را push می‌کنی تا برایش Pull Request باز کنی."
+     },
+     "realExample": {
+      "language": "bash",
+      "code": "git push\n# ! [rejected]  main -> main (fetch first)\n# Someone pushed before you. Never use --force on a shared branch.\n\ngit fetch origin                  # download only; your files don't change\ngit log --oneline main..origin/main   # commits teammates added\ngit diff --stat main origin/main      # which files they touched\n\ngit pull --rebase                 # replay your commits on top of theirs\n# on conflict: fix the file, git add <file>, then git rebase --continue\ndart test\ngit push\n\n# Housekeeping\ngit fetch --prune                 # forget branches deleted on the server\ngit branch -vv                    # which local branch tracks which remote",
+      "explanation": "`fetch` امن است و فقط `origin/main` را به‌روز می‌کند؛ با `main..origin/main` می‌بینی چه آمده. `pull --rebase` commitهای تو را روی کار دیگران می‌چیند تا تاریخچه خطی بماند."
+     },
+     "mistakes": [
+      "`git push --force` روی `main` مشترک؛ commitهای هم‌تیمی‌ها پاک می‌شود. روی branch خودت هم `--force-with-lease` امن‌تر است.",
+      "شروع کار روزانه بدون `git pull`؛ ساعت‌ها روی کد قدیمی کار می‌کنی و آخر روز conflict بزرگ می‌گیری.",
+      "خیال این‌که `fetch` فایل‌هایت را عوض می‌کند؛ فقط `origin/*` را به‌روز می‌کند و branch تو دست نمی‌خورد."
+     ],
+     "bestPractices": [
+      "روز کاری را با `git pull` شروع کن و با push کردن branch خودت تمام کن تا کارت روی سرور امن باشد.",
+      "برای SSH کلید بساز (`ssh-keygen -t ed25519`) تا هر بار رمز وارد نکنی.",
+      "هر branch را جدا push کن و به‌جای merge مستقیم در `main`، Pull Request باز کن."
+     ],
+     "relatedTerms": [
+      "git-branch",
+      "pull-request",
+      "ci-cd"
+     ],
+     "tryIt": "با `git init --bare team.git` یک remote محلی بساز و دو clone از آن بگیر (علی و سارا). علی commit و push کند. سارا بدون pull یک commit دیگر بزند و push کند تا `rejected` ببیند. با `git pull --rebase` حلش کن و دوباره push کن."
+    }
+   ]
+  },
+  {
+   "course": "pro-200",
+   "lessons": [
+    {
+     "title": "روش علمی پیدا کردن باگ",
+     "estimatedMinutes": 30,
+     "what": "دیباگ کردن مثل کار پزشک است: اول علائم را دقیق می‌پرسد، بعد فرضیه می‌سازد، آزمایش می‌گیرد و فقط بعد دارو می‌دهد. چرخه‌ی تو: باگ را قابل تکرار کن، فرضیه بساز، با یک آزمایش کوچک ردش یا تأییدش کن، درستش کن و تستی بنویس که باگ برنگردد.\n\nمهم‌ترین ابزار، خواندن دقیق پیام خطا و stack trace است؛ معمولاً خط مقصر را همان‌جا نوشته.",
+     "why": "بیشتر وقتِ هدررفته‌ی دیباگ از تغییر تصادفی کد می‌آید: «این را عوض کنم، شاید درست شد». بدون روش، باگ را پنهان می‌کنی نه حل؛ و هفته‌ی بعد با شکل دیگری برمی‌گردد. روش علمی زمان دیباگ را قابل پیش‌بینی می‌کند.",
+     "simpleExample": {
+      "language": "dart",
+      "code": "// Bug report: 3 items of 19.9 thousand Toman => shows 59699, expected 59700\nint totalToman(List<double> pricesInThousands) {\n  final sum = pricesInThousands.fold(0.0, (s, p) => s + p);\n  return (sum * 1000).toInt();\n}\n\nvoid main() {\n  // 1) Reproduce with the smallest input\n  print(totalToman([19.9, 19.9, 19.9])); // 59699\n  // 2) Hypothesis: floating-point error. 3) Experiment:\n  print(19.9 + 19.9 + 19.9); // 59.699999999999996\n  // 4) Fix the root cause: store money as int Toman\n  final prices = [19900, 19900, 19900];\n  print(prices.fold<int>(0, (s, p) => s + p)); // 59700\n}",
+      "explanation": "به‌جای تغییر تصادفی، کوچک‌ترین ورودی بازتولیدکننده را پیدا کردیم و فرضیه‌ی «خطای ممیز شناور» را با یک `print` تأیید کردیم. درمان ریشه‌ای `round()` نیست؛ پول باید `int` تومان باشد."
+     },
+     "realExample": {
+      "language": "bash",
+      "code": "# \"Invoice total was right in v1.4, now it's wrong.\" Find the guilty commit.\ngit bisect start\ngit bisect bad                   # current commit is broken\ngit bisect good v1.4             # this tag was known to be fine\n\n# Git checks out a commit in the middle. Test it, then answer:\ndart run bin/invoice.dart        # look at the total\ngit bisect good                  # or: git bisect bad\n# ...repeat; Git finally prints \"<sha> is the first bad commit\"\n\n# Or let a test decide automatically (exit 0 = good, non-zero = bad)\ngit bisect run dart test test/invoice_test.dart\n\ngit show 3f2a9c1                 # read the change Git reported\ngit bisect reset                 # go back to where you started",
+      "explanation": "`git bisect` جست‌وجوی دودویی روی تاریخچه است: بین ۱۰۰۰ commit حدود ۱۰ قدم کافی است. با `bisect run` یک تست خودکار همه‌ی قدم‌ها را خودش جلو می‌برد. آخر کار `reset` را فراموش نکن."
+     },
+     "mistakes": [
+      "تغییر هم‌زمان چند چیز به امید «شاید درست شود»؛ حتی اگر درست شد، نمی‌دانی کدام تغییر مؤثر بود.",
+      "نخواندن stack trace و رفتن سراغ جست‌وجوی اینترنتی؛ اولین خطی که به کد خودت اشاره می‌کند معمولاً محل باگ است.",
+      "رفع باگ بدون نوشتن تست؛ همان باگ در refactor بعدی بی‌صدا برمی‌گردد."
+     ],
+     "bestPractices": [
+      "اول باگ را با کوچک‌ترین ورودی ممکن بازتولید کن؛ نصف راه همین است.",
+      "فرضیه و نتیجه‌ی هر آزمایش را یادداشت کن تا دور خودت نچرخی.",
+      "مشکل را بلند برای کسی (یا یک اردک پلاستیکی) توضیح بده؛ اغلب وسط توضیح جواب را می‌بینی."
+     ],
+     "relatedTerms": [
+      "debugging",
+      "unit-test"
+     ],
+     "tryIt": "تابع `int averageScore(List<int> scores) => scores.reduce((a, b) => a + b) ~/ scores.length;` را برای لیست خالی اجرا کن. پیام خطا و اولین خط stack trace را یادداشت کن، فرضیه بنویس و درستش کن تا برای لیست خالی `0` بدهد. یک تست هم برایش بنویس."
+    },
+    {
+     "title": "Breakpoint و debugger",
+     "estimatedMinutes": 30,
+     "what": "`print` مثل پرسیدن از رهگذر است؛ breakpoint مثل نگه داشتن فیلم روی یک فریم. وقتی اجرا روی خط breakpoint می‌ایستد، مقدار همه‌ی متغیرها، call stack و وضعیت اشیا را می‌بینی.\n\nبعد قدم‌به‌قدم جلو می‌روی: Step Over (خط بعد)، Step Into (ورود به تابع) و Step Out (خروج از تابع). breakpoint شرطی فقط وقتی شرطش درست باشد می‌ایستد؛ مثلاً `percent > 100`.",
+     "why": "برای باگی که فقط در سفارش هزارم رخ می‌دهد، `print` یعنی هزار خط خروجی. breakpoint شرطی دقیقاً همان لحظه می‌ایستد و بدون تغییر کد و اجرای دوباره، همه‌چیز را نشانت می‌دهد.",
+     "simpleExample": {
+      "language": "dart",
+      "code": "import 'dart:developer';\n\nint applyDiscount(int total, int percent) {\n  // Conditional breakpoint in code: pauses the debugger when true.\n  debugger(when: percent > 100, message: 'bad percent: $percent');\n  return total - total * percent ~/ 100;\n}\n\nvoid main() {\n  final discounts = [10, 20, 150, 5];\n  for (final d in discounts) {\n    print(applyDiscount(200000, d)); // 180000, 160000, -100000, 190000\n  }\n}",
+      "explanation": "`debugger(when: ...)` یک breakpoint شرطی داخل کد است: در حالت Debug (`F5` در VS Code) فقط برای ۱۵۰٪ می‌ایستد و متغیرها را نشانت می‌دهد. `-100000` همان باگ است؛ بعد از رفعش این خط را پاک کن."
+     },
+     "realExample": {
+      "language": "json",
+      "code": "{\n  \"version\": \"0.2.0\",\n  \"configurations\": [\n    {\n      \"name\": \"hesab: report\",\n      \"request\": \"launch\",\n      \"type\": \"dart\",\n      \"program\": \"bin/hesab.dart\",\n      \"args\": [\"report\", \"2026-09\"]\n    },\n    {\n      \"name\": \"shop app (debug)\",\n      \"request\": \"launch\",\n      \"type\": \"dart\",\n      \"flutterMode\": \"debug\"\n    }\n  ]\n}",
+      "explanation": "این فایل `.vscode/launch.json` است. با `F5` برنامه‌ی خط فرمان با آرگومان‌های `report 2026-09` در حالت Debug اجرا می‌شود. روی شماره‌ی خط کلیک کن تا breakpoint بگذاری و با راست‌کلیک و Edit Breakpoint شرط بده."
+     },
+     "mistakes": [
+      "گذاشتن ده‌ها breakpoint و گم شدن بینشان؛ یکی نزدیک محل مشکوک بگذار و با Step جلو برو.",
+      "اجرای برنامه با `dart run` معمولی و تعجب از کار نکردن breakpoint؛ باید در حالت Debug (`F5`) اجرا شود.",
+      "Step Into در کد packageها و خود Flutter و گم شدن در آن؛ روی کدی که مال تو نیست Step Over بزن."
+     ],
+     "bestPractices": [
+      "برای باگ‌هایی که در حلقه تکرار می‌شوند، breakpoint شرطی بگذار نه ایستادن در هر دور.",
+      "به‌جای `print` موقت از Logpoint استفاده کن؛ پیام را بدون تغییر کد و بدون توقف چاپ می‌کند.",
+      "در پنل Watch عبارت‌هایی مثل `order.items.length` اضافه کن تا در هر قدم تغییرشان را ببینی."
+     ],
+     "relatedTerms": [
+      "debugging",
+      "unit-test"
+     ],
+     "tryIt": "مثال `applyDiscount` را در VS Code باز کن، روی خط `return` breakpoint با شرط `percent > 100` بگذار و با `F5` اجرا کن. باید فقط یک بار (برای `150`) بایستد. مقدار `total` را در پنل Variables ببین، بعد با `RangeError.checkValueInInterval` جلوی درصد نامعتبر را بگیر."
+    },
+    {
+     "title": "Logging اصولی",
+     "estimatedMinutes": 25,
+     "what": "لاگ جعبه‌سیاه هواپیماست: وقتی کاربری در شیراز می‌گوید «پرداخت گیر کرد»، تو آنجا نیستی و فقط لاگ‌ها می‌گویند چه شد. لاگ خوب سطح دارد (debug، info، warning، error)، زمینه دارد (کدام سفارش، کدام درخواست) و قابل جست‌وجوست.\n\nدر Flutter به‌جای `print` از `debugPrint` یا `log` در `dart:developer` استفاده کن؛ `log` نام و سطح می‌گیرد و خطا و stack trace را هم در DevTools نشان می‌دهد.",
+     "why": "`print('here')` و `print('here2')` در production نه اطلاعاتی می‌دهد و نه جست‌وجوپذیر است، و ممکن است شماره کارت یا توکن کاربر را در لاگ دستگاه بریزد. لاگ ساختاریافته با سطح مناسب، زمان پیدا کردن باگ‌های دنیای واقعی را از روز به دقیقه می‌رساند.",
+     "simpleExample": {
+      "language": "dart",
+      "code": "import 'dart:developer' as dev;\n\nvoid pay(String orderId, int amount) {\n  dev.log('pay started order=$orderId amount=$amount', name: 'payment');\n  try {\n    if (amount <= 0) throw ArgumentError.value(amount, 'amount');\n    dev.log('pay ok order=$orderId', name: 'payment');\n  } catch (e, st) {\n    dev.log('pay failed order=$orderId',\n        name: 'payment', level: 1000, error: e, stackTrace: st);\n  }\n}\n\nvoid main() {\n  pay('A-1024', 350000);\n  pay('A-1025', 0);\n}",
+      "explanation": "`name` دسته‌ی لاگ است و `level: 1000` یعنی خطای جدی (هم‌ارز SEVERE). `error` و `stackTrace` کنار پیام ثبت می‌شوند. این لاگ‌ها در Debug Console و تب Logging در DevTools دیده می‌شوند، نه در `dart run` ساده."
+     },
+     "realExample": {
+      "language": "dart",
+      "code": "enum Level { debug, info, warning, error }\n\nclass AppLogger {\n  AppLogger(this.tag, {this.minLevel = Level.info, this.sink = print});\n  final String tag;\n  final Level minLevel;\n  final void Function(String line) sink;\n  static final _card = RegExp(r'\\b(\\d{4})\\d{8}(\\d{4})\\b');\n  static final _mobile = RegExp(r'\\b(09\\d{2})\\d{4}(\\d{3})\\b');\n\n  String _redact(String m) => m\n      .replaceAllMapped(_card, (x) => '${x[1]}********${x[2]}')\n      .replaceAllMapped(_mobile, (x) => '${x[1]}****${x[2]}');\n\n  void _write(Level level, String message, [Object? error]) {\n    if (level.index < minLevel.index) return;\n    final time = DateTime.now().toIso8601String().substring(11, 19);\n    final err = error == null ? '' : ' | $error';\n    sink('$time ${level.name.toUpperCase()} [$tag] ${_redact(message)}$err');\n  }\n\n  void debug(String m) => _write(Level.debug, m);\n  void info(String m) => _write(Level.info, m);\n  void error(String m, Object e) => _write(Level.error, m, e);\n}\n\nvoid main() {\n  final log = AppLogger('payment');\n  log.debug('raw gateway response ...'); // below minLevel: dropped\n  log.info('pay start card=1234567812345678 mobile=09121234567');\n  log.error('pay failed order=A-1025', StateError('gateway timeout'));\n}",
+      "explanation": "لاگ debug چون زیر `minLevel` است حذف می‌شود. شماره کارت و موبایل قبل از ثبت ماسک می‌شوند: `card=1234********5678 mobile=0912****567`. خطا هم کنار پیام با زمان و برچسب ثبت می‌شود."
+     },
+     "mistakes": [
+      "لاگ کردن شماره کارت، رمز یکبارمصرف یا توکن؛ لاگ‌ها به دست افراد زیادی می‌رسند. قبل از ثبت ماسک کن.",
+      "`print` در حلقه‌های پرتکرار یا متد `build`؛ هم کند است و هم کنسول را غیرقابل خواندن می‌کند.",
+      "`catch (e)` بدون ثبت stack trace؛ می‌دانی چه خطایی رخ داد ولی نمی‌دانی کجا. `catch (e, st)` بنویس."
+     ],
+     "bestPractices": [
+      "هر لاگ زمینه داشته باشد: شناسه‌ی سفارش یا درخواست، تا بتوانی مسیر یک کاربر را دنبال کنی.",
+      "در نسخه‌ی release فقط `warning` و `error` را نگه دار؛ لاگ debug را با `kDebugMode` یا `minLevel` خاموش کن.",
+      "خطاهای production را به یک سرویس گزارش کرش بفرست؛ لاگ روی گوشی کاربر هیچ‌وقت به دستت نمی‌رسد."
+     ],
+     "relatedTerms": [
+      "debugging",
+      "code-review"
+     ],
+     "tryIt": "به `AppLogger` متد `warning` اضافه کن و کاری کن کد ملی ۱۰ رقمی هم ماسک شود (`001****679`). با `minLevel: Level.warning` بساز و نشان بده `info` چاپ نمی‌شود ولی `warning('national=0012345679')` با کد ملی ماسک‌شده چاپ می‌شود."
+    },
+    {
+     "title": "Flutter DevTools",
+     "estimatedMinutes": 30,
+     "what": "DevTools جعبه‌ابزار پزشکی اپ Flutter است: Widget Inspector درخت ویجت را نشان می‌دهد، Performance فریم‌های کند را قرمز می‌کند، CPU Profiler می‌گوید وقت کجا صرف شده، Memory نشت حافظه را پیدا می‌کند و Network درخواست‌های HTTP را فهرست می‌کند.\n\nاز VS Code یا Android Studio باز می‌شود. برای اندازه‌گیری کارایی، اپ را در حالت profile و روی گوشی واقعی اجرا کن، نه در حالت debug.",
+     "why": "«اپ کند است» گزارش مبهمی است. بدون اندازه‌گیری، ساعت‌ها کدی را بهینه می‌کنی که مشکل نبوده. DevTools دقیقاً نشان می‌دهد کدام ویجت بی‌دلیل rebuild می‌شود یا کدام تابع ۲۰۰ میلی‌ثانیه رشته‌ی اصلی را قفل کرده است.",
+     "simpleExample": {
+      "language": "bash",
+      "code": "# Debug mode: Inspector, logs, breakpoints (slow; don't measure speed here)\nflutter run\n\n# Profile mode: realistic performance numbers (use a real device)\nflutter run --profile\n\n# Inside the running `flutter run` terminal, press:\n#   v  -> open DevTools in the browser\n#   P  -> toggle the performance overlay\n#   r  -> hot reload",
+      "explanation": "حالت debug چند برابر کندتر است و عددهایش گمراه‌کننده‌اند؛ برای Performance و CPU Profiler همیشه `--profile` روی گوشی واقعی. کلید `v` در ترمینال `flutter run` مستقیم DevTools را باز می‌کند."
+     },
+     "realExample": {
+      "language": "dart",
+      "code": "import 'dart:developer';\nimport 'package:flutter/material.dart';\n\nclass ProductList extends StatelessWidget {\n  const ProductList({super.key, required this.prices});\n  final List<int> prices;\n\n  List<int> _sortedPrices() {\n    // Appears as a named block in DevTools > Performance timeline.\n    return Timeline.timeSync('sort prices', () => [...prices]..sort());\n  }\n\n  @override\n  Widget build(BuildContext context) {\n    final sorted = _sortedPrices(); // runs on every rebuild: jank suspect\n    return ListView.builder(\n      itemCount: sorted.length,\n      itemBuilder: (context, i) => ListTile(title: Text('${sorted[i]} تومان')),\n    );\n  }\n}\n\nvoid main() {\n  final prices = List.generate(200000, (i) => (i * 7919) % 1000000);\n  runApp(MaterialApp(home: Scaffold(body: ProductList(prices: prices))));\n}",
+      "explanation": "`Timeline.timeSync` برچسبی در timeline تب Performance می‌گذارد تا ببینی مرتب‌سازی چند میلی‌ثانیه از فریم را می‌گیرد. اگر بیشتر از حدود ۱۶ میلی‌ثانیه بود، آن را از `build` بیرون ببر و یک بار حساب کن."
+     },
+     "mistakes": [
+      "اندازه‌گیری کارایی در حالت debug یا روی شبیه‌ساز؛ عددها چند برابر بدتر از واقعیت‌اند و به نتیجه‌ی غلط می‌رسی.",
+      "بهینه‌سازی حدسی قبل از profile؛ مثلاً `const` همه‌جا، وقتی گلوگاه واقعی parse یک JSON سنگین است.",
+      "نادیده گرفتن تب Memory؛ Controller یا StreamSubscriptionی که dispose نشده حافظه را آرام‌آرام پر می‌کند."
+     ],
+     "bestPractices": [
+      "قبل و بعد از هر بهینه‌سازی عدد بگیر (مثلاً زمان فریم در Performance) و مقایسه کن.",
+      "در DevTools شمارش rebuild ویجت‌ها را روشن کن تا ویجت‌هایی که بی‌دلیل rebuild می‌شوند پیدا شوند.",
+      "کارهای مشکوک را با `Timeline.timeSync` برچسب بزن تا در timeline راحت پیدایشان کنی."
+     ],
+     "relatedTerms": [
+      "performance-profiling",
+      "debugging",
+      "widget-lifecycle"
+     ],
+     "tryIt": "مثال `ProductList` را با `flutter run --profile` روی گوشی اجرا کن، DevTools را باز کن و زمان برچسب `sort prices` را در تب Performance یادداشت کن. بعد مرتب‌سازی را به `initState` یک StatefulWidget ببر و نشان بده دیگر در هر rebuild تکرار نمی‌شود."
+    }
+   ]
+  },
+  {
+   "course": "pro-400",
+   "lessons": [
+    {
+     "title": "نوشتن Pull Request خوب",
+     "estimatedMinutes": 30,
+     "what": "Pull Request درخواستی است که می‌گوید «این تغییرها را بررسی کنید و وارد `main` کنید». PR خوب مثل بسته‌ای مرتب است: کوچک، با عنوان روشن، توضیح «چرا»، روش تست و در صورت نیاز اسکرین‌شات.\n\nقاعده‌ی طلایی: یک PR، یک هدف. رفع باگ مالیات و تغییر رنگ دکمه‌ها دو PR جدا هستند.",
+     "why": "PR هزارخطی را هیچ‌کس واقعاً بازبینی نمی‌کند؛ فقط Approve می‌زنند و باگ رد می‌شود. PR کوچک و توضیح‌دار سریع‌تر بررسی و merge می‌شود، conflict کمتری می‌خورد و اگر مشکلی داشت برگرداندنش ساده است.",
+     "simpleExample": {
+      "language": "markdown",
+      "code": "## چه چیزی عوض شد؟\nنرخ مالیات بر ارزش افزوده از ۹٪ به ۱۰٪ رسید و گرد کردن مالیات به نزدیک‌ترین تومان اصلاح شد.\n\n## چرا؟\nجمع فاکتورها گاهی ۱ تومان با گزارش حسابداری فرق داشت (issue #212).\n\n## چطور تست کنم؟\n1. `flutter test test/invoice_test.dart`\n2. سبدی با ۳ کالای ۳۳٬۳۳۳ تومانی بساز؛ مالیات باید `10000` باشد.\n\n## چک‌لیست\n- [x] تست تازه برای گرد کردن اضافه شد\n- [x] `dart analyze` بدون هشدار\n- [ ] اسکرین‌شات (تغییر UI ندارد)",
+      "explanation": "این قالب را در تنظیمات مخزن به‌عنوان قالب PR بگذار تا هر PR خودکار با آن شروع شود. «چطور تست کنم؟» مهم‌ترین بخش است: بازبین بدون حدس زدن می‌تواند تغییر را امتحان کند."
+     },
+     "realExample": {
+      "language": "bash",
+      "code": "# A 40-file branch mixes a VAT fix and a UI redesign. Split it.\ngit switch main && git pull\ngit switch -c fix/vat-rounding\n\n# Bring only the VAT files from the big branch\ngit restore --source feature/big-mess -- lib/tax.dart test/tax_test.dart\ngit add lib/tax.dart test/tax_test.dart\ngit commit -m \"Fix VAT rounding to nearest Toman\"\n\n# Self-review before asking anyone else\ngit diff main...HEAD --stat      # how big is this PR?\ngit diff main...HEAD             # read it like a reviewer would\ndart analyze && flutter test\n\ngit push -u origin fix/vat-rounding\n# Open the PR and fill in the template; the redesign gets its own PR.",
+      "explanation": "`git restore --source` فقط فایل‌های مالیات را از branch شلوغ می‌آورد. `main...HEAD` (سه نقطه) فقط تغییرهای branch تو از نقطه‌ی جدا شدن را نشان می‌دهد. قبل از درخواست بازبینی، خودت یک بار کامل بخوانش."
+     },
+     "mistakes": [
+      "PR با عنوان `fix` و توضیح خالی؛ بازبین باید از روی کد حدس بزند مشکل چه بوده است.",
+      "مخلوط کردن refactor، فرمت‌بندی و رفع باگ در یک PR؛ تغییر اصلی زیر صدها خط بی‌ربط گم می‌شود.",
+      "درخواست بازبینی قبل از خواندن diff توسط خودت؛ `print`های موقت و کد کامنت‌شده جا می‌مانند."
+     ],
+     "bestPractices": [
+      "PR را زیر حدود ۴۰۰ خط تغییر نگه دار؛ کار بزرگ را به چند PR پشت سر هم بشکن.",
+      "برای تغییر UI اسکرین‌شات قبل و بعد بگذار؛ از صد خط توضیح گویاتر است.",
+      "اگر PR هنوز آماده نیست، آن را Draft باز کن تا زود بازخورد بگیری و کسی اشتباهی merge نکند."
+     ],
+     "relatedTerms": [
+      "pull-request",
+      "code-review",
+      "git-branch"
+     ],
+     "tryIt": "برای افزودن اعتبارسنجی کد ملی به فرم ثبت‌نام یک PR (یا فایل `PR.md`) بنویس: عنوان زیر ۶۰ حرف، بخش‌های چه/چرا/چطور تست کنم، دست‌کم ۲ کد ملی معتبر و نامعتبر برای تست، و خروجی `git diff main...HEAD --stat` با کمتر از ۱۰ فایل."
+    },
+    {
+     "title": "بازبینی سازنده‌ی کد",
+     "estimatedMinutes": 30,
+     "what": "بازبینی کد بازجویی نیست؛ دو جفت چشم روی یک متن است تا باگ، نقص طراحی یا کد نامفهوم پیش از رسیدن به کاربر پیدا شود. نقد روی کد است نه نویسنده: «این تابع null را چک نمی‌کند» به‌جای «حواست نبود».\n\nنظر خوب مشخص است، دلیل دارد و اولویتش روشن است: اجباری (باگ، امنیت) یا پیشنهادی (`nit:` برای سلیقه‌ای‌ها).",
+     "why": "نظر مبهم مثل «این خوب نیست» فقط وقت می‌گیرد و نویسنده را دلخور می‌کند. نظر تند باعث می‌شود اعضای تازه‌کار دیگر PR کوچک نفرستند و کار را پنهان کنند. بازبینی سازنده هم کیفیت را بالا می‌برد و هم دانش را در تیم پخش می‌کند.",
+     "simpleExample": {
+      "language": "text",
+      "code": "بد:  این کد بد است.\nخوب: `total` این‌جا `double` است و برای ۰٫۱ + ۰٫۲ خطای گرد کردن می‌دهد.\n     پیشنهاد: مبلغ را `int` تومان نگه داریم. نظرت چیست؟\n\nبد:  چرا این‌طوری نوشتی؟!\nخوب: question: اگر `mobile` خالی باشد این regex چه برمی‌گرداند؟ تستی داریم؟\n\nبد:  اسم متغیر افتضاح است.\nخوب: nit: `d` را `discountPercent` کنیم؟ (اجباری نیست)\n\nخوب: praise: جدا کردن `VatCalculator` تست‌نویسی را خیلی ساده کرد.",
+      "explanation": "نظرهای خوب مشکل را دقیق نام می‌برند، دلیل می‌آورند و به‌جای دستور، پیشنهاد یا سؤال مطرح می‌کنند. برچسب‌هایی مثل `nit:` و `praise:` اولویت را روشن می‌کنند و تشویق کار خوب هم بخشی از بازبینی است."
+     },
+     "realExample": {
+      "language": "dart",
+      "code": "// PR \"Add wallet top-up\": review comments are marked REVIEW.\nclass WalletService {\n  int balance = 0; // REVIEW(blocking): public and mutable; make it private.\n\n  void topUp(String amountText) {\n    final amount = int.parse(amountText);\n    // REVIEW(blocking): int.parse throws on 'abc'. Use tryParse + error.\n    balance += amount;\n    // REVIEW(question): what if amount <= 0? Is there a daily limit?\n    print('balance: $balance'); // REVIEW(nit): use the app logger.\n  }\n}\n\n// Version after the review:\nclass WalletServiceFixed {\n  static const maxTopUp = 50000000; // Toman\n  int _balance = 0;\n  int get balance => _balance;\n\n  /// Returns an error message, or null on success.\n  String? topUp(String amountText) {\n    final amount = int.tryParse(amountText.trim());\n    if (amount == null) return 'مبلغ نامعتبر است';\n    if (amount <= 0 || amount > maxTopUp) return 'مبلغ خارج از محدوده است';\n    _balance += amount;\n    return null;\n  }\n}",
+      "explanation": "هر نظر برچسب اولویت دارد: `blocking` باید پیش از merge حل شود، `question` جواب می‌خواهد و `nit` اختیاری است. نسخه‌ی بعد از بازبینی نشان می‌دهد نظرها چطور به کد امن‌تر و تست‌پذیرتر می‌رسند."
+     },
+     "mistakes": [
+      "بحث طولانی درباره‌ی فاصله و ترتیب import؛ این کار `dart format` و lint است، نه بازبین انسانی.",
+      "Approve کردن PR بزرگ بعد از نگاه سطحی به دو فایل؛ اگر وقت نداری، صادقانه بگو یا فقط بخشی را بازبینی کن.",
+      "نظر بدون پیشنهاد جایگزین مثل «این اشتباه است»؛ نویسنده نمی‌داند چه کند و رفت‌وبرگشت زیاد می‌شود."
+     ],
+     "bestPractices": [
+      "اول توضیح PR را بخوان تا هدف را بفهمی، بعد سراغ جزئیات خط‌به‌خط برو.",
+      "بازبینی را ظرف یک روز کاری انجام بده؛ PR منتظرمانده یعنی branch کهنه و conflict.",
+      "وقتی بحثی بیش از دو بار رفت‌وبرگشت شد، پنج دقیقه تماس بگیر؛ متن لحن را بد منتقل می‌کند."
+     ],
+     "relatedTerms": [
+      "code-review",
+      "pull-request"
+     ],
+     "tryIt": "کلاس `WalletServiceFixed` را بازبینی کن و دست‌کم ۳ نظر با برچسب (`blocking`، `question`، `nit`) بنویس که هر کدام مشکل، دلیل و پیشنهاد داشته باشد، به‌علاوه‌ی یک `praise`. راهنما: `topUp('۵۰۰۰۰')` الان «مبلغ نامعتبر است» می‌دهد؛ درستش کن و تست بنویس."
+    },
+    {
+     "title": "چک‌لیست بازبینی و فرهنگ بازخورد",
+     "estimatedMinutes": 30,
+     "what": "خلبان‌ها با هزاران ساعت پرواز هم پیش از بلند شدن چک‌لیست می‌خوانند، چون حافظه در روزهای شلوغ خطا می‌کند. چک‌لیست بازبینی همین است: چند سؤال ثابت درباره‌ی درستی، خوانایی، تست، امنیت و کارایی.\n\nفرهنگ بازخورد یعنی تیم قواعد مشترک دارد: همه بازبینی می‌شوند (حتی مدیر فنی)، کارهای ماشینی به CI سپرده می‌شود و انسان روی منطق و طراحی تمرکز می‌کند.",
+     "why": "بدون چک‌لیست هر بازبین فقط چیزی را می‌بیند که آن روز به ذهنش رسیده؛ یکی فقط اسم‌ها را می‌بیند و دیگری هیچ‌وقت امنیت را. بدون فرهنگ مشترک هم بازبینی به دعوای شخصی یا تأیید تشریفاتی تبدیل می‌شود.",
+     "simpleExample": {
+      "language": "markdown",
+      "code": "## چک‌لیست بازبینی (اپ فروشگاه)\n\n### درستی\n- [ ] حالت‌های مرزی: لیست خالی، `null`، مبلغ صفر یا منفی\n- [ ] پول با `int` تومان، نه `double`\n\n### تست\n- [ ] باگ رفع‌شده تست دارد و تست‌ها بدون شبکه‌ی واقعی اجرا می‌شوند\n\n### امنیت\n- [ ] توکن، شماره کارت یا کد ملی در لاگ نیست\n- [ ] ورودی کاربر پیش از استفاده اعتبارسنجی می‌شود\n\n### Flutter\n- [ ] Controller و StreamSubscription در `dispose` بسته می‌شوند\n- [ ] بعد از `await`، پیش از استفاده از `context`، `context.mounted` چک می‌شود",
+      "explanation": "چک‌لیست را کوتاه و مخصوص پروژه نگه دار؛ ده سؤال کلیدی بهتر از پنجاه سؤالی است که کسی نمی‌خواند. هر وقت باگی از بازبینی رد شد، سؤالی برایش اضافه کن."
+     },
+     "realExample": {
+      "language": "yaml",
+      "code": "# CI workflow: machines check style and tests, humans check logic.\nname: PR checks\non: pull_request\n\njobs:\n  checks:\n    runs-on: ubuntu-latest\n    steps:\n      - uses: actions/checkout@v4\n      - uses: subosito/flutter-action@v2\n        with:\n          channel: stable\n      - run: flutter pub get\n      - run: dart format --output=none --set-exit-if-changed .\n      - run: flutter analyze\n      - run: flutter test",
+      "explanation": "هر PR خودکار فرمت، analyzer و تست را چک می‌کند و اگر یکی شکست بخورد merge ممکن نیست. این‌طوری بازبین انسانی وقتش را صرف فاصله و ویرگول نمی‌کند و روی منطق، طراحی و امنیت تمرکز می‌کند."
+     },
+     "mistakes": [
+      "چک‌لیست پنجاه‌مورده‌ی عمومی که کسی نمی‌خواند؛ آن را کوتاه و مخصوص ریسک‌های پروژه‌ی خودت نگه دار.",
+      "معاف کردن ارشدها از بازبینی؛ پیام می‌دهد بازبینی تنبیه است نه ابزار کیفیت، و باگ‌های آن‌ها هم رد می‌شود.",
+      "استفاده از آمار بازبینی (تعداد نظر یا رد) برای ارزیابی افراد؛ همه محافظه‌کار و ساکت می‌شوند."
+     ],
+     "bestPractices": [
+      "هر چیزی که ماشین می‌تواند چک کند (فرمت، lint، تست) را به CI بسپار و merge را به سبز بودنش مشروط کن.",
+      "بعد از هر باگ جدی در production یک سؤال مرتبط به چک‌لیست اضافه کن.",
+      "اعضای تازه‌کار را هم بازبین کن؛ خواندن کد دیگران سریع‌ترین راه یادگرفتن پروژه است."
+     ],
+     "relatedTerms": [
+      "code-review",
+      "ci-cd",
+      "pull-request"
+     ],
+     "tryIt": "برای پروژه‌ی «حساب‌کتاب» یا اپ خودت چک‌لیستی ۸ تا ۱۰ سؤالی بنویس که دست‌کم یک سؤال درباره‌ی پول، یکی امنیت و یکی تست داشته باشد. با آن یک PR واقعی (خودت یا هم‌کلاسی) را بازبینی کن و تعداد مواردی را که پیدا کردی یادداشت کن."
+    }
+   ]
+  },
+  {
+   "course": "pro-500",
+   "lessons": [
+    {
+     "title": "تصمیم‌گیری فنی و Trade-off",
+     "estimatedMinutes": 30,
+     "what": "در مهندسی تقریباً هیچ‌وقت «بهترین» راه‌حل نداریم؛ فقط معامله (trade-off) داریم. مثل انتخاب بین تاکسی و مترو: یکی سریع‌تر و گران‌تر، دیگری ارزان‌تر ولی با پیاده‌روی. انتخاب بین Riverpod و BLoC یا REST و WebSocket هم همین است.\n\nرهبر فنی گزینه‌ها را کنار هم می‌گذارد، معیارها را با تیم وزن می‌دهد (سرعت تحویل، مهارت تیم، هزینه، ریسک) و تصمیم برگشت‌پذیر را سریع و تصمیم برگشت‌ناپذیر را با دقت می‌گیرد.",
+     "why": "تصمیمی که بر اساس «مد روز» یا سلیقه‌ی شخصی گرفته شود، ماه‌ها بعد با هزینه‌ی سنگین پس گرفته می‌شود. اگر معیارها روشن نباشند، جلسه‌ها به بحث بی‌پایان تبدیل می‌شوند و تیم به تصمیم نهایی باور ندارد.",
+     "simpleExample": {
+      "language": "markdown",
+      "code": "## تصمیم: مدیریت state در اپ سفارش غذا\n\n| معیار (وزن)              | Provider | Riverpod | BLoC |\n|--------------------------|----------|----------|------|\n| آشنایی تیم (3)           | 5        | 3        | 2    |\n| تست‌پذیری (2)            | 3        | 5        | 5    |\n| مقیاس برای ۲۰ صفحه (2)   | 2        | 4        | 5    |\n| سرعت تحویل MVP (3)       | 5        | 4        | 2    |\n| **جمع وزنی**             | **40**   | **39**   | **32** |",
+      "explanation": "جدول وزن‌دار تصمیم را شفاف می‌کند، نه خودکار: Provider و Riverpod تقریباً مساوی‌اند، پس بحث باید روی آینده‌ی اپ باشد. ارزش جدول این است که گفت‌وگو را از «من دوست دارم» به معیارها می‌برد."
+     },
+     "realExample": {
+      "language": "markdown",
+      "code": "## Spike: WebSocket یا polling برای وضعیت سفارش؟ (حداکثر ۲ روز)\n\nسؤال: آیا WebSocket روی اینترنت موبایل کاربران ما پایدار است؟\n\nآزمایش:\n- نمونه‌ی ساده با هر دو روش، ۵۰ کاربر آزمایشی در ۳ شهر\n- اندازه‌گیری: تأخیر به‌روزرسانی، مصرف باتری در ۱ ساعت، درصد قطعی\n\nمعیار تصمیم (پیش از آزمایش توافق شده):\n- قطعی WebSocket کمتر از ۲٪ و باتری حداکثر ۱۰٪ بیشتر → WebSocket\n- در غیر این صورت → polling هر ۱۵ ثانیه\n\nبرگشت‌پذیری: بالا؛ هر دو پشت interface `OrderStatusSource` هستند.",
+      "explanation": "به‌جای بحث نظری، یک آزمایش زمان‌دار (spike) با معیار موفقیتِ از قبل توافق‌شده تعریف شده است. چون هر دو روش پشت یک interface هستند، تصمیم برگشت‌پذیر است و می‌شود سریع گرفتش."
+     },
+     "mistakes": [
+      "انتخاب فناوری چون «همه دارند استفاده می‌کنند»، بدون سنجیدن با مهارت تیم و نیاز واقعی پروژه.",
+      "یک اندازه دقت برای همه‌ی تصمیم‌ها؛ اسم پوشه‌ها یک هفته بحث نمی‌خواهد، ولی انتخاب دیتابیس می‌خواهد.",
+      "تعیین معیار بعد از دیدن نتیجه؛ معیارها ناخودآگاه طوری چیده می‌شوند که گزینه‌ی دلخواه ببرد."
+     ],
+     "bestPractices": [
+      "بپرس «برگرداندن این تصمیم چقدر هزینه دارد؟»؛ برگشت‌پذیرها را سریع بگیر، بقیه را با آزمایش.",
+      "پیش از جلسه گزینه‌ها و معیارها را کتبی بفرست تا جلسه صرف تصمیم شود نه توضیح.",
+      "اگر تیم به توافق نرسید، تصمیم‌گیرنده را از قبل مشخص کن و بخواه همه «مخالفت کنند ولی متعهد بمانند»."
+     ],
+     "relatedTerms": [
+      "state-management",
+      "scalability",
+      "technical-debt"
+     ],
+     "tryIt": "برای ذخیره‌ی آفلاین سبد خرید، بین `shared_preferences` و یک دیتابیس محلی جدول وزن‌دار با دست‌کم ۴ معیار بساز و جمع وزنی را حساب کن. در ۳ جمله بنویس این تصمیم چقدر برگشت‌پذیر است و چه چیزی نظرت را عوض می‌کند."
+    },
+    {
+     "title": "مستندسازی تصمیم با ADR",
+     "estimatedMinutes": 25,
+     "what": "ADR (Architecture Decision Record) صورت‌جلسه‌ی کوتاه یک تصمیم معماری است: چه تصمیمی، در چه شرایطی، با چه گزینه‌هایی و با چه پیامدی. مثل شناسنامه‌ی تصمیم که کنار کد در مخزن (مثلاً `docs/adr/`) می‌ماند.\n\nهر ADR شماره و وضعیت دارد: پیشنهادی، پذیرفته، منسوخ یا جایگزین‌شده. متن ADR پذیرفته عوض نمی‌شود؛ اگر نظر تیم تغییر کرد، ADR تازه می‌نویسی.",
+     "why": "یک سال بعد عضو تازه می‌پرسد «چرا BLoC؟» و کسی یادش نیست. یا بدتر، تیم تصمیمی را که دلیل خوبی داشت دوباره بحث و عوض می‌کند. ADR حافظه‌ی تیم است و تصمیم‌ها را از ذهن افراد به مخزن منتقل می‌کند.",
+     "simpleExample": {
+      "language": "markdown",
+      "code": "# ADR-0007: نگه‌داری مبالغ با int تومان\n\n- وضعیت: پذیرفته‌شده\n- تاریخ: 1405-06-12\n- تصمیم‌گیرندگان: رضا (مدیر فنی)، مریم، علی\n\n## زمینه\nمبالغ با `double` ذخیره می‌شد و فاکتورها ۱ تا ۲ تومان خطای گرد کردن داشتند.\n\n## گزینه‌ها\n- `double` با `round()` در هر محاسبه: رد شد، خطا را پنهان می‌کند.\n- `int` تومان: پذیرفته شد.\n\n## پیامدها\n+ جمع و مالیات دقیق و قابل تست می‌شود.\n- نسخه‌ی ۲ API لازم است؛ کلاینت‌های قدیمی ۳ ماه پشتیبانی می‌شوند.",
+      "explanation": "ADR کوتاه است: زمینه، گزینه‌ها، تصمیم و پیامدها. پیامد منفی هم صادقانه نوشته شده تا بعدها بدانی چه هزینه‌ای را آگاهانه پذیرفتید. شماره‌ی ترتیبی پیدا کردن و ارجاع دادن را ساده می‌کند."
+     },
+     "realExample": {
+      "language": "bash",
+      "code": "# ADRs live next to the code and go through PR review like code\ngit switch -c adr/0008-riverpod\ncp docs/adr/template.md docs/adr/0008-use-riverpod-for-state.md\n# ...write context, options, decision, consequences...\ngit add docs/adr/0008-use-riverpod-for-state.md\ngit commit -m \"ADR-0008: propose Riverpod for state management\"\ngit push -u origin adr/0008-riverpod    # open a PR and discuss there\n\n# A year later the decision changes: write ADR-0012,\n# and only update the status line of the old one.\nsed -i 's/^- وضعیت: .*/- وضعیت: جایگزین‌شده با ADR-0012/' \\\n  docs/adr/0008-use-riverpod-for-state.md\n\n# Find every decision that mentions state management\ngrep -il \"state\" docs/adr/*.md",
+      "explanation": "ADR مثل کد از PR عبور می‌کند و بحث درباره‌ی تصمیم در نظرهای بازبینی ثبت می‌شود. وقتی تصمیم عوض شد، فقط خط وضعیت ADR قدیمی تغییر می‌کند و ADR تازه دلیل تغییر را توضیح می‌دهد."
+     },
+     "mistakes": [
+      "ADR ده‌صفحه‌ای که کسی نمی‌خواند؛ یک صفحه کافی است و جزئیات را لینک کن.",
+      "نوشتن فقط گزینه‌ی برنده؛ گزینه‌های ردشده و دلیل رد، مهم‌ترین بخش برای خواننده‌ی آینده است.",
+      "ADR برای هر تصمیم کوچک مثل اسم متغیر؛ فقط تصمیم‌های پرهزینه و سخت‌برگشت معماری ADR می‌خواهند."
+     ],
+     "bestPractices": [
+      "ADR را در همان مخزن کد و از طریق PR بنویس تا با کد نسخه‌بندی و بازبینی شود.",
+      "بخش پیامدها را با مثبت‌ها و منفی‌ها بنویس؛ هزینه‌ی آگاهانه بهتر از غافلگیری است.",
+      "در هفته‌ی اول عضو تازه، خواندن ADRهای کلیدی را جزو کارهایش بگذار."
+     ],
+     "relatedTerms": [
+      "clean-architecture",
+      "technical-debt",
+      "code-review"
+     ],
+     "tryIt": "برای یکی از تصمیم‌های پروژه‌های قبلی‌ات (مثلاً انتخاب Provider یا ساختار پوشه‌ها) ADR شماره‌ی `0001` بنویس: زمینه، دست‌کم ۲ گزینه‌ی ردشده با دلیل، تصمیم، ۲ پیامد مثبت و ۱ منفی. آن را در `docs/adr/` با PR ثبت کن."
+    },
+    {
+     "title": "مدیریت بدهی فنی",
+     "estimatedMinutes": 30,
+     "what": "بدهی فنی مثل وام است: امروز برای رسیدن به جشنواره‌ی فروش، کد را سریع و ناتمیز می‌نویسی و زودتر منتشر می‌کنی. اما «سود» می‌پردازی: هر تغییر بعدی در آن بخش کندتر و پرخطرتر می‌شود.\n\nبدهی همیشه بد نیست؛ بدهی آگاهانه و ثبت‌شده ابزار کسب‌وکار است. مشکل بدهی پنهان است که کسی نمی‌داند کجاست و سودش تا روز ترکیدن جمع می‌شود.",
+     "why": "تیمی که بدهی را مدیریت نمی‌کند، کم‌کم نیمی از وقتش صرف دور زدن کد قدیمی می‌شود و قابلیتی ساده یک ماه طول می‌کشد. رهبر فنی باید بدهی را دیدنی کند و به زبان مدیر محصول، یعنی زمان و ریسک، توضیحش دهد تا وقت پرداختش گرفته شود.",
+     "simpleExample": {
+      "language": "dart",
+      "code": "// TODO(debt-142): VAT hard-coded for the sale campaign. Owner: Maryam.\n// Interest: every rate change needs a new app release.\nconst vatPercent = 10;\nint priceWithVat(int price) => price + price * vatPercent ~/ 100;\n\n// After paying the debt: the rate comes from remote config.\nclass TaxConfig {\n  final int vatPercent;\n  const TaxConfig({required this.vatPercent});\n  int apply(int price) => price + price * vatPercent ~/ 100;\n}\n\nvoid main() {\n  print(priceWithVat(450000)); // 495000\n  const config = TaxConfig(vatPercent: 10); // e.g. loaded from the server\n  print(config.apply(450000)); // 495000\n}",
+      "explanation": "بدهی ثبت‌شده شناسه، مالک و «سود» (هزینه‌ی ماندنش) دارد. نسخه‌ی دوم همان خروجی را می‌دهد ولی نرخ از تنظیمات می‌آید؛ پس تغییر نرخ دیگر به انتشار نسخه‌ی تازه‌ی اپ نیاز ندارد."
+     },
+     "realExample": {
+      "language": "markdown",
+      "code": "## فهرست بدهی فنی اپ فروشگاه (بازبینی ماهانه)\n\n| شناسه | شرح | سود (هزینه‌ی ماندن) | ریسک | تلاش | اولویت |\n|---|---|---|---|---|---|\n| D-142 | نرخ مالیات hard-code | هر تغییر = انتشار اپ | متوسط | ۱ روز | بالا |\n| D-131 | صفحه‌ی سبد خرید ۱۲۰۰ خطی | هر قابلیت سبد ۲ برابر زمان | بالا | ۵ روز | بالا |\n| D-118 | محاسبه‌ی تخفیف تست ندارد | باگ تکراری در هر جشنواره | بالا | ۲ روز | بالا |\n| D-097 | package قدیمی نمودار | فعلاً بی‌اثر | کم | ۳ روز | پایین |\n\nقاعده‌ی تیم: ۲۰٪ ظرفیت هر اسپرینت برای بدهی‌های «بالا».\n\nپیشنهاد به مدیر محصول: D-131 پیش از قابلیت «خرید اقساطی» پرداخت شود.\nبدون آن: ۴ هفته. با آن: ۱ هفته بازنویسی + ۲ هفته قابلیت.",
+      "explanation": "هر بدهی به زبان کسب‌وکار نوشته شده: «سود» یعنی چه هزینه‌ای هر روز می‌دهیم. پیشنهاد پایانی نشان می‌دهد پرداخت بدهی پیش از قابلیت تازه، کل کار را کوتاه‌تر می‌کند؛ استدلالی که مدیر محصول می‌پذیرد."
+     },
+     "mistakes": [
+      "درخواست «یک ماه فقط refactor» بدون نشان دادن سود؛ مدیر محصول ارزشش را نمی‌بیند و رد می‌کند.",
+      "`TODO` بدون مالک، شناسه یا مهلت؛ سال‌ها در کد می‌ماند و کسی مسئولش نیست.",
+      "بازنویسی کامل از صفر به‌جای پرداخت تدریجی؛ ماه‌ها قابلیت تازه نمی‌دهی و بدهی‌های جدید می‌سازی."
+     ],
+     "bestPractices": [
+      "قانون پیشاهنگ: هر بار به فایلی دست می‌زنی، کمی تمیزتر از قبل تحویلش بده.",
+      "بدهی را کنار قابلیت مرتبط پرداخت کن؛ «پیش از خرید اقساطی، سبد را بشکنیم» فروختنی‌تر است.",
+      "درصد ثابتی از هر اسپرینت (مثلاً ۱۵ تا ۲۰٪) را برای بدهی کنار بگذار تا فقط در بحران سراغش نروی."
+     ],
+     "relatedTerms": [
+      "technical-debt",
+      "clean-architecture",
+      "code-review"
+     ],
+     "tryIt": "در یکی از پروژه‌های قبلی‌ات ۴ بدهی فنی پیدا کن و جدولی مثل مثال با ستون‌های سود، ریسک، تلاش و اولویت بساز. برای مهم‌ترین مورد پیشنهادی ۳ جمله‌ای به زبان زمان و ریسک برای مدیر محصول بنویس."
+    }
+   ]
+  },
+  {
+   "course": "pro-600",
+   "lessons": [
+    {
+     "title": "منتورینگ اعضای تازه‌کار",
+     "estimatedMinutes": 30,
+     "what": "منتور خوب مثل مربی رانندگی است: فرمان را از دست شاگرد نمی‌گیرد، کنارش می‌نشیند، سؤال می‌پرسد و اجازه می‌دهد خودش تصمیم بگیرد، ولی نمی‌گذارد تصادف کند.\n\nمنتورینگ یعنی برنامه‌ی روشن ۳۰/۶۰/۹۰ روزه، جلسه‌ی یک‌به‌یک منظم، کارهای کوچک با سختی رو به افزایش و بازخورد مشخص. هدف این است که عضو تازه هرچه زودتر مستقل شود، نه وابسته به تو.",
+     "why": "عضو تازه‌کاری که رها شود، هفته‌ها روی یک مشکل گیر می‌کند و از ترس قضاوت چیزی نمی‌پرسد؛ نتیجه‌اش کد ضعیف یا استعفاست. منتورینگ خوب زمان رسیدن او به بهره‌وری را کوتاه می‌کند و دانش پروژه را از چند نفر به کل تیم پخش می‌کند.",
+     "simpleExample": {
+      "language": "markdown",
+      "code": "## برنامه‌ی ورود سارا (برنامه‌نویس Flutter تازه‌کار)\n\n### هفته‌ی ۱: راه‌اندازی و آشنایی\n- اجرای اپ روی گوشی خودش، خواندن README و ADRهای کلیدی\n- اولین PR: رفع یک باگ کوچک با برچسب `good-first-issue`\n\n### روز ۳۰: کار مستقل روی تسک کوچک\n- صفحه‌ی «سفارش‌های من» از طراحی تا merge\n\n### روز ۶۰: مالکیت یک بخش\n- مسئول بخش «کد تخفیف»؛ بازبینی PRهای کوچک دیگران\n\n### روز ۹۰: استقلال\n- تخمین و تحویل یک قابلیت متوسط با کمترین کمک\n\nجلسه‌ی یک‌به‌یک: هفته‌ای ۳۰ دقیقه، با دستور جلسه‌ای که خود سارا می‌نویسد",
+      "explanation": "برنامه، هدف هر مرحله را قابل‌سنجش می‌کند: سارا می‌داند چه انتظاری از او هست و تو می‌فهمی کجا کمک لازم است. اولین PR در همان هفته‌ی اول ترس از کد را زود می‌شکند."
+     },
+     "realExample": {
+      "language": "text",
+      "code": "سارا: سبد خرید بعد از حذف کالا به‌روز نمی‌شود.\n\nروش ۱ (جواب دادن)\nمنتور: notifyListeners را صدا بزن.\n      -> مشکل حل شد، ولی سارا چیزی یاد نگرفت.\n\nروش ۲ (سؤال راهنما)\nمنتور: وقتی کالا حذف می‌شود، ویجت از کجا می‌فهمد باید rebuild شود؟\nسارا: از Provider... شاید بعد از حذف خبر نمی‌دهیم.\nمنتور: چطور مطمئن می‌شوی؟\nسارا: یک breakpoint در removeItem می‌گذارم.\n      ... ده دقیقه بعد ...\nسارا: notifyListeners جا افتاده بود! درستش کردم و تست هم نوشتم.\nمنتور: عالی. دفعه‌ی بعد اول به چه چیزی شک می‌کنی؟",
+      "explanation": "در روش دوم منتور با سؤال مسیر فکر کردن را نشان می‌دهد نه جواب را. کمی بیشتر طول می‌کشد، اما سارا دفعه‌ی بعد خودش باگ را پیدا می‌کند. وقتی عجله است یا پای امنیت در میان است، جواب مستقیم اشکالی ندارد."
+     },
+     "mistakes": [
+      "گرفتن کیبورد و حل مشکل به‌جای شاگرد؛ سریع است، ولی فردا همان سؤال را دوباره می‌پرسد.",
+      "دادن تسک بزرگ یا مبهم در هفته‌ی اول؛ عضو تازه گم می‌شود و اعتمادبه‌نفسش را از دست می‌دهد.",
+      "بازخورد فقط در ارزیابی سالانه؛ بازخورد باید هفتگی، مشخص و نزدیک به زمان اتفاق باشد."
+     ],
+     "bestPractices": [
+      "پیش از جواب دادن بپرس «تا حالا چه چیزهایی را امتحان کردی؟» تا مسیر فکرش را ببینی.",
+      "بازخورد را مشخص بده: «تست حالت خالی در PR دیروز عالی بود»، نه «کارت خوب است».",
+      "قانون ۳۰ دقیقه بگذار: اگر ۳۰ دقیقه گیر بود بپرسد؛ نه زودتر، نه خیلی دیرتر."
+     ],
+     "relatedTerms": [
+      "code-review",
+      "debugging"
+     ],
+     "tryIt": "برای یک عضو تازه‌کار فرضی برنامه‌ی ۳۰/۶۰/۹۰ روزه با یک هدف قابل‌سنجش در هر مرحله بنویس. سپس ۵ سؤال راهنما (بدون دادن جواب) برای باگ «لیست بعد از حذف به‌روز نمی‌شود» آماده کن و با یک هم‌کلاسی تمرینش کن."
+    },
+    {
+     "title": "مصاحبه‌ی فنی از سمت مصاحبه‌کننده",
+     "estimatedMinutes": 30,
+     "what": "مصاحبه‌ی فنی خوب مثل امتحان رانندگی در خیابان است، نه آزمون حفظ آیین‌نامه: می‌خواهی ببینی داوطلب در کار واقعی چطور فکر می‌کند. سؤال «فرق `final` و `const` چیست؟» حافظه را می‌سنجد؛ «این کد چرا کند است؟» مهارت را.\n\nمصاحبه‌کننده‌ی حرفه‌ای از قبل معیارها (rubric) را مشخص می‌کند، از همه‌ی داوطلب‌ها سؤال یکسان می‌پرسد و قبل از مشورت با بقیه امتیازش را ثبت می‌کند.",
+     "why": "مصاحبه‌ی بی‌ساختار یعنی تصمیم بر اساس حس و شباهت داوطلب به خودت؛ هم آدم‌های خوب را از دست می‌دهی و هم آدم نامناسب استخدام می‌کنی. هزینه‌ی یک استخدام اشتباه چند ماه حقوق و وقت تیم است.",
+     "simpleExample": {
+      "language": "markdown",
+      "code": "## Rubric: برنامه‌نویس Flutter میانی (تمرین: صفحه‌ی لیست سفارش‌ها)\n\n| مهارت       | ۱ (ضعیف)              | ۳ (قابل‌قبول)          | ۵ (قوی)                        |\n|-------------|------------------------|------------------------|--------------------------------|\n| حل مسئله    | بی‌برنامه کد می‌زند    | مسئله را می‌شکند       | حالت‌های مرزی را خودش می‌پرسد |\n| کیفیت کد    | ویجت ۳۰۰ خطی           | ویجت‌ها را جدا می‌کند  | state و UI جدا و قابل تست     |\n| async و خطا | خطا را نادیده می‌گیرد  | loading و error دارد   | retry و لغو درخواست           |\n| ارتباط      | ساکت کار می‌کند        | فکرش را بلند می‌گوید   | trade-off را توضیح می‌دهد     |\n\nقاعده: هر امتیاز با یک مشاهده‌ی مشخص ثبت شود؛ مثلاً «لیست خالی را خودش پرسید».",
+      "explanation": "rubric از قبل می‌گوید «خوب» یعنی چه تا چند مصاحبه‌کننده با یک خط‌کش بسنجند. ثبت مشاهده‌ی مشخص کنار هر امتیاز جلوی قضاوت حسی مثل «به نظرم باهوش بود» را می‌گیرد."
+     },
+     "realExample": {
+      "language": "dart",
+      "code": "// Interview exercise (30 min): \"Review and fix this cart, think aloud.\"\n// Planted issues: money as double, empty-list crash, leaked mutable state.\nclass Cart {\n  final List<double> prices = [];\n\n  void add(double price) => prices.add(price);\n\n  double average() => prices.reduce((a, b) => a + b) / prices.length;\n\n  double total() {\n    var sum = 0.0;\n    for (final p in prices) {\n      sum += p;\n    }\n    return sum;\n  }\n}\n\nvoid main() {\n  final cart = Cart()..add(19.9)..add(19.9)..add(19.9);\n  print(cart.total()); // 59.699999999999996, not 59.7\n  cart.prices.clear(); // anyone can mutate the internals\n  print(cart.average()); // throws StateError: No element\n}",
+      "explanation": "تمرین کوتاه و شبیه کار واقعی است و مشکل‌های کاشته‌شده سطح‌های مختلف دارند: داوطلب ضعیف فقط کرش را می‌بیند و داوطلب قوی به `double` برای پول و نشت state داخلی هم اشاره می‌کند. به مسیر فکرش گوش بده."
+     },
+     "mistakes": [
+      "معمای الگوریتمی بی‌ربط به کار روزانه‌ی تیم؛ مهارت حفظ کردن را می‌سنجی نه مهندسی را.",
+      "کمک نکردن وقتی داوطلب گیر کرده؛ مصاحبه تست استرس نیست و یک راهنمایی کوچک اطلاعات بیشتری می‌دهد.",
+      "تصمیم در جلسه‌ی جمعی پیش از ثبت امتیاز فردی؛ نظر نفر اول روی بقیه اثر می‌گذارد."
+     ],
+     "bestPractices": [
+      "پنج دقیقه‌ی اول را برای آرام کردن داوطلب و توضیح ساختار مصاحبه بگذار.",
+      "همیشه ۱۰ دقیقه برای سؤال‌های داوطلب بگذار؛ مصاحبه دوطرفه است و او هم تیم را می‌سنجد.",
+      "بازخورد مکتوب را همان روز و بر اساس rubric بنویس، پیش از این‌که جزئیات فراموش شود."
+     ],
+     "relatedTerms": [
+      "code-review",
+      "debugging",
+      "unit-test"
+     ],
+     "tryIt": "برای استخدام یک برنامه‌نویس Dart تازه‌کار، تمرینی ۲۰ دقیقه‌ای با ۳ مشکل کاشته‌شده در سطح‌های مختلف طراحی کن و rubric چهارمهارتی با توصیف امتیاز ۱، ۳ و ۵ برایش بنویس. با یک هم‌کلاسی اجرایش کن و امتیاز بده."
+    },
+    {
+     "title": "مصاحبه از سمت داوطلب و رشد شغلی",
+     "estimatedMinutes": 30,
+     "what": "مصاحبه‌ی فنی از سمت داوطلب مثل دفاع از پروژه‌ی پایانی است: داوران فقط جواب نهایی را نمی‌خواهند، می‌خواهند بفهمند چطور به آن رسیدی. پس بلند فکر کن، پیش از کد زدن سؤال بپرس و trade-offها را بگو.\n\nرشد شغلی هم فقط «سال سابقه» نیست. رفتن از junior به senior یعنی از «تسک را درست انجام می‌دهم» به «مسئله را تعریف می‌کنم، دیگران را رشد می‌دهم و پیامد تصمیم‌ها را می‌بینم».",
+     "why": "خیلی از برنامه‌نویس‌های خوب در مصاحبه رد می‌شوند، چون ساکت کد می‌زنند یا سؤال را بد فهمیده‌اند. خیلی‌ها هم سال‌ها در یک سطح می‌مانند، چون نمی‌دانند سطح بعد دقیقاً چه انتظاری دارد. هر دو مهارت قابل یادگرفتن‌اند.",
+     "simpleExample": {
+      "language": "text",
+      "code": "سؤال: «از یک باگ سخت که حل کردی بگو.»\n\nS (موقعیت): در اپ فروشگاه، جمع فاکتورها گاهی ۱ تومان با حسابداری فرق داشت.\nT (وظیفه):  باید پیش از جشنواره‌ی فروش، ظرف ۳ روز علت را پیدا می‌کردم.\nA (اقدام):  باگ را با ۳ کالای ۱۹٫۹ هزار تومانی بازتولید کردم، فهمیدم مشکل\n            double است، مبالغ را به int تومان بردم و ۱۲ تست نوشتم.\nR (نتیجه):  اختلاف صفر شد و تیم این قاعده را در یک ADR ثبت کرد.",
+      "explanation": "روش STAR جواب را کوتاه و ساختارمند می‌کند. بخش «اقدام» باید درباره‌ی کار خودت باشد («من»، نه «ما») و «نتیجه» با عدد یا اثر مشخص تمام شود. سه چهار داستان این‌چنینی از قبل آماده کن."
+     },
+     "realExample": {
+      "language": "dart",
+      "code": "// Task: \"normalize Iranian mobile numbers\". Clarify first, out loud:\n// Q: Which inputs? A: '09121234567', '+989121234567', '9121234567', Persian digits.\n// Q: Invalid input? A: return null.\n// Plan: 1) Persian digits -> Latin 2) strip spaces/dashes 3) unify prefix 4) validate.\nString? normalizeMobile(String input) {\n  const fa = '۰۱۲۳۴۵۶۷۸۹';\n  var s = input;\n  for (var i = 0; i < 10; i++) {\n    s = s.replaceAll(fa[i], '$i');\n  }\n  s = s.replaceAll(RegExp(r'[\\s-]'), '');\n  if (s.startsWith('+98')) s = '0${s.substring(3)}';\n  if (s.startsWith('0098')) s = '0${s.substring(4)}';\n  if (s.length == 10 && s.startsWith('9')) s = '0$s';\n  return RegExp(r'^09\\d{9}$').hasMatch(s) ? s : null;\n}\n\nvoid main() {\n  // Test the edge cases you asked about, then mention trade-offs.\n  const inputs = ['+98 912 123 4567', '۰۹۱۲۱۲۳۴۵۶۷', '9121234567', '0912-abc'];\n  for (final input in inputs) {\n    print('$input -> ${normalizeMobile(input)}');\n  }\n}",
+      "explanation": "پیش از کد، ورودی‌ها و رفتار خطا با سؤال روشن شده و برنامه در ۴ قدم گفته شده است. در پایان هم حالت‌های مرزی تست می‌شوند: سه ورودی اول `09121234567` و آخری `null` می‌دهد. مصاحبه‌کننده همین مسیر فکر را امتیاز می‌دهد."
+     },
+     "mistakes": [
+      "شروع فوری کد زدن بدون پرسیدن درباره‌ی ورودی‌ها و حالت خطا؛ ممکن است مسئله‌ی دیگری را حل کنی.",
+      "سکوت کامل هنگام فکر کردن؛ مصاحبه‌کننده مسیر فکرت را نمی‌بیند و نمی‌تواند کمکت کند.",
+      "بزرگ‌نمایی رزومه یا ادعای مهارتی که نداری؛ با دو سؤال عمیق معلوم می‌شود و اعتماد از بین می‌رود."
+     ],
+     "bestPractices": [
+      "سه چهار داستان STAR (باگ سخت، اختلاف نظر، شکست، یادگیری سریع) از پروژه‌هایت آماده کن.",
+      "آخر مصاحبه سؤال واقعی بپرس: «بازبینی کد در تیم چطور است؟» یا «تازه‌واردها چطور شروع می‌کنند؟»",
+      "برای رشد، از مدیرت بپرس سطح بعد دقیقاً چه انتظاری دارد و هر فصل یک هدف مشخص با او تعیین کن."
+     ],
+     "relatedTerms": [
+      "debugging",
+      "unit-test",
+      "code-review"
+     ],
+     "tryIt": "`normalizeMobile` را بدون نگاه به مثال، با تایمر ۲۰ دقیقه‌ای و بلند فکر کردن حل کن و صدایت را ضبط کن. خروجی برای `'+98 912 123 4567'` باید `09121234567` باشد. بعد یک داستان STAR از پروژه‌هایت بنویس که کمتر از ۲ دقیقه طول بکشد."
+    }
+   ]
+  }
+ ]
+}

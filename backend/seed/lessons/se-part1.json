@@ -1,0 +1,763 @@
+{
+ "courses": [
+  {
+   "course": "se-101",
+   "lessons": [
+    {
+     "title": "متغیرها و انواع داده",
+     "estimatedMinutes": 20,
+     "what": "متغیر مثل ظرف‌های برچسب‌دار آشپزخانه است: روی ظرف نوشته «برنج» و داخلش فقط برنج می‌ریزی. در برنامه هم `int price = 45000;` یعنی ظرفی به اسم `price` که فقط عدد صحیح در آن جا می‌گیرد.\n\nهر متغیر در Dart یک نوع (Type) دارد: `int` برای عدد صحیح، `double` برای اعشاری، `String` برای متن و `bool` برای درست/غلط. اگر `var` بنویسی، Dart نوع را از مقدار اولیه حدس می‌زند.",
+     "why": "هر اپی که می‌شناسی، از اپ سفارش غذا تا بانک، داده نگه می‌دارد: نام کاربر، موجودی کیف پول، تعداد آیتم‌های سبد. اگر نوع را اشتباه انتخاب کنی، مثلاً شماره موبایل را `int` بگیری، صفر اولش گم می‌شود. خوبی Dart این است که خیلی از این خطاها را قبل از اجرا نشانت می‌دهد.",
+     "simpleExample": {
+      "language": "dart",
+      "code": "void main() {\n  String name = 'سارا';\n  int age = 20;\n  double gpa = 17.5;\n  bool isStudent = true;\n  var city = 'تبریز'; // inferred as String\n\n  // Phone numbers are text, not numbers\n  final String mobile = '09121234567';\n\n  print('$name، $age ساله از $city');\n  print('معدل: $gpa، دانشجو: $isStudent');\n  print('موبایل: $mobile');\n}",
+      "explanation": "چهار نوع پایه تعریف شده و `var` نوع `city` را خودش `String` تشخیص می‌دهد. شماره موبایل متن است، چون با آن حساب نمی‌کنی و صفر اولش مهم است. `$name` مقدار متغیر را وسط متن می‌گذارد."
+     },
+     "realExample": {
+      "language": "dart",
+      "code": "void main() {\n  const int deliveryFee = 25000; // toman, never changes\n  final String customer = 'رضا';\n\n  int pizzaPrice = 280000;\n  int pizzaCount = 2;\n  int drinkPrice = 35000;\n  bool hasDiscountCode = true;\n\n  int subtotal = pizzaPrice * pizzaCount + drinkPrice;\n  // ~/ is integer division: 10% discount without decimals\n  int discount = hasDiscountCode ? subtotal ~/ 10 : 0;\n  int total = subtotal - discount + deliveryFee;\n\n  print('مشتری: $customer');\n  print('جمع سفارش: $subtotal تومان'); // 595000\n  print('تخفیف: $discount تومان'); // 59500\n  print('قابل پرداخت: $total تومان'); // 560500\n}",
+      "explanation": "فاکتور ساده‌ی یک اپ سفارش غذا. `const` برای مقداری است که هیچ‌وقت عوض نمی‌شود و `final` برای مقداری که فقط یک بار تعیین می‌شود. مبلغ‌ها به تومان و با `int` هستند و `~/` تقسیم صحیح انجام می‌دهد."
+     },
+     "mistakes": [
+      "ذخیره‌ی شماره موبایل یا کد ملی در `int`؛ صفر اولشان حذف می‌شود. با این‌ها حساب نمی‌کنی، پس `String` هستند.",
+      "انتظار عدد صحیح از `/`؛ در Dart حاصل `7 / 2` همیشه `double` است (`3.5`). برای تقسیم صحیح `~/` بنویس.",
+      "جمع متن و عدد مثل `'قیمت: ' + price`؛ خطای نوع می‌دهد. بنویس `'قیمت: $price'`."
+     ],
+     "bestPractices": [
+      "اسم متغیر باید معنی‌دار باشد: `totalPrice` نه `tp` یا `x`.",
+      "هرجا مقدار عوض نمی‌شود `final` بنویس و برای ثابت‌های زمان کامپایل `const`.",
+      "مبلغ پول را به تومان و با `int` نگه دار؛ `double` در جمع‌های زیاد خطای گرد کردن دارد."
+     ],
+     "relatedTerms": [
+      "variable",
+      "immutability"
+     ],
+     "tryIt": "برنامه‌ای بنویس که قیمت سه کتاب (۲۰۰، ۱۵۰ و ۲۵۰ هزار تومان) را در متغیرهای `int` بگیرد، جمع را حساب کند و اگر جمع بیشتر از `500000` بود ۱۵٪ تخفیف بدهد. خروجی مورد انتظار: `قابل پرداخت: 510000 تومان`."
+    },
+    {
+     "title": "شرط و حلقه",
+     "estimatedMinutes": 20,
+     "what": "هر روز شرط و تکرار را اجرا می‌کنی: «اگر سنگک تمام شده بود، بربری بخر» یک شرط است و «تا نوبتت نشده، در صف نانوایی بمان» یک حلقه.\n\nدر Dart با `if` و `else` تصمیم می‌گیری و با `for` و `while` کاری را تکرار می‌کنی. `for` وقتی خوب است که تعداد تکرار معلوم است؛ `while` وقتی که فقط شرط توقف را می‌دانی.",
+     "why": "بدون شرط، برنامه نمی‌تواند به ورودی واکنش نشان دهد و رمز غلط را از درست تشخیص نمی‌دهد. بدون حلقه، برای جمع قیمت صد آیتم سبد خرید باید صد خط کد بنویسی. تقریباً هر منطقی در هر اپ، ترکیبی از همین دو ابزار است.",
+     "simpleExample": {
+      "language": "dart",
+      "code": "void main() {\n  int score = 16;\n\n  if (score >= 17) {\n    print('عالی');\n  } else if (score >= 10) {\n    print('قبول');\n  } else {\n    print('مردود');\n  }\n\n  for (int i = 1; i <= 3; i++) {\n    print('نفر $i در صف نانوایی');\n  }\n}",
+      "explanation": "`if` شرط‌ها را از بالا به پایین بررسی می‌کند و فقط اولین شرط درست اجرا می‌شود؛ اینجا «قبول». حلقه‌ی `for` سه بار اجرا می‌شود چون `i` از ۱ تا ۳ بالا می‌رود."
+     },
+     "realExample": {
+      "language": "dart",
+      "code": "void main() {\n  // Metro fare based on number of stations\n  final trips = [3, 8, 15, 22];\n  int totalFare = 0;\n\n  for (final stations in trips) {\n    int fare;\n    if (stations <= 5) {\n      fare = 5000;\n    } else if (stations <= 15) {\n      fare = 8000;\n    } else {\n      fare = 12000;\n    }\n    totalFare += fare;\n    print('$stations ایستگاه: $fare تومان');\n  }\n  print('جمع کرایه: $totalFare تومان'); // 33000\n\n  // PIN check: stop on success or when attempts run out\n  const correctPin = '4321';\n  final attempts = ['1111', '1234', '4321'];\n  int tries = 0;\n  bool loggedIn = false;\n  while (tries < attempts.length && !loggedIn) {\n    loggedIn = attempts[tries] == correctPin;\n    tries++;\n  }\n  print(loggedIn ? 'ورود موفق در تلاش $tries' : 'حساب قفل شد');\n}",
+      "explanation": "حلقه‌ی `for-in` روی سفرهای مترو می‌چرخد و با `if` کرایه‌ی هر سفر را تعیین می‌کند. حلقه‌ی `while` تا وقتی ادامه دارد که رمز درست پیدا نشده و هنوز تلاشی باقی مانده؛ خروجی: «ورود موفق در تلاش ۳»."
+     },
+     "mistakes": [
+      "حلقه‌ی بی‌پایان: اگر `tries++` را در `while` فراموش کنی، شرط هیچ‌وقت غلط نمی‌شود و برنامه گیر می‌کند.",
+      "خطای یکی بیشتر: نوشتن `i <= list.length` به‌جای `i < list.length`؛ در دور آخر `RangeError` می‌گیری.",
+      "ترتیب اشتباه شرط‌ها: اگر اول `score >= 10` را بسنجی، نمره‌ی ۱۹ هم «قبول» چاپ می‌شود و هرگز به «عالی» نمی‌رسد."
+     ],
+     "bestPractices": [
+      "شرط‌ها را از خاص به عام بچین و یک `else` برای حالت‌های پیش‌بینی‌نشده بگذار.",
+      "وقتی روی همه‌ی اعضای یک لیست کار داری، `for (final x in list)` امن‌تر از کار با اندیس است.",
+      "قبل از نوشتن هر `while` از خودت بپرس: «چه چیزی در بدنه، شرط را یک روز غلط می‌کند؟»"
+     ],
+     "relatedTerms": [
+      "variable",
+      "debugging"
+     ],
+     "tryIt": "برنامه‌ای بنویس که اعداد ۱ تا ۲۰ را چاپ کند، ولی به‌جای مضرب‌های ۳ بنویسد «نان»، به‌جای مضرب‌های ۵ «پنیر» و به‌جای مضرب‌های هر دو «نان‌وپنیر». خط پانزدهم خروجی باید «نان‌وپنیر» و خط دهم «پنیر» باشد."
+    },
+    {
+     "title": "توابع و تفکر الگوریتمی",
+     "estimatedMinutes": 25,
+     "what": "تابع مثل دستور پخت است: یک بار می‌نویسی «آب را جوش بیاور، چای بریز، ده دقیقه دم بگذار» و از آن به بعد فقط می‌گویی «چای درست کن». تابع ورودی (پارامتر) می‌گیرد و خروجی (مقدار برگشتی) می‌دهد.\n\nتفکر الگوریتمی یعنی قبل از کد زدن، مسئله را به گام‌های کوچک و دقیق بشکنی. معمولاً هر گام یک تابع می‌شود.",
+     "why": "اگر محاسبه‌ی مالیات را در پنج جای اپ کپی کنی و نرخ عوض شود، باید پنج جا را اصلاح کنی و احتمالاً یکی را جا می‌اندازی. تابع منطق را یک‌جا نگه می‌دارد، تست کردنش را ساده می‌کند و `main` را مثل یک فهرست کارها خوانا می‌کند.",
+     "simpleExample": {
+      "language": "dart",
+      "code": "int addTax(int price) {\n  return price + price * 10 ~/ 100;\n}\n\nbool isValidMobile(String mobile) =>\n    mobile.length == 11 && mobile.startsWith('09');\n\nvoid main() {\n  print(addTax(200000)); // 220000\n  print(isValidMobile('09121234567')); // true\n  print(isValidMobile('9121234567')); // false\n}",
+      "explanation": "`addTax` یک `int` می‌گیرد و `int` برمی‌گرداند. `isValidMobile` با `=>` در یک خط نوشته شده؛ این شکل کوتاه برای تابعی است که فقط یک عبارت را برمی‌گرداند."
+     },
+     "realExample": {
+      "language": "dart",
+      "code": "// Iranian national code check, broken into steps:\n// 1) format  2) weighted sum  3) compare check digit\nbool isValidNationalCode(String code) {\n  if (!RegExp(r'^\\d{10}$').hasMatch(code)) return false;\n  if (code.split('').toSet().length == 1) return false; // 1111111111\n\n  final digits = code.split('').map(int.parse).toList();\n  final checkDigit = digits[9];\n  final r = weightedSum(digits.sublist(0, 9)) % 11;\n  return r < 2 ? checkDigit == r : checkDigit == 11 - r;\n}\n\nint weightedSum(List<int> nineDigits) {\n  var sum = 0;\n  for (var i = 0; i < 9; i++) {\n    sum += nineDigits[i] * (10 - i); // weights 10..2\n  }\n  return sum;\n}\n\nvoid main() {\n  for (final c in ['0012345679', '1234567890', '12345']) {\n    print('$c: ${isValidNationalCode(c)}'); // true, false, false\n  }\n}",
+      "explanation": "الگوریتم واقعی اعتبارسنجی کد ملی: بررسی قالب، جمع وزن‌دار ۹ رقم اول و مقایسه‌ی باقی‌مانده‌ی تقسیم بر ۱۱ با رقم آخر. گام دوم تابعی جدا شده تا هم خواناتر باشد و هم جداگانه تست شود."
+     },
+     "mistakes": [
+      "تابع همه‌کاره: تابعی که هم ورودی می‌خواند، هم حساب می‌کند و هم چاپ می‌کند. هر تابع فقط یک کار.",
+      "جا انداختن `return` در یکی از مسیرها؛ برای تابعی با نوع برگشتی غیر nullable، Dart خطای کامپایل می‌دهد.",
+      "کد زدن قبل از فکر کردن: اول گام‌ها را روی کاغذ بنویس، بعد هر گام را به یک تابع تبدیل کن."
+     ],
+     "bestPractices": [
+      "اسم تابع با فعل شروع شود و کارش را بگوید: `calculateTotal`، `isValidMobile`.",
+      "تابع را خالص نگه دار: فقط از پارامترها بخواند و نتیجه را برگرداند، نه اینکه خودش چاپ کند.",
+      "وقتی پارامترها زیاد است، پارامتر نام‌دار بگیر تا صدا زدن خوانا شود: `order(price: 5000, count: 2)`."
+     ],
+     "relatedTerms": [
+      "function",
+      "variable"
+     ],
+     "tryIt": "تابع `String gradeLabel(double score)` را بنویس: ۱۷ به بالا «عالی»، ۱۲ تا زیر ۱۷ «خوب»، ۱۰ تا زیر ۱۲ «قبول» و زیر ۱۰ «مردود». آن را برای `[19, 14.5, 11, 8]` صدا بزن. خروجی مورد انتظار به ترتیب: عالی، خوب، قبول، مردود."
+    }
+   ]
+  },
+  {
+   "course": "se-110",
+   "lessons": [
+    {
+     "title": "List و آرایه در Dart",
+     "estimatedMinutes": 20,
+     "what": "لیست مثل جاکفشی کشودار است: کشوها شماره دارند (از صفر، نه یک!) و در هر کشو یک چیز می‌گذاری. در Dart نوع `List<String>` یعنی کشوهایی که فقط متن می‌گیرند.\n\nلیست ترتیب را حفظ می‌کند، عضو تکراری می‌پذیرد و با اندیس (`list[0]`) در زمان ثابت به هر عضو می‌رسی. برخلاف آرایه‌ی ثابت در زبانی مثل C، لیست معمولی Dart می‌تواند بزرگ و کوچک شود.",
+     "why": "سبد خرید، فهرست پیام‌ها، ایستگاه‌های یک خط مترو؛ هرجا چند داده‌ی هم‌نوع و مرتب داری، لیست لازم است. اگر متدهایی مثل `where`، `map` و `fold` را بلد نباشی، برای هر کار ساده یک حلقه‌ی طولانی و پرخطا می‌نویسی.",
+     "simpleExample": {
+      "language": "dart",
+      "code": "void main() {\n  final cart = <String>['نان', 'شیر', 'پنیر'];\n\n  print(cart[0]); // نان (index starts at 0)\n  print(cart.length); // 3\n\n  cart.add('چای');\n  cart.remove('شیر');\n  cart.insert(0, 'خرما');\n\n  print(cart); // [خرما, نان, پنیر, چای]\n  print(cart.contains('شیر')); // false\n  print(cart.indexOf('پنیر')); // 2\n}",
+      "explanation": "اولین عضو اندیس ۰ دارد. `add` به انتها اضافه می‌کند، `insert` در جای دلخواه و `remove` اولین عضو برابر را حذف می‌کند. بعد از حذف و درج، اندیس بقیه‌ی عضوها جابه‌جا می‌شود."
+     },
+     "realExample": {
+      "language": "dart",
+      "code": "class CartItem {\n  final String name;\n  final int price; // toman\n  final int qty;\n  const CartItem(this.name, this.price, this.qty);\n\n  int get total => price * qty;\n}\n\nvoid main() {\n  final items = [\n    const CartItem('کباب کوبیده', 320000, 2),\n    const CartItem('دوغ', 30000, 3),\n    const CartItem('سالاد شیرازی', 60000, 1),\n  ];\n\n  final sum = items.fold<int>(0, (acc, item) => acc + item.total);\n  final cheap = items.where((i) => i.price < 100000).map((i) => i.name);\n  final sorted = [...items]..sort((a, b) => b.total.compareTo(a.total));\n\n  print('جمع: $sum تومان'); // 790000\n  print('ارزان‌ها: ${cheap.toList()}'); // [دوغ, سالاد شیرازی]\n  print('گران‌ترین ردیف: ${sorted.first.name}'); // کباب کوبیده\n}",
+      "explanation": "سبد یک اپ سفارش غذا. `fold` جمع کل را حساب می‌کند، `where` فیلتر می‌کند و `map` هر آیتم را به اسمش تبدیل می‌کند. `[...items]` کپی می‌سازد تا `sort` ترتیب لیست اصلی را به‌هم نریزد."
+     },
+     "mistakes": [
+      "دسترسی به `list[list.length]`؛ آخرین اندیس `length - 1` است و این کار `RangeError` می‌دهد.",
+      "حذف عضو وسط `for-in` روی همان لیست؛ `ConcurrentModificationError` می‌گیری. به‌جایش `removeWhere` بنویس.",
+      "فراموش کردن اینکه `where` و `map` یک `Iterable` تنبل می‌دهند؛ برای اندیس یا استفاده‌ی چندباره `toList()` بزن."
+     ],
+     "bestPractices": [
+      "نوع عضوها را مشخص کن: `<String>[]`؛ لیست خالی بدون نوع (`[]`) از نوع `List<dynamic>` می‌شود.",
+      "برای لیستی که نباید تغییر کند از `const [...]` یا `List.unmodifiable` استفاده کن.",
+      "به‌جای حلقه‌ی دستی، `where`، `map`، `any` و `fold` را به کار ببر؛ کد کوتاه‌تر و خواناتر می‌شود."
+     ],
+     "relatedTerms": [
+      "collections",
+      "big-o"
+     ],
+     "tryIt": "لیست نمره‌های یک کلاس را بساز: `[18, 12.5, 9, 15, 20, 7.5]`. با متدهای لیست میانگین (با `toStringAsFixed(2)`)، تعداد مردودها (زیر ۱۰) و بالاترین نمره را چاپ کن. خروجی مورد انتظار: `13.67`، `2` و `20`."
+    },
+    {
+     "title": "Map و Set",
+     "estimatedMinutes": 20,
+     "what": "Map مثل دفترچه‌تلفن است: با اسم (کلید) شماره (مقدار) را پیدا می‌کنی، بدون ورق زدن کل دفتر. هر کلید فقط یک بار می‌آید.\n\nSet مثل دفتر حضور و غیاب است: هر اسم فقط یک بار ثبت می‌شود. Map و Set پیش‌فرض Dart بر پایه‌ی hash ساخته شده‌اند، پس پیدا کردن یک کلید یا عضو به‌طور میانگین `O(1)` است، نه `O(n)`.",
+     "why": "فرض کن باید بفهمی کد تخفیف `NOROOZ` قبلاً استفاده شده یا نه. در لیستی با صد هزار کد باید یکی‌یکی بگردی؛ در Set تقریباً بلافاصله جواب می‌گیری. Map هم ابزار اصلی شمارش، گروه‌بندی و کش کردن داده است.",
+     "simpleExample": {
+      "language": "dart",
+      "code": "void main() {\n  final prices = <String, int>{'سنگک': 8000, 'بربری': 6000};\n  prices['لواش'] = 3000; // add\n  prices['بربری'] = 7000; // update\n\n  print(prices['بربری']); // 7000\n  print(prices['تافتون']); // null: key not found\n  print(prices.containsKey('لواش')); // true\n\n  final visitors = <String>{'علی', 'سارا'};\n  visitors.add('علی'); // duplicate, ignored\n  print(visitors.length); // 2\n}",
+      "explanation": "با `map[key] = value` هم اضافه می‌کنی هم به‌روز. برای کلید ناموجود `null` برمی‌گردد، پس نوع `prices['...']` در واقع `int?` است. Set عضو تکراری را بی‌صدا نادیده می‌گیرد."
+     },
+     "realExample": {
+      "language": "dart",
+      "code": "void main() {\n  final orders = [\n    (customer: 'مریم', city: 'اصفهان', amount: 450000),\n    (customer: 'رضا', city: 'تهران', amount: 120000),\n    (customer: 'مریم', city: 'اصفهان', amount: 90000),\n    (customer: 'علی', city: 'تهران', amount: 300000),\n  ];\n\n  final salesByCity = <String, int>{};\n  final customers = <String>{};\n\n  for (final o in orders) {\n    salesByCity.update(o.city, (v) => v + o.amount,\n        ifAbsent: () => o.amount);\n    customers.add(o.customer);\n  }\n\n  print(salesByCity); // {اصفهان: 540000, تهران: 420000}\n  print('مشتری یکتا: ${customers.length}'); // 3\n\n  final usedCodes = {'NOROOZ', 'YALDA'};\n  final code = 'NOROOZ';\n  print(usedCodes.contains(code) ? 'کد قبلاً استفاده شده' : 'کد معتبر است');\n}",
+      "explanation": "هر سفارش یک Record است (قابلیت Dart ۳). `update` با `ifAbsent` اگر شهر نبود مقدار اولیه می‌گذارد و اگر بود جمع می‌زند. Set مشتری تکراری را حذف می‌کند و `contains` روی آن سریع است."
+     },
+     "mistakes": [
+      "فرض اینکه `map[key]` همیشه مقدار دارد؛ نوعش nullable است و برای کلید ناموجود `null` برمی‌گرداند.",
+      "بررسی عضویت در داده‌ی بزرگ با `List.contains` که `O(n)` است. اگر زیاد می‌پرسی، یک بار Set بساز.",
+      "نوشتن `{}` برای Set خالی؛ این یک Map است! بنویس `<String>{}`."
+     ],
+     "bestPractices": [
+      "کلید Map را از نوع ساده و تغییرناپذیر بگیر (`String`، `int`، enum)؛ شیء تغییرپذیر به‌عنوان کلید دردسر می‌سازد.",
+      "برای شمارش بنویس `counts[k] = (counts[k] ?? 0) + 1` یا از `update` با `ifAbsent` استفاده کن.",
+      "وقتی عضو تکراری معنایی ندارد و بیشتر «هست یا نیست» می‌پرسی، Set انتخاب درست است."
+     ],
+     "relatedTerms": [
+      "collections",
+      "big-o"
+     ],
+     "tryIt": "جمله‌ی `'نان و پنیر و سبزی و نان'` را با `split(' ')` بشکن و با یک Map تعداد تکرار هر کلمه را بشمار، بعد با یک Set تعداد کلمه‌های یکتا را چاپ کن. خروجی مورد انتظار: `{نان: 2, و: 3, پنیر: 1, سبزی: 1}` و عدد `4`."
+    },
+    {
+     "title": "پشته، صف و مقدمه‌ای بر Big-O",
+     "estimatedMinutes": 25,
+     "what": "صف نانوایی یک Queue است: اولین کسی که آمده، اول نان می‌گیرد (FIFO). بشقاب‌های روی هم یک Stack است: آخرین بشقابی که گذاشتی، اول برمی‌داری (LIFO).\n\nBig-O می‌گوید با بزرگ شدن ورودی، زمان اجرا چطور رشد می‌کند. `O(1)` یعنی زمان ثابت، `O(n)` یعنی متناسب با تعداد داده و `O(n²)` یعنی اگر داده دو برابر شود، زمان حدوداً چهار برابر می‌شود.",
+     "why": "دکمه‌ی «برگشت» و Undo با پشته کار می‌کنند و صف سفارش‌های آشپزخانه‌ی رستوران با Queue. Big-O کمکت می‌کند قبل از اینکه اپ با ده هزار کاربر کند شود، بفهمی کدام بخش کد مقیاس‌پذیر نیست.",
+     "simpleExample": {
+      "language": "dart",
+      "code": "import 'dart:collection';\n\nvoid main() {\n  // Stack: last in, first out\n  final history = <String>[];\n  history.add('خانه');\n  history.add('منو');\n  history.add('سبد خرید');\n  print(history.removeLast()); // سبد خرید\n\n  // Queue: first in, first out\n  final line = Queue<String>();\n  line.addAll(['علی', 'سارا', 'رضا']);\n  print(line.removeFirst()); // علی\n  print(line); // {سارا, رضا}\n}",
+      "explanation": "لیست با `add` و `removeLast` یک پشته‌ی کامل است. `Queue` از `dart:collection` برداشتن از ابتدا را `O(1)` انجام می‌دهد؛ کاری که `removeAt(0)` روی لیست با `O(n)` می‌کند."
+     },
+     "realExample": {
+      "language": "dart",
+      "code": "// O(n^2): compares every pair\nbool hasDuplicateSlow(List<String> phones) {\n  for (var i = 0; i < phones.length; i++) {\n    for (var j = i + 1; j < phones.length; j++) {\n      if (phones[i] == phones[j]) return true;\n    }\n  }\n  return false;\n}\n\n// O(n): a single pass with a Set\nbool hasDuplicateFast(List<String> phones) {\n  final seen = <String>{};\n  for (final p in phones) {\n    if (!seen.add(p)) return true; // add returns false if present\n  }\n  return false;\n}\n\nvoid main() {\n  final phones = List.generate(\n      20000, (i) => '0912${i.toString().padLeft(7, '0')}');\n\n  final sw = Stopwatch()..start();\n  print('${hasDuplicateSlow(phones)} slow: ${sw.elapsedMilliseconds} ms');\n  sw.reset();\n  print('${hasDuplicateFast(phones)} fast: ${sw.elapsedMilliseconds} ms');\n}",
+      "explanation": "هر دو تابع دنبال شماره‌ی تکراری می‌گردند. نسخه‌ی کند برای بیست هزار شماره حدود دویست میلیون مقایسه انجام می‌دهد و نسخه‌ی سریع فقط بیست هزار عملیات. اجرایش کن و فاصله‌ی زمان‌ها را ببین."
+     },
+     "mistakes": [
+      "استفاده از `list.removeAt(0)` به‌عنوان صف؛ هر بار همه‌ی عضوها جابه‌جا می‌شوند (`O(n)`). از `Queue` استفاده کن.",
+      "برداشتن از پشته‌ی خالی؛ `removeLast()` روی لیست خالی `StateError` می‌دهد. قبلش `isNotEmpty` را چک کن.",
+      "یکی گرفتن Big-O با زمان واقعی؛ `O(n)` یعنی رشد خطی، نه «n میلی‌ثانیه». روی ورودی خیلی کوچک تفاوت دیده نمی‌شود."
+     ],
+     "bestPractices": [
+      "قبل از نوشتن حلقه‌ی تودرتو روی یک داده بپرس: آیا با یک Set یا Map می‌شود `O(n)` حلش کرد؟",
+      "برای Stack از `add` و `removeLast` لیست استفاده کن؛ هر دو به‌طور میانگین `O(1)` هستند.",
+      "Big-O را با اندازه‌ی واقعی داده بسنج: صد سفارش با یک میلیون تراکنش بانکی خیلی فرق دارد."
+     ],
+     "relatedTerms": [
+      "big-o",
+      "collections"
+     ],
+     "tryIt": "با یک پشته تابع `bool isBalanced(String s)` بنویس که بررسی کند پرانتزهای `()[]{}` درست باز و بسته شده‌اند. خروجی مورد انتظار: `isBalanced('{[()]}')` برابر `true` و `isBalanced('([)]')` برابر `false`. پیچیدگی زمانی‌اش چیست؟ (`O(n)`)"
+    }
+   ]
+  },
+  {
+   "course": "se-210",
+   "lessons": [
+    {
+     "title": "جست‌وجوی خطی و دودویی",
+     "estimatedMinutes": 25,
+     "what": "دنبال اسم «مریم» در دفتر حضور و غیابی می‌گردی که مرتب نیست؟ باید از اول یکی‌یکی نگاه کنی: جست‌وجوی خطی با `O(n)`.\n\nاما در لغت‌نامه وسط کتاب را باز می‌کنی، می‌بینی کلمه قبل است یا بعد، و هر بار نصف صفحه‌ها حذف می‌شود: جست‌وجوی دودویی با `O(log n)`. شرط لازمش یک چیز است: داده باید مرتب باشد.",
+     "why": "در یک میلیون کالا که بر اساس کد مرتب شده‌اند، جست‌وجوی خطی تا یک میلیون مقایسه لازم دارد و دودویی حداکثر حدود ۲۰ مقایسه. همین تفاوت است که جست‌وجوی سریع در اپ‌های فروشگاهی و بانکی را ممکن می‌کند.",
+     "simpleExample": {
+      "language": "dart",
+      "code": "int linearSearch(List<int> items, int target) {\n  for (var i = 0; i < items.length; i++) {\n    if (items[i] == target) return i;\n  }\n  return -1; // not found\n}\n\nint binarySearch(List<int> sorted, int target) {\n  var low = 0, high = sorted.length - 1;\n  while (low <= high) {\n    final mid = (low + high) ~/ 2;\n    if (sorted[mid] == target) return mid;\n    if (sorted[mid] < target) low = mid + 1; // go right\n    if (sorted[mid] > target) high = mid - 1; // go left\n  }\n  return -1;\n}\nvoid main() => print([linearSearch([7, 3, 9], 9), binarySearch([1, 4, 8, 12, 20], 12)]); // [2, 3]",
+      "explanation": "خطی از اول تا آخر می‌رود. دودویی بازه‌ی `[low, high]` را نگه می‌دارد و هر دور وسط را با هدف مقایسه می‌کند؛ اگر هدف بزرگ‌تر بود نیمه‌ی چپ و اگر کوچک‌تر بود نیمه‌ی راست را کنار می‌گذارد."
+     },
+     "realExample": {
+      "language": "dart",
+      "code": "/// First index whose value is >= target (lower bound).\nint lowerBound(List<int> sorted, int target) {\n  var low = 0, high = sorted.length; // half-open range [low, high)\n  while (low < high) {\n    final mid = (low + high) ~/ 2;\n    if (sorted[mid] < target) {\n      low = mid + 1;\n    } else {\n      high = mid;\n    }\n  }\n  return low;\n}\n\nString hhmm(int minutes) =>\n    '${(minutes ~/ 60).toString().padLeft(2, '0')}:'\n    '${(minutes % 60).toString().padLeft(2, '0')}';\n\nvoid main() {\n  // Bus departures in minutes after midnight, already sorted\n  final departures = [360, 380, 400, 430, 465, 510, 555, 600];\n  final now = 7 * 60 + 12; // 07:12\n\n  final i = lowerBound(departures, now);\n  if (i == departures.length) {\n    print('امروز اتوبوس دیگری نیست');\n  } else {\n    print('اتوبوس بعدی: ${hhmm(departures[i])}'); // 07:45\n  }\n}",
+      "explanation": "اپ اتوبوس شهری: ساعت حرکت‌ها مرتب‌اند، پس با نسخه‌ی lower bound جست‌وجوی دودویی اولین حرکت بعد از الان پیدا می‌شود. این نسخه حتی وقتی مقدار دقیق در لیست نیست، جای درست را برمی‌گرداند."
+     },
+     "mistakes": [
+      "اجرای جست‌وجوی دودویی روی لیست نامرتب؛ خطایی نمی‌گیری، ولی جواب غلط می‌گیری.",
+      "نوشتن `low = mid` به‌جای `mid + 1` در حلقه‌ی `low <= high`؛ بازه کوچک نمی‌شود و حلقه تمام نمی‌شود.",
+      "مرتب کردن لیست قبل از هر بار جست‌وجو؛ مرتب‌سازی `O(n log n)` است و از یک جست‌وجوی خطی گران‌تر درمی‌آید."
+     ],
+     "bestPractices": [
+      "برای یک بار جست‌وجو، خطی کافی است. دودویی وقتی می‌ارزد که داده مرتب بماند و بارها جست‌وجو شود.",
+      "نوع بازه را صریح انتخاب کن (بسته `[low, high]` یا نیم‌باز `[low, high)`) و تا آخر به آن پایبند بمان.",
+      "مرزها را حتماً تست کن: لیست خالی، عضو اول، عضو آخر و مقداری که در لیست نیست."
+     ],
+     "relatedTerms": [
+      "big-o",
+      "collections"
+     ],
+     "tryIt": "`binarySearch` را طوری تغییر بده که تعداد مقایسه‌ها را بشمارد. در `List.generate(1000000, (i) => i * 2)` دنبال `1999998` بگرد و تعداد را چاپ کن. خروجی مورد انتظار: حدود ۲۰ مقایسه؛ جست‌وجوی خطی برای همین کار یک میلیون مقایسه لازم دارد."
+    },
+    {
+     "title": "الگوریتم‌های مرتب‌سازی",
+     "estimatedMinutes": 25,
+     "what": "برگ‌های بازی را در دستت مرتب می‌کنی: هر برگ جدید را برمی‌داری و در جای درستش بین برگ‌های مرتب می‌گذاری. این Insertion Sort است و در بدترین حالت `O(n²)`.\n\nالگوریتم‌های سریع‌تر مثل Merge Sort (همیشه) و Quick Sort (به‌طور میانگین) `O(n log n)` هستند. در کار واقعی از `list.sort()` خود Dart استفاده می‌کنی و کار تو نوشتن تابع مقایسه‌ی درست است.",
+     "why": "مرتب کردن بر اساس ارزان‌ترین کالا، نزدیک‌ترین راننده یا جدیدترین پیام، کار هر روز اپ‌هاست. جست‌وجوی دودویی و حذف تکراری‌ها هم روی داده‌ی مرتب ساده می‌شوند. فهم الگوریتم‌ها نشانت می‌دهد چرا صدا زدن `sort` داخل یک حلقه، اپ را کند می‌کند.",
+     "simpleExample": {
+      "language": "dart",
+      "code": "void insertionSort(List<int> a) {\n  for (var i = 1; i < a.length; i++) {\n    final current = a[i];\n    var j = i - 1;\n    // shift bigger items one step to the right\n    while (j >= 0 && a[j] > current) {\n      a[j + 1] = a[j];\n      j--;\n    }\n    a[j + 1] = current;\n  }\n}\n\nvoid main() {\n  final prices = [45000, 12000, 98000, 30000];\n  insertionSort(prices);\n  print(prices); // [12000, 30000, 45000, 98000]\n}",
+      "explanation": "بخش سمت چپ لیست همیشه مرتب است. هر دور، عضو بعدی (`current`) برداشته می‌شود، عضوهای بزرگ‌تر از آن یک خانه به راست می‌روند و `current` در جای خالی قرار می‌گیرد."
+     },
+     "realExample": {
+      "language": "dart",
+      "code": "class Restaurant {\n  final String name;\n  final double rating;\n  final int deliveryMinutes;\n  const Restaurant(this.name, this.rating, this.deliveryMinutes);\n}\n\nvoid main() {\n  final list = [\n    const Restaurant('کبابی سارا', 4.5, 35),\n    const Restaurant('پیتزا رضا', 4.8, 50),\n    const Restaurant('آش مریم', 4.5, 20),\n    const Restaurant('ساندویچ علی', 3.9, 15),\n  ];\n\n  // Highest rating first; on a tie, faster delivery first\n  list.sort((a, b) {\n    final byRating = b.rating.compareTo(a.rating);\n    if (byRating != 0) return byRating;\n    return a.deliveryMinutes.compareTo(b.deliveryMinutes);\n  });\n\n  for (final r in list) {\n    print('${r.name} | ${r.rating} | ${r.deliveryMinutes} دقیقه');\n  }\n  // پیتزا رضا، آش مریم، کبابی سارا، ساندویچ علی\n}",
+      "explanation": "مرتب‌سازی چندمعیاره در اپ سفارش غذا. تابع مقایسه عدد منفی (a جلوتر)، صفر (برابر) یا مثبت (b جلوتر) برمی‌گرداند. اگر امتیازها برابر بود، زمان ارسال تعیین می‌کند کدام اول بیاید."
+     },
+     "mistakes": [
+      "برگرداندن `a.rating - b.rating` در تابع مقایسه؛ حاصل `double` است و خطای نوع می‌گیری. `compareTo` بنویس.",
+      "فرض پایدار بودن `List.sort`؛ Dart تضمین نمی‌کند عضوهای برابر ترتیب قبلی را حفظ کنند. معیار دوم را صریح بنویس.",
+      "صدا زدن `sort()` بعد از هر `add` داخل حلقه؛ کار چند برابر می‌شود. یک بار در پایان مرتب کن."
+     ],
+     "bestPractices": [
+      "در کد واقعی از `sort` کتابخانه استفاده کن؛ پیاده‌سازی دستی برای یادگیری و مصاحبه است.",
+      "اگر لیست اصلی نباید عوض شود، اول کپی بگیر: `[...list]..sort(...)`.",
+      "Insertion Sort روی لیست کوچک یا تقریباً مرتب سریع است؛ Big-O فقط رفتار ورودی‌های بزرگ را می‌گوید."
+     ],
+     "relatedTerms": [
+      "big-o",
+      "recursion"
+     ],
+     "tryIt": "Merge Sort را پیاده کن: تابع `List<int> mergeSort(List<int> a)` لیست را نصف کند، هر نیمه را بازگشتی مرتب کند و دو نیمه‌ی مرتب را ادغام کند. خروجی مورد انتظار برای `[5, 2, 9, 1, 5, 6]`: `[1, 2, 5, 5, 6, 9]`."
+    },
+    {
+     "title": "بازگشت و الگوهای حل مسئله",
+     "estimatedMinutes": 25,
+     "what": "پوشه‌های تودرتوی گوشی را در نظر بگیر: برای شمردن همه‌ی عکس‌های یک پوشه، عکس‌های خودش را می‌شماری و همین کار را برای هر زیرپوشه تکرار می‌کنی. تابع بازگشتی هم خودش را با مسئله‌ای کوچک‌تر صدا می‌زند تا به «حالت پایه» برسد که جوابش مستقیم معلوم است.\n\nکنار بازگشت، چند الگوی پرکاربرد حل مسئله هم هست: تقسیم و غلبه، دو اشاره‌گر (Two Pointers) و Memoization.",
+     "why": "داده‌ی درختی همه‌جا هست: دسته‌بندی کالاها، کامنت‌های تودرتو، پوشه‌ها. بازگشت این‌ها را با چند خط حل می‌کند. ولی بدون حالت پایه به Stack Overflow می‌رسی و با محاسبه‌ی تکراری، کدی می‌نویسی که ساعت‌ها طول می‌کشد.",
+     "simpleExample": {
+      "language": "dart",
+      "code": "int factorial(int n) {\n  if (n <= 1) return 1; // base case\n  return n * factorial(n - 1); // smaller problem\n}\n\nfinal _memo = <int, int>{};\n\nint fib(int n) {\n  if (n < 2) return n; // base cases: fib(0)=0, fib(1)=1\n  return _memo[n] ??= fib(n - 1) + fib(n - 2);\n}\n\nvoid main() {\n  print(factorial(5)); // 120\n  print(fib(50)); // 12586269025, instant thanks to memo\n}",
+      "explanation": "`factorial` هر بار مسئله را یکی کوچک‌تر می‌کند تا به حالت پایه برسد. `fib` ساده برای `50` ده‌ها میلیارد فراخوانی تکراری دارد؛ با Memoization هر مقدار فقط یک بار حساب و در Map ذخیره می‌شود."
+     },
+     "realExample": {
+      "language": "dart",
+      "code": "class Category {\n  final String name;\n  final int productCount;\n  final List<Category> children;\n  const Category(this.name, this.productCount, [this.children = const []]);\n}\n\n// Products in a category plus all of its sub-categories\nint totalProducts(Category c) {\n  var sum = c.productCount;\n  for (final child in c.children) {\n    sum += totalProducts(child); // recursive call\n  }\n  return sum; // leaf: no children, so no recursion (base case)\n}\n\nvoid printTree(Category c, [int depth = 0]) {\n  print('${'  ' * depth}- ${c.name} (${totalProducts(c)})');\n  for (final child in c.children) {\n    printTree(child, depth + 1);\n  }\n}\n\nvoid main() {\n  const shop = Category('پوشاک', 0, [\n    Category('مردانه', 5, [Category('پیراهن', 40), Category('کفش', 25)]),\n    Category('زنانه', 10, [Category('مانتو', 60)]),\n  ]);\n  printTree(shop); // root shows 140\n}",
+      "explanation": "دسته‌بندی‌های یک فروشگاه اینترنتی یک درخت است. `totalProducts` تعداد کالای هر دسته را با همه‌ی زیرشاخه‌هایش حساب می‌کند؛ برگ‌ها حالت پایه‌اند چون فرزندی ندارند. `printTree` هم با بازگشت، درخت را با تورفتگی چاپ می‌کند."
+     },
+     "mistakes": [
+      "نداشتن حالت پایه یا نرسیدن به آن (مثلاً `factorial(-3)` با شرط `n == 0`)؛ نتیجه Stack Overflow است.",
+      "بازگشت ساده برای مسئله‌ای با زیرمسئله‌های تکراری مثل فیبوناچی؛ زمان نمایی می‌شود. Memoization اضافه کن.",
+      "بازگشت روی داده‌ی خیلی عمیق (صد هزار سطح)؛ Dart بهینه‌سازی tail call ندارد و پشته پر می‌شود. حلقه بنویس."
+     ],
+     "bestPractices": [
+      "اول حالت پایه را بنویس، بعد مطمئن شو هر فراخوانی یک قدم به آن نزدیک‌تر می‌شود.",
+      "قبل از کد زدن، یک نمونه‌ی کوچک را روی کاغذ حل کن تا الگوی تکرار را ببینی.",
+      "الگوی دو اشاره‌گر را به خاطر بسپار: یافتن دو عدد با جمع مشخص در لیست مرتب با `O(n)` به‌جای `O(n²)`."
+     ],
+     "relatedTerms": [
+      "recursion",
+      "big-o"
+     ],
+     "tryIt": "تابع بازگشتی `int sumDigits(int n)` بنویس که مجموع ارقام یک عدد را حساب کند (حالت پایه: `n < 10`، راهنما: `n % 10` و `n ~/ 10`). خروجی مورد انتظار برای `sumDigits(1402)`: عدد `7`. بعد نسخه‌ی حلقه‌ای‌اش را هم بنویس."
+    }
+   ]
+  },
+  {
+   "course": "se-310",
+   "lessons": [
+    {
+     "title": "اصل Single Responsibility و Open/Closed",
+     "estimatedMinutes": 30,
+     "what": "در رستوران، آشپز غذا می‌پزد، صندوق‌دار پول می‌گیرد و پیک غذا را می‌برد. اگر یک نفر همه‌ی این کارها را بکند، هر تغییر در یکی بقیه را به‌هم می‌ریزد. Single Responsibility می‌گوید هر کلاس فقط یک «دلیل برای تغییر» داشته باشد.\n\nOpen/Closed می‌گوید کد برای توسعه باز و برای تغییر بسته باشد: برای قانون تخفیف جدید، کلاس جدید می‌نویسی، نه اینکه کد قبلی و تست‌شده را دستکاری کنی.",
+     "why": "کلاس `OrderService` هزارخطی که هم قیمت حساب می‌کند، هم پیامک می‌فرستد و هم در دیتابیس می‌نویسد، با هر تغییر کوچک باگ تازه می‌دهد و کسی جرئت دست زدن به آن را ندارد. این دو اصل تغییرها را محلی و کم‌خطر می‌کنند.",
+     "simpleExample": {
+      "language": "dart",
+      "code": "// Bad: one class, three reasons to change\nclass OrderManagerBad {\n  int total(List<int> prices) => prices.fold(0, (a, b) => a + b);\n  void saveToDb(int total) => print('INSERT $total');\n  void sendSms(String mobile) => print('SMS to $mobile');\n}\n\n// Good: each class has one job\nclass PriceCalculator {\n  int total(List<int> prices) => prices.fold(0, (a, b) => a + b);\n}\n\nclass OrderRepository {\n  void save(int total) => print('INSERT $total');\n}\nclass SmsNotifier {\n  void send(String mobile, String text) => print('SMS to $mobile: $text');\n}",
+      "explanation": "در نسخه‌ی بد، تغییر فرمول قیمت، جدول دیتابیس یا سرویس پیامک همه به یک کلاس دست می‌زنند. در نسخه‌ی خوب هر تغییر فقط یک کلاس کوچک را عوض می‌کند و بقیه دست‌نخورده می‌مانند."
+     },
+     "realExample": {
+      "language": "dart",
+      "code": "abstract interface class DiscountRule {\n  /// Discount in toman (0 if the rule does not apply).\n  int apply(int subtotal, DateTime date);\n}\n\nclass FirstOrderDiscount implements DiscountRule {\n  final bool isFirstOrder;\n  FirstOrderDiscount(this.isFirstOrder);\n  @override\n  int apply(int subtotal, DateTime date) => isFirstOrder ? 50000 : 0;\n}\n\nclass BigCartDiscount implements DiscountRule {\n  @override\n  int apply(int subtotal, DateTime date) =>\n      subtotal >= 1000000 ? subtotal ~/ 10 : 0;\n}\n\n// Closed for modification: new rules never touch this class\nclass Checkout {\n  final List<DiscountRule> rules;\n  Checkout(this.rules);\n\n  int payable(int subtotal, DateTime date) =>\n      subtotal - rules.fold<int>(0, (sum, r) => sum + r.apply(subtotal, date));\n}\n\nvoid main() {\n  final checkout = Checkout([FirstOrderDiscount(true), BigCartDiscount()]);\n  print(checkout.payable(1200000, DateTime.now())); // 1030000\n}",
+      "explanation": "برای قانون جدید، مثلاً تخفیف شب یلدا که از `date` استفاده می‌کند، فقط یک کلاس تازه می‌سازی و به لیست اضافه می‌کنی. `Checkout` که تست شده دست نمی‌خورد و هر قانون هم فقط یک مسئولیت دارد."
+     },
+     "mistakes": [
+      "تفسیر SRP به «هر کلاس فقط یک متد»؛ معیار، یک دلیل برای تغییر است، نه تعداد متدها.",
+      "زنجیره‌ی `if (type == 'card') ... else if (type == 'wallet')` که با هر روش پرداخت جدید باید ویرایش شود؛ نقض OCP.",
+      "انتزاع زودهنگام: interface برای چیزی که فقط یک پیاده‌سازی دارد و تغییر نمی‌کند. OCP را جایی بکار ببر که تغییر تکرار می‌شود."
+     ],
+     "bestPractices": [
+      "اگر برای توصیف کلاس مجبوری «و» بگویی («حساب می‌کند و پیامک می‌فرستد»)، احتمالاً باید آن را دو تکه کنی.",
+      "نقطه‌های تغییر پرتکرار (روش پرداخت، قانون تخفیف، نوع ارسال) را پشت یک interface ببر.",
+      "بعد از هر ویژگی جدید بپرس: «برای این تغییر چند فایل را باز کردم؟» اگر زیاد بود، طراحی را بازبینی کن."
+     ],
+     "relatedTerms": [
+      "solid",
+      "design-patterns"
+     ],
+     "tryIt": "یک `YaldaDiscount` بنویس که اگر `date.month == 12 && date.day == 21` بود ۲۰٪ تخفیف بدهد و فقط به لیست قوانین اضافه‌اش کن، بدون تغییر `Checkout`. خروجی مورد انتظار برای `payable(1200000, DateTime(2025, 12, 21))` با هر سه قانون: `790000`."
+    },
+    {
+     "title": "اصل Liskov، Interface Segregation و Dependency Inversion",
+     "estimatedMinutes": 30,
+     "what": "Liskov: اگر جایی «وسیله‌ی پرداخت» می‌خواهد، هر زیرکلاسش باید بدون غافلگیری کار کند؛ زیرکلاسی که `pay` را با `throw` پیاده کند، این قول را می‌شکند.\n\nInterface Segregation: به کسی که فقط چاپگر می‌خواهد، دستگاه «چاپ و اسکن و فکس» تحمیل نکن. Dependency Inversion: منطق سطح بالا (ثبت سفارش) به انتزاع وابسته باشد، نه به جزئیاتی مثل یک سرویس پیامک خاص.",
+     "why": "بدون این سه اصل، تعویض سرویس پیامک یعنی ویرایش منطق سفارش، کلاس‌ها متدهای بی‌معنی پیاده می‌کنند که فقط `throw` دارند، و تست بدون ارسال پیامک واقعی ممکن نیست. رعایتشان کد را قابل تعویض و تست‌پذیر می‌کند.",
+     "simpleExample": {
+      "language": "dart",
+      "code": "abstract interface class Payable {\n  void pay(int amount);\n}\nabstract interface class Refundable {\n  void refund(int amount);\n}\nclass CardPayment implements Payable, Refundable {\n  @override\n  void pay(int amount) => print('کارت: $amount تومان');\n  @override\n  void refund(int amount) => print('برگشت به کارت: $amount');\n}\n\n// Gift cards can't refund, so they don't claim to (LSP-safe)\nclass GiftCardPayment implements Payable {\n  @override\n  void pay(int amount) => print('کارت هدیه: $amount تومان');\n}",
+      "explanation": "به‌جای یک interface بزرگ با `pay` و `refund`، دو interface کوچک داریم. کارت هدیه فقط `Payable` است؛ پس هیچ‌جا `refund` را روی آن صدا نمی‌زنند و مجبور نیست متدی با `throw` بنویسد."
+     },
+     "realExample": {
+      "language": "dart",
+      "code": "// Abstraction owned by the business layer\nabstract interface class SmsSender {\n  Future<void> send(String mobile, String text);\n}\n\nclass HttpSmsSender implements SmsSender { // real provider\n  @override\n  Future<void> send(String mobile, String text) async {\n    print('POST /sms to=$mobile text=$text'); // real API call here\n  }\n}\n\nclass FakeSmsSender implements SmsSender { // test double\n  final sent = <String>[];\n  @override\n  Future<void> send(String mobile, String text) async => sent.add(mobile);\n}\n\nclass OrderService {\n  final SmsSender sms; // abstraction, not HttpSmsSender\n  OrderService(this.sms);\n\n  Future<void> confirm(String orderId, String mobile) =>\n      sms.send(mobile, 'سفارش $orderId ثبت شد');\n}\n\nFuture<void> main() async {\n  await OrderService(HttpSmsSender()).confirm('A-1024', '09121234567');\n  final fake = FakeSmsSender();\n  await OrderService(fake).confirm('A-1025', '09351112233');\n  print(fake.sent); // [09351112233]\n}",
+      "explanation": "`OrderService` فقط `SmsSender` را می‌شناسد. در اپ واقعی `HttpSmsSender` به آن داده می‌شود و در تست `FakeSmsSender`، بدون تغییر حتی یک خط منطق سفارش. جهت وابستگی برعکس شده: جزئیات به انتزاع وابسته‌اند."
+     },
+     "mistakes": [
+      "زیرکلاسی که متد والد را با `throw UnimplementedError()` پیاده می‌کند؛ کدی که به والد اعتماد کرده در اجرا می‌شکند (نقض LSP).",
+      "یک interface بزرگ مثل `UserService` با بیست متد؛ هر پیاده‌سازی و هر Mock مجبور است همه را بنویسد (نقض ISP).",
+      "ساختن وابستگی داخل کلاس با `final sms = HttpSmsSender();`؛ دیگر نمی‌توانی در تست عوضش کنی (نقض DIP)."
+     ],
+     "bestPractices": [
+      "آزمون LSP: آیا تست‌هایی که برای نوع والد نوشته‌ای، با زیرکلاس هم پاس می‌شوند؟ اگر نه، ارث‌بری اشتباه است.",
+      "interface را از دید مصرف‌کننده طراحی کن: فقط متدهایی که همان مصرف‌کننده واقعاً لازم دارد.",
+      "وابستگی‌ها را از سازنده بگیر و نوعشان را انتزاعی بگذار؛ ساختنشان را به `main` یا get_it بسپار."
+     ],
+     "relatedTerms": [
+      "solid",
+      "dependency-injection",
+      "mocking"
+     ],
+     "tryIt": "یک `ConsoleSmsSender` بنویس که پیام را با پیشوند `[DEV]` چاپ کند و آن را به `OrderService` بده، بدون تغییر خود `OrderService`. بعد با `FakeSmsSender` نشان بده که بعد از دو بار `confirm` مقدار `fake.sent.length` برابر `2` است."
+    },
+    {
+     "title": "الگوهای طراحی Factory و Strategy",
+     "estimatedMinutes": 30,
+     "what": "Factory مثل پیشخوان رستوران است: فقط می‌گویی «یک پیتزا»؛ اینکه کدام آشپز و با چه دستوری درستش کند، دست آشپزخانه است. کد مصرف‌کننده نمی‌داند دقیقاً کدام کلاس ساخته شد.\n\nStrategy مثل انتخاب مسیر در اپ مسیریاب است: «کوتاه‌ترین»، «بدون طرح ترافیک» یا «با مترو». مقصد یکی است، ولی الگوریتم قابل تعویض است و در زمان اجرا انتخاب می‌شود.",
+     "why": "بدون Factory، منطق «کدام کلاس را بسازم» در ده جای اپ تکرار می‌شود. بدون Strategy، یک متد پر از `if/else` برای هر روش محاسبه داری که با هر روش جدید بزرگ‌تر می‌شود. هر دو الگو یک تصمیم را یک‌جا جمع می‌کنند.",
+     "simpleExample": {
+      "language": "dart",
+      "code": "abstract class Notifier {\n  void send(String text);\n  // Factory: caller asks by channel name, gets the right class\n  factory Notifier(String channel) => switch (channel) {\n        'sms' => SmsNotifier(),\n        'push' => PushNotifier(),\n        _ => throw ArgumentError('Unknown channel: $channel'),\n      };\n}\n\nclass SmsNotifier implements Notifier {\n  @override\n  void send(String text) => print('SMS: $text');\n}\nclass PushNotifier implements Notifier {\n  @override\n  void send(String text) => print('Push: $text');\n}",
+      "explanation": "`factory` constructor در Dart خود Factory است: `Notifier('sms').send('کد تأیید: 4821')` یک `SmsNotifier` می‌سازد، ولی مصرف‌کننده فقط نوع `Notifier` را می‌بیند. `switch` expression هم برای کانال ناشناخته خطای روشن می‌دهد."
+     },
+     "realExample": {
+      "language": "dart",
+      "code": "abstract interface class DeliveryFeeStrategy {\n  int feeFor(double km, int subtotal);\n}\n\nclass StandardFee implements DeliveryFeeStrategy {\n  const StandardFee();\n  @override\n  int feeFor(double km, int subtotal) => 15000 + (km * 5000).round();\n}\n\nclass FreeAboveThreshold implements DeliveryFeeStrategy {\n  final int threshold;\n  const FreeAboveThreshold(this.threshold);\n  @override\n  int feeFor(double km, int subtotal) =>\n      subtotal >= threshold ? 0 : const StandardFee().feeFor(km, subtotal);\n}\n\nclass Checkout {\n  DeliveryFeeStrategy strategy; // swappable at runtime\n  Checkout(this.strategy);\n  int total(int subtotal, double km) =>\n      subtotal + strategy.feeFor(km, subtotal);\n}\n\nvoid main() {\n  final checkout = Checkout(const StandardFee());\n  print(checkout.total(300000, 4)); // 335000\n  checkout.strategy = const FreeAboveThreshold(500000); // campaign starts\n  print(checkout.total(600000, 4)); // 600000\n  print(checkout.total(300000, 4)); // 335000\n}",
+      "explanation": "هزینه‌ی ارسال اپ سفارش غذا با Strategy: `Checkout` فقط می‌داند «یک استراتژی دارم». وقتی کمپین «ارسال رایگان بالای ۵۰۰ هزار تومان» شروع می‌شود، فقط استراتژی را در زمان اجرا عوض می‌کنی."
+     },
+     "mistakes": [
+      "Factory که به‌جای نوع انتزاعی، نوع مشخص (`SmsNotifier`) برمی‌گرداند؛ مصرف‌کننده دوباره به جزئیات گره می‌خورد.",
+      "Strategy برای دو حالتی که هرگز عوض نمی‌شوند؛ یک `if` ساده خواناتر از سه کلاس است.",
+      "استراتژی‌ای که state مشترک را تغییر می‌دهد یا به استراتژی دیگری وابسته است؛ باید مستقل و قابل تعویض بماند."
+     ],
+     "bestPractices": [
+      "در Dart از `factory` constructor و `switch` expression استفاده کن تا Factory کوتاه و کامل باشد.",
+      "برای Strategy یک‌متدی، تابع هم کافی است (`int Function(double km)`)؛ کلاس را وقتی بساز که state لازم است.",
+      "هر استراتژی را جداگانه Unit Test کن؛ کوچک و بی‌وابستگی‌اند و تستشان چند خط بیشتر نیست."
+     ],
+     "relatedTerms": [
+      "design-patterns",
+      "solid"
+     ],
+     "tryIt": "یک `RushHourFee` بنویس که هزینه‌ی `StandardFee` را یک‌ونیم برابر کند (برای ساعت ۱۸ تا ۲۱) و بدون تغییر `Checkout` جایگزینش کن. خروجی مورد انتظار برای `total(300000, 4)`: `352500`."
+    },
+    {
+     "title": "الگوهای طراحی Observer و Adapter",
+     "estimatedMinutes": 30,
+     "what": "Observer مثل عضویت در کانال اطلاع‌رسانی دانشگاه است: لازم نیست هر ساعت سر بزنی؛ هر وقت خبری شد، به همه‌ی اعضا اطلاع داده می‌شود. شیء اصلی فهرست شنونده‌ها را دارد و تغییر را به آن‌ها خبر می‌دهد.\n\nAdapter مثل تبدیل دوشاخه‌ی سه‌پین به دوپین است: دو چیز ناسازگار را بدون تغییر هیچ‌کدام به هم وصل می‌کند؛ مثلاً SDK قدیمی یک بانک را به interface ای که اپ تو انتظار دارد.",
+     "why": "بدون Observer، صفحه‌ی سبد باید مدام بپرسد «چیزی عوض شد؟» یا کلاس‌ها مستقیم هم را صدا بزنند و به هم گره بخورند. `ChangeNotifier` و `Stream` در Flutter همین الگو هستند. بدون Adapter، ساختار عجیب یک API بیرونی در کل اپت پخش می‌شود.",
+     "simpleExample": {
+      "language": "dart",
+      "code": "class Cart {\n  final _listeners = <void Function(int count)>[];\n  int _count = 0;\n  void subscribe(void Function(int count) l) => _listeners.add(l);\n  void unsubscribe(void Function(int count) l) => _listeners.remove(l);\n\n  void addItem() {\n    _count++;\n    for (final l in [..._listeners]) { // copy: safe if one unsubscribes\n      l(_count); // notify every observer\n    }\n  }\n}\n\nvoid main() {\n  final cart = Cart()..subscribe((c) => print('آیکون سبد: $c'));\n  cart.addItem(); // آیکون سبد: 1\n}",
+      "explanation": "`Cart` نمی‌داند چه کسی گوش می‌دهد؛ فقط بعد از هر تغییر همه‌ی شنونده‌ها را صدا می‌زند. آیکون سبد، صفحه‌ی پرداخت یا سرویس آمار می‌توانند مستقل از هم مشترک شوند."
+     },
+     "realExample": {
+      "language": "dart",
+      "code": "// What our app expects\nenum PaymentStatus { success, failed }\n\nabstract interface class PaymentGateway {\n  Future<PaymentStatus> pay({required int toman, required String orderId});\n}\n\n// Third-party SDK we can't change: works in rial, returns string codes\nclass LegacyBankSdk {\n  Future<Map<String, String>> doTransaction(int amountRial, String ref) async =>\n      {'ResCode': amountRial > 0 ? '0' : '-1', 'Ref': ref};\n}\n\n// Adapter: makes LegacyBankSdk look like a PaymentGateway\nclass LegacyBankAdapter implements PaymentGateway {\n  final LegacyBankSdk _sdk;\n  LegacyBankAdapter(this._sdk);\n\n  @override\n  Future<PaymentStatus> pay({required int toman, required String orderId}) async {\n    final res = await _sdk.doTransaction(toman * 10, orderId); // toman -> rial\n    return res['ResCode'] == '0' ? PaymentStatus.success : PaymentStatus.failed;\n  }\n}\n\nFuture<void> main() async {\n  final PaymentGateway gateway = LegacyBankAdapter(LegacyBankSdk());\n  print(await gateway.pay(toman: 250000, orderId: 'A-77'));\n  // PaymentStatus.success\n}",
+      "explanation": "SDK بانکی (خیالی) با ریال و کد وضعیت رشته‌ای کار می‌کند. Adapter تبدیل تومان به ریال و کد به enum را یک‌جا انجام می‌دهد؛ بقیه‌ی اپ فقط `PaymentGateway` را می‌شناسد و تعویض درگاه یعنی یک Adapter تازه."
+     },
+     "mistakes": [
+      "فراموش کردن `unsubscribe` یا `removeListener` در `dispose`؛ شنونده‌ی صفحه‌ی بسته‌شده زنده می‌ماند و نشت حافظه می‌سازد.",
+      "حذف شنونده وسط حلقه‌ی اطلاع‌رسانی روی خود لیست؛ `ConcurrentModificationError` می‌گیری. روی کپی حلقه بزن.",
+      "Adapter که منطق تجاری (مثلاً قانون تخفیف) هم دارد؛ کار Adapter فقط ترجمه است."
+     ],
+     "bestPractices": [
+      "در Flutter به‌جای Observer دست‌ساز از `ChangeNotifier`، `ValueNotifier` یا `Stream` استفاده کن؛ همین الگو هستند.",
+      "برای هر SDK یا API بیرونی یک Adapter بساز تا تعویضش فقط یک فایل را عوض کند.",
+      "در Adapter واحدها و قالب‌ها (ریال و تومان، تاریخ شمسی و میلادی، کد خطا) را صریح تبدیل کن و برایش تست بنویس."
+     ],
+     "relatedTerms": [
+      "design-patterns",
+      "stream",
+      "state-management"
+     ],
+     "tryIt": "به `Cart` شنونده‌ی دومی اضافه کن که وقتی تعداد به `3` رسید، «ارسال رایگان فعال شد» چاپ کند. سه بار `addItem` صدا بزن. خروجی مورد انتظار: سه خط «آیکون سبد» با اعداد ۱ تا ۳ و درست بعد از خط سوم، «ارسال رایگان فعال شد»."
+    }
+   ]
+  },
+  {
+   "course": "se-320",
+   "lessons": [
+    {
+     "title": "هرم تست و اولین Unit Test با package:test",
+     "estimatedMinutes": 25,
+     "what": "قبل از تحویل کیک، قنادی یک تکه‌اش را می‌چشد. تست خودکار همان چشیدن است، ولی با کد و در چند میلی‌ثانیه. Unit Test کوچک‌ترین واحد کد (یک تابع یا کلاس) را جدا از بقیه بررسی می‌کند.\n\nهرم تست می‌گوید: پایه‌ی هرم تعداد زیادی Unit Test سریع، وسط تعداد کمتری تست که چند بخش را با هم می‌سنجند (در Flutter: Widget Test) و نوک هرم چند تست End-to-End کند و گران.",
+     "why": "بدون تست، هر تغییر کوچک در فرمول تخفیف یعنی باز کردن اپ و کلیک دستی روی ده صفحه، و باز هم باگ به دست کاربر می‌رسد. Unit Test در چند ثانیه صدها حالت را بررسی می‌کند و به تو جرئت refactor می‌دهد.",
+     "simpleExample": {
+      "language": "dart",
+      "code": "import 'package:test/test.dart';\n\nint applyDiscount(int price, int percent) => price - price * percent ~/ 100;\n\nvoid main() {\n  test('applies 20% discount', () {\n    // Arrange\n    const price = 500000;\n    // Act\n    final result = applyDiscount(price, 20);\n    // Assert\n    expect(result, 400000);\n  });\n\n  test('0% discount keeps the price', () {\n    expect(applyDiscount(80000, 0), 80000);\n  });\n}",
+      "explanation": "هر `test` یک توضیح و یک بدنه دارد و الگوی Arrange-Act-Assert آن را خوانا می‌کند. در پروژه‌ی واقعی تابع در `lib/` و تست در `test/` است و با `dart test` اجرا می‌شود؛ در Flutter همین API را `flutter_test` می‌دهد."
+     },
+     "realExample": {
+      "language": "dart",
+      "code": "import 'package:test/test.dart';\n\nclass Cart {\n  final _items = <String, int>{}; // name -> price (toman)\n  void add(String name, int price) {\n    if (price <= 0) throw ArgumentError.value(price, 'price');\n    _items[name] = price;\n  }\n\n  int get total => _items.values.fold(0, (a, b) => a + b);\n  bool get freeDelivery => total >= 500000;\n}\n\nvoid main() {\n  group('Cart', () {\n    late Cart cart;\n    setUp(() => cart = Cart()); // fresh cart for every test\n    test('empty cart total is 0', () => expect(cart.total, 0));\n    test('sums item prices', () {\n      cart..add('پیتزا', 300000)..add('نوشابه', 40000);\n      expect(cart.total, 340000);\n    });\n    test('free delivery starts exactly at 500000', () {\n      cart.add('کیک', 500000);\n      expect(cart.freeDelivery, isTrue);\n    });\n    test('rejects non-positive price', () {\n      expect(() => cart.add('هدیه', 0), throwsArgumentError);\n    });\n  });\n}",
+      "explanation": "`group` تست‌های مرتبط را کنار هم می‌گذارد و `setUp` قبل از هر تست سبد تازه می‌سازد تا تست‌ها روی هم اثر نگذارند. مرز دقیق `500000` و ورودی نامعتبر هم تست شده‌اند؛ باگ‌ها معمولاً همین‌جاها پنهان‌اند."
+     },
+     "mistakes": [
+      "تست‌هایی که به هم وابسته‌اند (تست دوم از داده‌ی تست اول استفاده می‌کند)؛ با تغییر ترتیب اجرا می‌شکنند. از `setUp` استفاده کن.",
+      "تست کردن فقط مسیر خوشحال؛ مرزها (صفر، منفی، دقیقاً `500000`) و خطاها جایی‌اند که باگ‌ها پنهان می‌شوند.",
+      "نوشتن `expect(f(), throwsA(...))` به‌جای `expect(() => f(), ...)`؛ تابع قبل از `expect` اجرا و خطا بیرون پرتاب می‌شود."
+     ],
+     "bestPractices": [
+      "اسم تست را جمله‌ای بنویس که رفتار را بگوید: `'free delivery starts exactly at 500000'`.",
+      "هر تست یک رفتار را بسنجد و در میلی‌ثانیه تمام شود؛ شبکه و دیتابیس واقعی در Unit Test جایی ندارند.",
+      "یک بار تست را عمداً قرمز ببین؛ مطمئن می‌شوی واقعاً چیزی را بررسی می‌کند و همیشه سبز نیست."
+     ],
+     "relatedTerms": [
+      "unit-test",
+      "debugging"
+     ],
+     "tryIt": "برای تابع `isValidMobile` (یازده رقم، شروع با `09`) یک `group` با دست‌کم چهار تست بنویس: شماره‌ی درست، شماره‌ی ده‌رقمی، شروع با `98` و رشته‌ی خالی. با `dart test` اجرا کن. خروجی مورد انتظار: `All tests passed!`"
+    },
+    {
+     "title": "Mock و Fake برای جداسازی وابستگی‌ها",
+     "estimatedMinutes": 30,
+     "what": "خلبان‌ها اول در شبیه‌ساز پرواز تمرین می‌کنند، نه با هواپیمای واقعی. در تست هم به‌جای درگاه واقعی بانک یا سرویس پیامک، یک «بدل» (Test Double) می‌گذاری.\n\nFake یک پیاده‌سازی ساده ولی واقعی است، مثل مخزنی که داده را در یک Map نگه می‌دارد. Mock شیئی است که رفتارش را در تست تعیین می‌کنی (`when`) و بعد بررسی می‌کنی چطور صدا زده شد (`verify`). در Dart معمولاً از `mocktail` استفاده می‌شود.",
+     "why": "تستی که واقعاً پیامک بفرستد یا به درگاه پرداخت وصل شود، کند، پرهزینه و ناپایدار است و با قطع اینترنت قرمز می‌شود. با Mock و Fake تست در میلی‌ثانیه اجرا می‌شود و حالت‌های سخت مثل «درگاه پرداخت را رد کرد» را هم راحت شبیه‌سازی می‌کنی.",
+     "simpleExample": {
+      "language": "dart",
+      "code": "import 'package:test/test.dart';\n\nabstract interface class UserRepository {\n  Future<String?> findName(String mobile);\n}\nclass FakeUserRepository implements UserRepository { // in-memory fake\n  final _db = {'09121234567': 'سارا'};\n  @override\n  Future<String?> findName(String mobile) async => _db[mobile];\n}\nFuture<String> greet(UserRepository repo, String mobile) async =>\n    'سلام ${await repo.findName(mobile) ?? 'مهمان'}';\n\nvoid main() {\n  test('greets known user', () async {\n    expect(await greet(FakeUserRepository(), '09121234567'), 'سلام سارا');\n  });\n}",
+      "explanation": "`greet` فقط `UserRepository` را می‌شناسد، پس در تست یک Fake داخل حافظه به آن می‌دهیم. نه سروری لازم است نه دیتابیسی و تست در چند میلی‌ثانیه اجرا می‌شود."
+     },
+     "realExample": {
+      "language": "dart",
+      "code": "import 'package:mocktail/mocktail.dart';\nimport 'package:test/test.dart';\n\nabstract interface class PaymentGateway {\n  Future<bool> charge(String orderId, int toman);\n}\nabstract interface class SmsSender {\n  Future<void> send(String mobile, String text);\n}\n\nclass CheckoutService {\n  final PaymentGateway gateway;\n  final SmsSender sms;\n  CheckoutService(this.gateway, this.sms);\n  Future<bool> pay(String orderId, int toman, String mobile) async {\n    final ok = await gateway.charge(orderId, toman);\n    if (ok) await sms.send(mobile, 'پرداخت سفارش $orderId موفق بود');\n    return ok;\n  }\n}\nclass MockGateway extends Mock implements PaymentGateway {}\nclass MockSms extends Mock implements SmsSender {}\nvoid main() {\n  test('failed payment returns false and sends no SMS', () async {\n    final gateway = MockGateway(), sms = MockSms();\n    when(() => gateway.charge(any(), any())).thenAnswer((_) async => false);\n    final ok = await CheckoutService(gateway, sms).pay('A-1', 90000, '09121234567');\n    expect(ok, isFalse);\n    verify(() => gateway.charge('A-1', 90000)).called(1);\n    verifyNever(() => sms.send(any(), any()));\n  });\n}",
+      "explanation": "`when` رفتار Mock را تعیین می‌کند: درگاه پرداخت را رد می‌کند. `verify` بررسی می‌کند درگاه دقیقاً یک بار با همین مبلغ صدا زده شده و `verifyNever` مطمئن می‌شود هیچ پیامکی نرفته؛ بدون اتصال به بانک واقعی."
+     },
+     "mistakes": [
+      "Mock کردن همه‌چیز، حتی کلاس‌های داده و منطق خالص؛ تست به جزئیات پیاده‌سازی گره می‌خورد و با هر refactor می‌شکند.",
+      "stub نکردن متدی که `Future` برمی‌گرداند؛ Mock به‌طور پیش‌فرض `null` می‌دهد و تست با خطای نوع می‌شکند.",
+      "Mock کردن مستقیم کلاسی که مال تو نیست (مثل `Dio`)؛ بهتر است پشت interface خودت پنهانش کنی و آن را Mock کنی."
+     ],
+     "bestPractices": [
+      "برای وابستگی‌هایی که state دارند (مخزن، کش) Fake بساز؛ از ده خط `when` خواناتر است و در چند تست به کار می‌آید.",
+      "Mock را برای بررسی تعامل نگه دار: «پیامک رفت؟»، «درگاه فقط یک بار صدا زده شد؟»",
+      "در `mocktail` برای نوع‌های سفارشی که با `any()` تطبیق می‌دهی، `registerFallbackValue` را در `setUpAll` صدا بزن."
+     ],
+     "relatedTerms": [
+      "mocking",
+      "unit-test",
+      "dependency-injection"
+     ],
+     "tryIt": "تست دومی اضافه کن: درگاه `true` برگرداند و بررسی کن پیامک دقیقاً یک بار به `09121234567` رفته. راهنما: `sms.send` را با `thenAnswer((_) async {})` stub کن و از `verify(...).called(1)` استفاده کن. خروجی مورد انتظار: هر دو تست سبز."
+    },
+    {
+     "title": "نوشتن کد تست‌پذیر",
+     "estimatedMinutes": 30,
+     "what": "تست کردن ماشینی که موتورش به بدنه جوش داده شده سخت است؛ اگر با پیچ‌ومهره بسته شده باشد، بازش می‌کنی و جدا امتحانش می‌کنی. کد تست‌پذیر هم وابستگی‌هایش را «جوش» نمی‌دهد.\n\nسه نشانه‌ی کد سخت‌تست: ساختن وابستگی داخل کلاس، صدا زدن مستقیم `DateTime.now()` یا `Random()`، و قاطی بودن منطق با UI و شبکه. راه‌حل: وابستگی را از بیرون بده و منطق را خالص نگه دار.",
+     "why": "تابعی که مستقیم `DateTime.now()` صدا می‌زند تا «تخفیف ساعت ناهار» را حساب کند، فقط ظهرها قابل تست است! کد تست‌ناپذیر معمولاً اصلاً تست نمی‌شود و باگ‌ها همان‌جا جمع می‌شوند. تست‌پذیری نشانه‌ی طراحی خوب هم هست.",
+     "simpleExample": {
+      "language": "dart",
+      "code": "// Hard to test: depends on the real clock\nbool isLunchDiscountBad() {\n  final hour = DateTime.now().hour;\n  return hour >= 12 && hour < 15;\n}\n// Testable: time comes in as a parameter\nbool isLunchDiscount(DateTime now) => now.hour >= 12 && now.hour < 15;\n\n// Or inject a clock with a real default\nclass DiscountService {\n  final DateTime Function() clock;\n  DiscountService({DateTime Function()? clock}) : clock = clock ?? DateTime.now;\n  bool get lunchActive => isLunchDiscount(clock());\n}\nvoid main() {\n  print(isLunchDiscount(DateTime(2025, 3, 21, 13))); // true\n  print(DiscountService(clock: () => DateTime(2025, 3, 21, 9)).lunchActive); // false\n}",
+      "explanation": "نسخه‌ی اول فقط با ساعت واقعی کار می‌کند. در نسخه‌ی دوم زمان پارامتر است و در `DiscountService` تابع ساعت تزریق می‌شود؛ اپ از `DateTime.now` استفاده می‌کند و تست هر ساعتی که بخواهد را می‌دهد."
+     },
+     "realExample": {
+      "language": "dart",
+      "code": "import 'dart:math';\nimport 'package:test/test.dart';\n\nclass OtpService {\n  final Random _random;\n  final DateTime Function() _now;\n  final _codes = <String, (String code, DateTime expires)>{};\n  OtpService({Random? random, DateTime Function()? now})\n      : _random = random ?? Random.secure(),\n        _now = now ?? DateTime.now;\n  String send(String mobile) {\n    final code = (_random.nextInt(9000) + 1000).toString(); // 4 digits\n    _codes[mobile] = (code, _now().add(const Duration(minutes: 2)));\n    return code; // in production: send via SMS instead\n  }\n  bool verify(String mobile, String code) {\n    final entry = _codes[mobile];\n    if (entry == null) return false;\n    return entry.$1 == code && _now().isBefore(entry.$2);\n  }\n}\n\nvoid main() {\n  test('code expires after 2 minutes', () {\n    var now = DateTime(2025, 1, 1, 10, 0);\n    final otp = OtpService(random: Random(42), now: () => now);\n    final code = otp.send('09121234567');\n    expect(otp.verify('09121234567', code), isTrue);\n    now = now.add(const Duration(minutes: 3)); // time travel!\n    expect(otp.verify('09121234567', code), isFalse);\n  });\n}",
+      "explanation": "کد یکبارمصرف پیامکی دو وابستگی پنهان دارد: زمان و عدد تصادفی. چون هر دو از سازنده تزریق می‌شوند، تست زمان را سه دقیقه جلو می‌برد و انقضا را در چند میلی‌ثانیه می‌سنجد. اپ واقعی از پیش‌فرض‌ها (`Random.secure`، `DateTime.now`) استفاده می‌کند."
+     },
+     "mistakes": [
+      "صدا زدن `DateTime.now()` یا `Random()` وسط منطق؛ نتیجه‌ی تست به ساعت اجرا یا شانس بستگی پیدا می‌کند.",
+      "استفاده از Singleton سراسری مثل `ApiClient.instance` داخل کلاس‌ها؛ در تست نمی‌توانی جایگزینش کنی.",
+      "منطق تجاری داخل `build` ویجت یا callback دکمه؛ برای تستش مجبوری کل UI را بالا بیاوری."
+     ],
+     "bestPractices": [
+      "منطق را در کلاس‌ها و تابع‌های خالص Dart بنویس و UI فقط آن‌ها را صدا بزند.",
+      "وابستگی را از سازنده بگیر و برای راحتی یک پیش‌فرض واقعی بگذار: `clock ?? DateTime.now`.",
+      "اگر نوشتن تست سخت است، مشکل معمولاً از طراحی کد است نه از تست؛ اول کد را بازطراحی کن."
+     ],
+     "relatedTerms": [
+      "unit-test",
+      "dependency-injection",
+      "mocking"
+     ],
+     "tryIt": "به `OtpService` قانون «حداکثر سه تلاش اشتباه» اضافه کن: بعد از سه کد غلط، حتی کد درست هم رد شود. تستی بنویس که سه بار `'0000'` بفرستد و نشان دهد `verify` با کد درست `false` برمی‌گرداند. خروجی مورد انتظار: تست سبز."
+    }
+   ]
+  },
+  {
+   "course": "se-410",
+   "lessons": [
+    {
+     "title": "لایه‌بندی و قانون وابستگی در Clean Architecture",
+     "estimatedMinutes": 30,
+     "what": "رستوران را در نظر بگیر: سالن، آشپزخانه و انبار. دستور پخت قورمه‌سبزی به اینکه سبزی از کدام تأمین‌کننده آمده بستگی ندارد؛ تأمین‌کننده عوض شود، دستور پخت همان است.\n\nClean Architecture کد را سه لایه می‌کند: Presentation (ویجت و state)، Domain (Entity، Use Case و interface مخزن) و Data (API، دیتابیس، پیاده‌سازی مخزن). قانون وابستگی: import ها فقط رو به Domain اشاره می‌کنند.",
+     "why": "وقتی ویجت مستقیم `http.get` صدا می‌زند و JSON پارس می‌کند، تعویض API یا اضافه کردن کش آفلاین یعنی دست بردن در ده صفحه. با لایه‌بندی، Domain هیچ‌چیز از Flutter و `dio` نمی‌داند؛ با Unit Test ساده تست می‌شود و تعویض منبع داده فقط لایه‌ی Data را عوض می‌کند.",
+     "simpleExample": {
+      "language": "text",
+      "code": "lib/\n  features/\n    orders/\n      domain/          # pure Dart: no Flutter, no dio\n        order.dart                 (Entity)\n        order_repository.dart      (abstract interface)\n        place_order.dart           (Use Case)\n      data/            # depends on domain\n        order_dto.dart             (JSON <-> Entity)\n        order_api.dart             (dio calls)\n        order_repository_impl.dart\n      presentation/    # depends on domain\n        order_cubit.dart\n        order_page.dart\n\nDependency rule:  presentation --> domain <-- data",
+      "explanation": "ساختار feature-first: هر قابلیت سه پوشه دارد. `domain` به هیچ لایه‌ای وابسته نیست؛ `data` و `presentation` هر دو به `domain` وابسته‌اند ولی نه به یکدیگر. پس صفحه‌ی سفارش هرگز `order_api.dart` را import نمی‌کند."
+     },
+     "realExample": {
+      "language": "dart",
+      "code": "// ---- domain/order.dart (pure Dart) ----\nclass Order {\n  final String id;\n  final int totalToman;\n  const Order(this.id, this.totalToman);\n}\n\n// ---- domain/order_repository.dart ----\nabstract interface class OrderRepository {\n  Future<List<Order>> recentOrders();\n}\n\n// ---- data/order_repository_impl.dart (knows JSON & API) ----\nclass ApiOrderRepository implements OrderRepository {\n  final Future<List<Map<String, dynamic>>> Function() fetchJson;\n  ApiOrderRepository(this.fetchJson);\n\n  @override\n  Future<List<Order>> recentOrders() async => [\n        for (final j in await fetchJson())\n          Order(j['id'] as String, (j['total_rial'] as int) ~/ 10), // rial -> toman\n      ];\n}\n\n// ---- presentation: sees only the domain interface ----\nFuture<void> main() async {\n  final OrderRepository repo = ApiOrderRepository(() async => [\n        {'id': 'A-1', 'total_rial': 4500000},\n      ]);\n  final orders = await repo.recentOrders();\n  print('${orders.first.id}: ${orders.first.totalToman} تومان'); // 450000\n}",
+      "explanation": "سه لایه برای نمایش در یک فایل آمده‌اند. Entity `Order` تومان می‌فهمد و از JSON خبر ندارد؛ اسم فیلدهای API و تبدیل ریال به تومان فقط در لایه‌ی Data است. مصرف‌کننده فقط `OrderRepository` را می‌بیند."
+     },
+     "mistakes": [
+      "import کردن `package:flutter` یا `dio` در لایه‌ی Domain؛ Domain باید Dart خالص بماند تا مستقل تست شود.",
+      "برگرداندن مدل JSON (DTO) از Repository به UI؛ هر تغییر API مستقیم به صفحه‌ها نشت می‌کند. Entity برگردان.",
+      "لایه‌بندی کامل برای یک اپ دوصفحه‌ای یا prototype؛ پیچیدگی بی‌دلیل است. معماری را به اندازه‌ی پروژه انتخاب کن."
+     ],
+     "bestPractices": [
+      "پوشه‌بندی را بر اساس feature انجام بده (`orders/`، `auth/`) و لایه‌ها را داخل هر feature بگذار.",
+      "قانون وابستگی را با نگاه به import ها چک کن: هیچ فایلی در `domain/` نباید از `data/` یا `presentation/` چیزی بیاورد.",
+      "خطاهای فنی مثل `DioException` را در لایه‌ی Data به خطای Domain (مثلاً `NetworkFailure`) تبدیل کن."
+     ],
+     "relatedTerms": [
+      "clean-architecture",
+      "repository-pattern",
+      "dependency-injection"
+     ],
+     "tryIt": "یک `FakeOrderRepository` بساز که دو سفارش ثابت برگرداند و در `main` جای `ApiOrderRepository` بگذارش؛ هیچ خط دیگری نباید عوض شود. خروجی مورد انتظار: اطلاعات اولین سفارش Fake چاپ شود. سپس import ها را مرور کن تا مطمئن شوی قانون وابستگی نقض نشده."
+    },
+    {
+     "title": "Use Case: کپسوله کردن یک عملیات تجاری",
+     "estimatedMinutes": 30,
+     "what": "در بانک، «انتقال وجه» یک عملیات مشخص با قوانین خودش است: موجودی کافی، سقف روزانه، ثبت تراکنش. فرقی نمی‌کند از اپ انجام شود یا از خودپرداز؛ قوانین یکی است.\n\nUse Case کلاسی در لایه‌ی Domain است که دقیقاً یک عملیات تجاری را کپسوله می‌کند: `PlaceOrder`، `TransferMoney`، `ApplyCoupon`. ورودی می‌گیرد، قوانین را اجرا می‌کند، از Repository کمک می‌گیرد و نتیجه برمی‌گرداند.",
+     "why": "بدون Use Case، قانون «حداقل سفارش ۱۰۰ هزار تومان» یک بار در Cubit سبد و یک بار در صفحه‌ی سفارش سریع نوشته می‌شود؛ روزی یکی عوض می‌شود و دیگری نه. Use Case قانون را یک‌جا نگه می‌دارد و بدون UI تست می‌شود.",
+     "simpleExample": {
+      "language": "dart",
+      "code": "class TransferMoney {\n  static const dailyLimit = 50000000; // toman\n\n  /// Returns an error message, or null when the transfer is allowed.\n  String? call({required int balance, required int amount, required int sentToday}) {\n    if (amount <= 0) return 'مبلغ نامعتبر است';\n    if (amount > balance) return 'موجودی کافی نیست';\n    if (sentToday + amount > dailyLimit) return 'از سقف روزانه بیشتر است';\n    return null;\n  }\n}\n\nvoid main() {\n  final transfer = TransferMoney();\n  print(transfer(balance: 2000000, amount: 500000, sentToday: 0)); // null\n  print(transfer(balance: 2000000, amount: 3000000, sentToday: 0)); // موجودی کافی نیست\n}",
+      "explanation": "متد `call` باعث می‌شود Use Case مثل یک تابع صدا زده شود: `transfer(...)`. همه‌ی قوانین انتقال یک‌جا هستند و این کلاس نه Flutter می‌شناسد نه API؛ پس با یک Unit Test ساده بررسی می‌شود."
+     },
+     "realExample": {
+      "language": "dart",
+      "code": "sealed class PlaceOrderResult {}\nclass OrderPlaced extends PlaceOrderResult {\n  final String orderId;\n  OrderPlaced(this.orderId);\n}\nclass OrderRejected extends PlaceOrderResult {\n  final String reason;\n  OrderRejected(this.reason);\n}\n\nabstract interface class OrderRepository {\n  Future<bool> isRestaurantOpen(String restaurantId);\n  Future<String> submit(String restaurantId, int totalToman);\n}\n\nclass PlaceOrder {\n  static const minOrder = 100000; // toman\n  final OrderRepository _repo;\n  PlaceOrder(this._repo);\n\n  Future<PlaceOrderResult> call(String restaurantId, int totalToman) async {\n    if (totalToman < minOrder) return OrderRejected('حداقل سفارش ۱۰۰ هزار تومان است');\n    if (!await _repo.isRestaurantOpen(restaurantId)) return OrderRejected('رستوران بسته است');\n    return OrderPlaced(await _repo.submit(restaurantId, totalToman));\n  }\n}\n\n// Presentation side: the switch must cover every case\nString message(PlaceOrderResult r) => switch (r) {\n      OrderPlaced(:final orderId) => 'سفارش $orderId ثبت شد',\n      OrderRejected(:final reason) => reason,\n    };",
+      "explanation": "`PlaceOrder` قوانین سفارش را یک‌جا دارد و فقط از interface مخزن استفاده می‌کند. نتیجه یک `sealed class` است؛ پس `switch` در لایه‌ی Presentation باید همه‌ی حالت‌ها را پوشش دهد، وگرنه کامپایل نمی‌شود."
+     },
+     "mistakes": [
+      "ساختن Use Case برای هر متد مخزن، حتی وقتی هیچ قانونی ندارد؛ لایه‌ی اضافه‌ی بی‌فایده است.",
+      "گذاشتن قوانین تجاری در Cubit یا ویجت؛ با آمدن صفحه‌ی دوم، قانون کپی می‌شود و روزی ناهماهنگ می‌شود.",
+      "Use Case که `BuildContext` می‌گیرد یا دیالوگ نشان می‌دهد؛ Domain نباید چیزی از UI بداند."
+     ],
+     "bestPractices": [
+      "اسم Use Case را فعل + مفعول بگذار (`PlaceOrder`، `ApplyCoupon`) و هر کدام فقط یک عملیات انجام دهد.",
+      "نتیجه را با `sealed class` مدل کن تا UI مجبور شود همه‌ی حالت‌ها، از جمله خطاها، را مدیریت کند.",
+      "برای هر Use Case تست بنویس و مخزن را Fake کن؛ این‌ها ارزان‌ترین و مهم‌ترین تست‌های اپ‌اند."
+     ],
+     "relatedTerms": [
+      "use-case",
+      "clean-architecture",
+      "repository-pattern"
+     ],
+     "tryIt": "Use Case `ApplyCoupon` را بنویس: کد `YALDA` روی سبد بالای `300000` تومان ۲۰٪ تخفیف بدهد (حداکثر `100000` تومان) و بقیه‌ی کدها رد شوند. نتیجه را با `sealed class` مدل کن. خروجی مورد انتظار برای سبد `800000`: مبلغ نهایی `700000`."
+    },
+    {
+     "title": "Repository Pattern: پنهان کردن منبع داده",
+     "estimatedMinutes": 30,
+     "what": "وقتی از کتابخانه‌ی دانشگاه کتاب می‌خواهی، مسئولش می‌داند کتاب در قفسه است، در انبار یا باید از شعبه‌ی دیگر بیاید. تو فقط اسم کتاب را می‌گویی.\n\nRepository همین نقش را دارد: یک interface در Domain که می‌گوید «چه داده‌ای» و یک پیاده‌سازی در Data که تصمیم می‌گیرد «از کجا»: API، دیتابیس محلی یا کش. بقیه‌ی اپ نمی‌فهمد داده از کجا آمده.",
+     "why": "اینترنت در مترو قطع می‌شود. اگر صفحه‌ها مستقیم API صدا بزنند، برای پشتیبانی آفلاین باید همه را عوض کنی. با Repository فقط یک کلاس تصمیم می‌گیرد «اگر شبکه نبود، آخرین داده را بده» و تبدیل JSON به Entity هم یک‌جا انجام می‌شود.",
+     "simpleExample": {
+      "language": "dart",
+      "code": "class Product {\n  final int id;\n  final String name;\n  final int price; // toman\n  const Product(this.id, this.name, this.price);\n}\n// Domain: WHAT we need, not WHERE it comes from\nabstract interface class ProductRepository {\n  Future<List<Product>> getProducts();\n  Future<Product?> getById(int id);\n}\nclass InMemoryProductRepository implements ProductRepository {\n  final _items = [const Product(1, 'چای ۵۰۰ گرمی', 180000)];\n  @override\n  Future<List<Product>> getProducts() async => _items;\n  @override\n  Future<Product?> getById(int id) async => _items.where((p) => p.id == id).firstOrNull;\n}",
+      "explanation": "interface فقط قرارداد است. `InMemoryProductRepository` ساده‌ترین پیاده‌سازی است که برای تست و نمونه‌سازی سریع عالی است؛ بعداً نسخه‌ی API بدون تغییر در مصرف‌کننده‌ها جایگزینش می‌شود."
+     },
+     "realExample": {
+      "language": "dart",
+      "code": "import 'package:dio/dio.dart';\n\nclass Product {\n  final int id;\n  final String name;\n  final int price; // toman\n  const Product(this.id, this.name, this.price);\n}\n\nabstract interface class ProductRepository {\n  Future<List<Product>> getProducts();\n}\nclass NetworkFailure implements Exception {}\nclass ProductRepositoryImpl implements ProductRepository {\n  final Dio _dio;\n  List<Product>? _cache; // last successful result\n  ProductRepositoryImpl(this._dio);\n  @override\n  Future<List<Product>> getProducts() async {\n    try {\n      final res = await _dio.get<List<dynamic>>('/products');\n      return _cache = [\n        for (final j in res.data!.cast<Map<String, dynamic>>())\n          Product(j['id'] as int, j['title'] as String, (j['price_rial'] as int) ~/ 10),\n      ];\n    } on DioException {\n      final cached = _cache;\n      if (cached != null) return cached; // offline: show last data\n      throw NetworkFailure(); // domain error, not DioException\n    }\n  }\n}",
+      "explanation": "مخزن تصمیم می‌گیرد داده از کجا بیاید: از سرور، و اگر اینترنت قطع بود از آخرین نتیجه‌ی موفق. اسم فیلدهای API (`title`، `price_rial`) و `DioException` بیرون از این کلاس دیده نمی‌شوند؛ UI فقط `Product` و `NetworkFailure` را می‌شناسد."
+     },
+     "mistakes": [
+      "برگرداندن `Response` یا `Map<String, dynamic>` از Repository؛ جزئیات API به همه‌ی لایه‌ها نشت می‌کند.",
+      "بیرون دادن `DioException` از مخزن؛ لایه‌های بالا مجبور می‌شوند `dio` را import کنند. خطا را به نوع Domain تبدیل کن.",
+      "یک Repository غول‌آسا برای کل اپ (`AppRepository`)؛ برای هر مفهوم (سفارش، کاربر، محصول) مخزن جدا بساز."
+     ],
+     "bestPractices": [
+      "interface مخزن را در Domain و پیاده‌سازی‌اش را در Data بگذار؛ همین جدایی تست و تعویض را ممکن می‌کند.",
+      "سیاست کش (اول کش یا اول شبکه، مدت اعتبار) را فقط داخل Repository پیاده کن، نه در UI.",
+      "یک نسخه‌ی InMemory یا Fake از هر مخزن داشته باش؛ در تست Use Case ها بارها به کارت می‌آید."
+     ],
+     "relatedTerms": [
+      "repository-pattern",
+      "caching",
+      "clean-architecture"
+     ],
+     "tryIt": "با mocktail برای `ProductRepositoryImpl` تست بنویس: بار اول `Dio` لیست بدهد و بار دوم `DioException` پرتاب کند؛ بررسی کن فراخوانی دوم همان لیست قبلی را برمی‌گرداند. تست دوم: بدون کش، `NetworkFailure` پرتاب شود. خروجی مورد انتظار: دو تست سبز."
+    },
+    {
+     "title": "Dependency Injection در Flutter",
+     "estimatedMinutes": 30,
+     "what": "برق خانه را خودت تولید نمی‌کنی؛ از پریز می‌گیری. اگر روزی برق از پنل خورشیدی بیاید، یخچال عوض نمی‌شود. Dependency Injection یعنی کلاس وابستگی‌هایش را خودش نسازد و از بیرون، معمولاً از سازنده، بگیرد.\n\nدر Flutter یک Composition Root نزدیک `main` داری که اشیا را می‌سازد و به هم وصل می‌کند؛ با get_it یا با Provider و `RepositoryProvider` در درخت ویجت.",
+     "why": "اگر `ProductsCubit` خودش `ProductRepositoryImpl(Dio())` بسازد، در تست نمی‌توانی Fake بدهی، برای staging آدرس سرور را عوض کنی یا یک `Dio` مشترک با interceptor توکن داشته باشی. با DI همه‌ی این‌ها فقط در یک فایل تنظیم می‌شوند.",
+     "simpleExample": {
+      "language": "dart",
+      "code": "abstract interface class TokenStorage {\n  Future<String?> read();\n}\n\nclass ApiClient {\n  final TokenStorage storage; // injected, not created here\n  ApiClient(this.storage);\n  Future<String> authHeader() async => 'Bearer ${await storage.read() ?? ''}';\n}\nclass MemoryTokenStorage implements TokenStorage {\n  @override\n  Future<String?> read() async => 'test-token';\n}\n\nFuture<void> main() async {\n  final client = ApiClient(MemoryTokenStorage()); // composition root\n  print(await client.authHeader()); // Bearer test-token\n}",
+      "explanation": "`ApiClient` نمی‌داند توکن از `flutter_secure_storage` می‌آید یا از حافظه؛ فقط `TokenStorage` را می‌شناسد. در اپ نسخه‌ی امن و در تست نسخه‌ی حافظه‌ای را به آن می‌دهی. این همان Constructor Injection است."
+     },
+     "realExample": {
+      "language": "dart",
+      "code": "import 'package:dio/dio.dart';\nimport 'package:flutter/material.dart';\nimport 'package:flutter_bloc/flutter_bloc.dart';\nimport 'package:get_it/get_it.dart';\n\nfinal getIt = GetIt.instance;\nabstract interface class ProductRepository {\n  Future<List<String>> names();\n}\nclass ProductRepositoryImpl implements ProductRepository {\n  final Dio dio;\n  ProductRepositoryImpl(this.dio);\n  @override\n  Future<List<String>> names() async => ['چای', 'قهوه']; // dio.get in real code\n}\nclass ProductsCubit extends Cubit<List<String>> {\n  final ProductRepository repo; // injected via constructor\n  ProductsCubit(this.repo) : super(const []);\n  Future<void> load() async => emit(await repo.names());\n}\nvoid setupDependencies() {\n  getIt.registerLazySingleton(() => Dio(BaseOptions(baseUrl: 'https://api.example.ir')));\n  getIt.registerLazySingleton<ProductRepository>(() => ProductRepositoryImpl(getIt()));\n  getIt.registerFactory(() => ProductsCubit(getIt())); // new Cubit per screen\n}\n\nvoid main() {\n  setupDependencies();\n  runApp(MaterialApp(\n    home: BlocProvider(create: (_) => getIt<ProductsCubit>()..load(), child: const Placeholder()),\n  ));\n}",
+      "explanation": "همه‌ی سیم‌کشی در `setupDependencies` است: یک `Dio` مشترک، مخزن به‌صورت Singleton تنبل و Cubit به‌صورت Factory تا هر صفحه نمونه‌ی تازه بگیرد. خود کلاس‌ها از get_it خبر ندارند و وابستگی را از سازنده می‌گیرند."
+     },
+     "mistakes": [
+      "صدا زدن `GetIt.instance<X>()` داخل متدهای کلاس‌ها؛ وابستگی پنهان می‌شود و تست سخت. فقط در Composition Root از get_it بخوان.",
+      "ثبت Cubit به‌صورت Singleton؛ وقتی `BlocProvider` آن را `close` کرد، صفحه‌ی بعد Cubit بسته‌شده می‌گیرد و `emit` خطا می‌دهد.",
+      "فراموش کردن `getIt.reset()` بین تست‌ها؛ ثبت‌های یک تست به تست بعدی نشت می‌کنند."
+     ],
+     "bestPractices": [
+      "Constructor Injection را پیش‌فرض بگیر؛ get_it و Provider فقط ابزار ساختن و رساندن اشیا در Composition Root هستند.",
+      "سرویس‌های مشترک و گران (`Dio`، مخزن) را Singleton و اشیای وابسته به صفحه (Cubit) را Factory ثبت کن.",
+      "برای تست و محیط‌های مختلف (dev، staging، prod) تابع setup جدا داشته باش که پیاده‌سازی مناسب را ثبت کند."
+     ],
+     "relatedTerms": [
+      "dependency-injection",
+      "clean-architecture",
+      "bloc"
+     ],
+     "tryIt": "تابع `setupTestDependencies()` بنویس که به‌جای `ProductRepositoryImpl` یک Fake با سه اسم ثبت کند. در یک تست `ProductsCubit` را از get_it بگیر، `load()` را صدا بزن و بررسی کن `state.length` برابر `3` است. در `tearDown` هم `getIt.reset()` بزن. خروجی مورد انتظار: تست سبز."
+    }
+   ]
+  },
+  {
+   "course": "se-420",
+   "lessons": [
+    {
+     "title": "Widget Test: تست کردن UI در انزوا",
+     "estimatedMinutes": 30,
+     "what": "Widget Test مثل امتحان عملی رانندگی در محوطه‌ی بسته است: ماشین واقعی است، ولی خیابان و ترافیک واقعی نیست. ویجت در محیطی شبیه‌سازی‌شده ساخته می‌شود، بدون گوشی و شبکه، و تو مثل کاربر روی آن ضربه می‌زنی و متن وارد می‌کنی.\n\nسه ابزار اصلی: `tester.pumpWidget` برای ساختن، `find` برای پیدا کردن، و `tap` یا `enterText` به همراه `pump` برای تعامل و ساختن قاب بعدی.",
+     "why": "Unit Test نمی‌گوید پیام خطای شماره موبایل واقعاً زیر فیلد نمایش داده می‌شود یا نه، و اجرای دستی اپ برای هر تغییر کند است. Widget Test در چند صد میلی‌ثانیه رفتار UI را می‌سنجد و روی CI بدون شبیه‌ساز اجرا می‌شود.",
+     "simpleExample": {
+      "language": "dart",
+      "code": "import 'package:flutter/material.dart';\nimport 'package:flutter_test/flutter_test.dart';\n\nclass PriceTag extends StatelessWidget {\n  const PriceTag({super.key, required this.toman});\n  final int toman;\n  @override\n  Widget build(BuildContext context) => Text(toman == 0 ? 'رایگان' : '$toman تومان',\n      textDirection: TextDirection.rtl);\n}\n\nvoid main() {\n  testWidgets('shows free label for zero price', (tester) async {\n    await tester.pumpWidget(const PriceTag(toman: 0));\n    expect(find.text('رایگان'), findsOneWidget);\n    expect(find.textContaining('تومان'), findsNothing);\n  });\n}",
+      "explanation": "`pumpWidget` ویجت را در محیط تست می‌سازد و `find.text` آن را مثل کاربر با متنش پیدا می‌کند. چون `MaterialApp` نداریم، `textDirection` را صریح دادیم؛ در تست‌های بزرگ‌تر ویجت را داخل `MaterialApp` بگذار."
+     },
+     "realExample": {
+      "language": "dart",
+      "code": "import 'package:flutter/material.dart';\nimport 'package:flutter_test/flutter_test.dart';\n\nclass LoginForm extends StatefulWidget {\n  const LoginForm({super.key});\n  @override\n  State<LoginForm> createState() => _LoginFormState();\n}\n\nclass _LoginFormState extends State<LoginForm> {\n  String _mobile = '';\n  String? _error;\n  void _submit() {\n    final ok = RegExp(r'^09\\d{9}$').hasMatch(_mobile);\n    setState(() => _error = ok ? null : 'شماره معتبر نیست');\n  }\n  @override\n  Widget build(BuildContext context) => Column(children: [\n        TextField(key: const Key('mobile'), onChanged: (v) => _mobile = v, decoration: InputDecoration(errorText: _error)),\n        ElevatedButton(onPressed: _submit, child: const Text('دریافت کد')),\n      ]);\n}\n\nvoid main() {\n  testWidgets('invalid mobile shows an error', (tester) async {\n    await tester.pumpWidget(const MaterialApp(home: Scaffold(body: LoginForm())));\n    await tester.enterText(find.byKey(const Key('mobile')), '0912');\n    await tester.tap(find.text('دریافت کد'));\n    await tester.pump(); // rebuild after setState\n    expect(find.text('شماره معتبر نیست'), findsOneWidget);\n  });\n}",
+      "explanation": "تست مثل کاربر عمل می‌کند: شماره‌ی ناقص وارد می‌کند، دکمه را می‌زند و پیام خطا را می‌بیند. `pump()` لازم است چون بعد از `setState` قاب تازه باید ساخته شود. `Key` پیدا کردن فیلد را از تغییر متن و ترجمه مستقل می‌کند."
+     },
+     "mistakes": [
+      "فراموش کردن `await tester.pump()` بعد از `tap`؛ نتیجه‌ی `setState` هنوز روی صفحه نیامده و `expect` شکست می‌خورد.",
+      "`pumpAndSettle` وقتی انیمیشن بی‌پایان مثل `CircularProgressIndicator` روی صفحه است؛ تست تا timeout گیر می‌کند.",
+      "ساختن ویجت بدون `MaterialApp` و `Scaffold` وقتی به Theme یا Material نیاز دارد؛ خطای «No Material widget found» می‌گیری."
+     ],
+     "bestPractices": [
+      "یک تابع کمکی مثل `pumpApp(tester, widget)` بساز که `MaterialApp`، تم و Provider های لازم را دور ویجت بپیچد.",
+      "برای ویجت‌های مهم `Key` معنی‌دار بگذار (`Key('mobile')`) تا تست با تغییر متن یا ترجمه نشکند.",
+      "رفتار را تست کن نه ساختار: «پیام خطا دیده می‌شود» بهتر از «یک `Column` با دو فرزند هست»."
+     ],
+     "relatedTerms": [
+      "widget-test",
+      "stateful-widget",
+      "build-context"
+     ],
+     "tryIt": "به `LoginForm` پارامتر `onSubmit` اضافه کن که با شماره‌ی معتبر صدا زده شود. تست دومی بنویس که `09121234567` وارد کند و بررسی کند `onSubmit` با همین شماره صدا زده شده و پیام خطا `findsNothing` است. خروجی مورد انتظار با `flutter test`: هر دو تست سبز."
+    },
+    {
+     "title": "Golden Test: تست ظاهر پیکسل‌به‌پیکسل",
+     "estimatedMinutes": 25,
+     "what": "Golden Test مثل مقایسه‌ی عکس قبل و بعد است: یک بار تصویر درست ویجت (فایل golden) را ذخیره می‌کنی و از آن به بعد هر اجرا، ویجت را دوباره رندر و پیکسل‌به‌پیکسل با آن عکس مقایسه می‌کند.\n\nمقایسه با `matchesGoldenFile('x.png')` انجام می‌شود و تصویر مرجع را با `flutter test --update-goldens` می‌سازی یا به‌روز می‌کنی.",
+     "why": "بعضی باگ‌ها منطقی نیستند، ظاهری‌اند: فاصله‌ها به‌هم ریخته، قیمت از کارت بیرون زده یا چیدمان راست‌به‌چپ خراب شده. Widget Test معمولی این‌ها را نمی‌بیند. Golden Test هر تغییر ناخواسته‌ی ظاهر را قبل از رسیدن به کاربر، در همان Pull Request نشان می‌دهد.",
+     "simpleExample": {
+      "language": "dart",
+      "code": "import 'package:flutter/material.dart';\nimport 'package:flutter_test/flutter_test.dart';\n\nvoid main() {\n  testWidgets('discount badge looks right', (tester) async {\n    await tester.pumpWidget(\n      const MaterialApp(\n        home: Scaffold(\n          body: Center(child: Chip(label: Text('20% OFF'))),\n        ),\n      ),\n    );\n    await expectLater(\n      find.byType(Chip),\n      matchesGoldenFile('goldens/discount_badge.png'),\n    );\n  });\n}",
+      "explanation": "بار اول با `flutter test --update-goldens` فایل `discount_badge.png` ساخته می‌شود. از آن به بعد اگر رنگ، اندازه یا شکل Chip عوض شود، تست شکست می‌خورد و تصویر تفاوت‌ها در پوشه‌ی `failures` کنار تست ذخیره می‌شود."
+     },
+     "realExample": {
+      "language": "dart",
+      "code": "import 'package:flutter/material.dart';\nimport 'package:flutter_test/flutter_test.dart';\n\nclass ProductCard extends StatelessWidget {\n  const ProductCard({super.key, required this.name, required this.price});\n  final String name;\n  final String price;\n  @override\n  Widget build(BuildContext context) => Card(\n        child: ListTile(title: Text(name), trailing: Text('$price تومان')),\n      );\n}\n\nvoid main() {\n  for (final (label, width) in [('phone', 360.0), ('tablet', 800.0)]) {\n    testWidgets('ProductCard golden on $label', (tester) async {\n      tester.view.physicalSize = Size(width, 200);\n      tester.view.devicePixelRatio = 1.0;\n      addTearDown(tester.view.reset); // restore for the next test\n\n      await tester.pumpWidget(const MaterialApp(\n        home: Directionality(\n          textDirection: TextDirection.rtl,\n          child: Scaffold(body: ProductCard(name: 'زعفران', price: '1,250,000')),\n        ),\n      ));\n      await expectLater(find.byType(ProductCard),\n          matchesGoldenFile('goldens/product_card_$label.png'));\n    });\n  }\n}",
+      "explanation": "کارت محصول یک فروشگاه اینترنتی در دو عرض گوشی و تبلت و در حالت راست‌به‌چپ تست می‌شود. `tester.view` اندازه‌ی صفحه را ثابت می‌کند تا تصویر در هر اجرا یکسان باشد و `addTearDown` آن را برای تست بعدی برمی‌گرداند."
+     },
+     "mistakes": [
+      "ساختن golden روی مک و اجرا روی CI لینوکسی؛ رندر فونت فرق دارد و تست بی‌دلیل قرمز می‌شود. هر دو را روی یک سیستم‌عامل بساز.",
+      "انتظار دیدن متن فارسی در golden؛ فونت پیش‌فرض تست حروف را مستطیل نشان می‌دهد. برای متن واقعی فونت را با `FontLoader` بارگذاری کن.",
+      "زدن `--update-goldens` بدون نگاه کردن به تصویر جدید؛ عملاً باگ ظاهری را به‌عنوان مرجع درست ثبت می‌کنی."
+     ],
+     "bestPractices": [
+      "Golden را برای ویجت‌های کلیدی و پایدار (کارت محصول، دکمه، فاکتور) بنویس، نه صفحه‌هایی که هر هفته عوض می‌شوند.",
+      "اندازه‌ی صفحه، تم و جهت متن را در تست ثابت کن تا نتیجه در هر اجرا یکسان باشد.",
+      "تغییر فایل‌های golden را در Pull Request مثل کد بازبینی کن و تصویر قبل و بعد را کنار هم ببین."
+     ],
+     "relatedTerms": [
+      "widget-test",
+      "code-review",
+      "ci-cd"
+     ],
+     "tryIt": "برای `ProductCard` یک golden در تم تیره (`theme: ThemeData.dark()`) اضافه کن و با `--update-goldens` بسازش. بعد رنگ `Card` را عوض کن و `flutter test` بزن. خروجی مورد انتظار: تست با پیام اختلاف پیکسلی شکست بخورد و تصویر تفاوت در پوشه‌ی `failures` ساخته شود."
+    },
+    {
+     "title": "Integration Test و جای‌دادن تست‌ها در جریان توسعه",
+     "estimatedMinutes": 30,
+     "what": "Integration Test مثل مشتری مخفی رستوران است: کل مسیر را از ورود تا پرداخت واقعاً طی می‌کند. اپ کامل روی گوشی، شبیه‌ساز یا دسکتاپ اجرا می‌شود و تست مثل کاربر از صفحه‌ی ورود تا ثبت سفارش جلو می‌رود.\n\nدر Flutter از package `integration_test` استفاده می‌کنی: همان `testWidgets` و `find` آشنا، ولی روی اپ واقعی. فایل‌ها در پوشه‌ی `integration_test/` قرار می‌گیرند.",
+     "why": "همه‌ی Unit و Widget Test ها سبزند، ولی اپ واقعی بعد از ورود سفید می‌ماند، چون route اشتباه ثبت شده یا یک plugin روی اندروید کرش می‌کند. Integration Test این شکاف‌ها را می‌گیرد. چون کند است، باید بدانی کجای جریان توسعه اجرایش کنی.",
+     "simpleExample": {
+      "language": "dart",
+      "code": "import 'package:flutter/material.dart';\nimport 'package:flutter_test/flutter_test.dart';\nimport 'package:integration_test/integration_test.dart';\n\n// In a real project: import 'package:my_app/main.dart';\nclass MyApp extends StatelessWidget {\n  const MyApp({super.key});\n  @override\n  Widget build(BuildContext context) => const MaterialApp(home: Scaffold(body: Text('خوش آمدی')));\n}\nvoid main() {\n  IntegrationTestWidgetsFlutterBinding.ensureInitialized();\n  testWidgets('app starts on the welcome screen', (tester) async {\n    await tester.pumpWidget(const MyApp());\n    await tester.pumpAndSettle();\n    expect(find.text('خوش آمدی'), findsOneWidget);\n  });\n}",
+      "explanation": "`ensureInitialized` تست را به اپ واقعی روی دستگاه وصل می‌کند. در پروژه‌ی واقعی `MyApp` را از `main.dart` خودت import می‌کنی. اجرا: `flutter test integration_test` وقتی گوشی یا شبیه‌ساز وصل است."
+     },
+     "realExample": {
+      "language": "yaml",
+      "code": "# .github/workflows/flutter.yml\nname: flutter-ci\non:\n  pull_request:\n  push:\n    branches: [main]\n\njobs:\n  fast-checks:              # every PR, a few minutes\n    runs-on: ubuntu-latest\n    steps:\n      - uses: actions/checkout@v4\n      - uses: subosito/flutter-action@v2\n        with: { channel: stable }\n      - run: flutter pub get\n      - run: dart format --output=none --set-exit-if-changed .\n      - run: flutter analyze\n      - run: flutter test          # unit + widget + golden\n\n  integration:              # slow: only on main, after fast checks\n    needs: fast-checks\n    if: github.ref == 'refs/heads/main'\n    runs-on: ubuntu-latest\n    steps:\n      - uses: actions/checkout@v4\n      - uses: subosito/flutter-action@v2\n        with: { channel: stable }\n      - run: sudo apt-get update && sudo apt-get install -y clang cmake ninja-build pkg-config libgtk-3-dev xvfb\n      - run: flutter pub get\n      - run: xvfb-run flutter test integration_test -d linux",
+      "explanation": "هر Pull Request در چند دقیقه format، analyze و همه‌ی Unit، Widget و Golden Test ها را اجرا می‌کند. Integration Test کندتر است، پس فقط بعد از سبز شدن مرحله‌ی اول و روی `main` اجرا می‌شود؛ اینجا روی نسخه‌ی دسکتاپ لینوکس."
+     },
+     "mistakes": [
+      "نوشتن بیشتر تست‌ها به‌صورت Integration؛ کند و شکننده‌اند و هرم تست وارونه می‌شود. منطق را با Unit Test پوشش بده.",
+      "وصل کردن Integration Test به سرور و داده‌ی واقعی؛ با قطعی شبکه یا تغییر داده، تست بی‌دلیل قرمز می‌شود. سرور Fake بگذار.",
+      "فراموش کردن `IntegrationTestWidgetsFlutterBinding.ensureInitialized()`؛ تست روی دستگاه درست اجرا و گزارش نمی‌شود."
+     ],
+     "bestPractices": [
+      "فقط مسیرهای حیاتی را Integration تست کن: ورود، جست‌وجو، افزودن به سبد و پرداخت.",
+      "تست‌های سریع را روی هر Pull Request و تست‌های کند را بعد از merge یا شبانه اجرا کن.",
+      "وابستگی‌ها را در `main` قابل تعویض کن (DI) تا Integration Test بتواند مخزن Fake تزریق کند."
+     ],
+     "relatedTerms": [
+      "integration-test",
+      "ci-cd",
+      "widget-test"
+     ],
+     "tryIt": "یک Integration Test برای «افزودن به سبد» بنویس: اپ کوچکی با دکمه‌ی «افزودن» و متن `سبد: 0` بساز، دو بار روی دکمه ضربه بزن و بررسی کن `سبد: 2` دیده می‌شود. با `flutter test integration_test` روی شبیه‌ساز اجرا کن. خروجی مورد انتظار: `All tests passed!`"
+    }
+   ]
+  }
+ ]
+}

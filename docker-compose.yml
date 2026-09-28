@@ -1,0 +1,20 @@
+services:
+  db:
+    image: postgres:16-alpine
+    container_name: codeacademy-db
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: codeacademy
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-codeacademy_dev}
+      POSTGRES_DB: codeacademy
+    ports:
+      - "5435:5432"
+    volumes:
+      - codeacademy-pg:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U codeacademy"]
+      interval: 3s
+      timeout: 3s
+      retries: 20
+volumes:
+  codeacademy-pg:

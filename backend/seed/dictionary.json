@@ -1,0 +1,619 @@
+{
+ "terms": [
+  {
+   "slug": "dependency-injection",
+   "nameEn": "Dependency Injection",
+   "nameFa": "تزریق وابستگی",
+   "category": "software-engineering",
+   "definition": "تزریق وابستگی یعنی کلاس، وابستگی‌هایش را خودش نسازد و از بیرون (معمولاً از سازنده) بگیرد. مثل رستورانی که درگاه پرداخت را خودش نمی‌سازد و هر وقت بخواهد عوضش می‌کند. این‌طوری در تست راحت نسخه‌ی ساختگی جایگزین می‌کنی. در Flutter معمولاً با `get_it` یا `provider` انجامش می‌دهند.",
+   "example": "abstract class PaymentGateway {\n  bool pay(int toman);\n}\nclass FakeGateway implements PaymentGateway {\n  @override\n  bool pay(int toman) => true;\n}\nclass CheckoutService {\n  CheckoutService(this.gateway); // injected from outside\n  final PaymentGateway gateway;\n  bool checkout(int total) => gateway.pay(total);\n}\nvoid main() => print(CheckoutService(FakeGateway()).checkout(250000));",
+   "related": [
+    "repository-pattern",
+    "mocking",
+    "unit-test",
+    "solid"
+   ]
+  },
+  {
+   "slug": "future",
+   "nameEn": "Future",
+   "nameFa": "نتیجه‌ی غیرهمزمان (Future)",
+   "category": "dart",
+   "definition": "`Future` شیئی است که نتیجه‌ی یک کار غیرهمزمان را بعداً تحویل می‌دهد: یا یک مقدار، یا یک خطا. مثل فیش سفارش در رستوران: الان غذا دستت نیست، ولی وقتی آماده شد صدایت می‌زنند. برای درخواست شبکه، خواندن فایل یا تأخیر زمانی از آن استفاده می‌کنی.",
+   "example": "Future<int> fetchPrice() async {\n  await Future.delayed(const Duration(seconds: 1)); // fake network delay\n  return 185000;\n}\n\nFuture<void> main() async {\n  final price = await fetchPrice();\n  print('قیمت: $price تومان');\n}",
+   "related": [
+    "async-await",
+    "stream",
+    "event-loop"
+   ]
+  },
+  {
+   "slug": "clean-architecture",
+   "nameEn": "Clean Architecture",
+   "nameFa": "معماری تمیز",
+   "category": "software-engineering",
+   "definition": "Clean Architecture روشی برای چیدن کد در لایه‌هاست تا منطق اصلی برنامه از UI، دیتابیس و فریم‌ورک جدا بماند. وابستگی‌ها فقط رو به داخل‌اند: لایه‌ی domain چیزی از Flutter یا API نمی‌داند. مثل دستور پخت رستوران که با عوض‌شدن گارسون یا ظرف‌ها تغییر نمی‌کند.",
+   "example": "",
+   "related": [
+    "use-case",
+    "repository-pattern",
+    "dependency-injection",
+    "solid"
+   ]
+  },
+  {
+   "slug": "widget-lifecycle",
+   "nameEn": "Widget Lifecycle",
+   "nameFa": "چرخه‌ی حیات ویجت",
+   "category": "flutter",
+   "definition": "چرخه‌ی حیات ویجت مراحلی است که `State` یک `StatefulWidget` از ساخته‌شدن تا حذف از درخت طی می‌کند: `initState`، `didChangeDependencies`، `build`، `didUpdateWidget` و `dispose`. مثلاً کنترلر فرم را در `initState` می‌سازی و در `dispose` آزاد می‌کنی تا حافظه هدر نرود.",
+   "example": "import 'package:flutter/material.dart';\nclass NameField extends StatefulWidget {\n  const NameField({super.key});\n  @override State<NameField> createState() => _NameFieldState();\n}\nclass _NameFieldState extends State<NameField> {\n  late final TextEditingController _ctrl;\n  @override\n  void initState() { super.initState(); _ctrl = TextEditingController(); }\n  @override\n  void dispose() { _ctrl.dispose(); super.dispose(); }\n  @override\n  Widget build(BuildContext context) => TextField(controller: _ctrl);\n}",
+   "related": [
+    "stateful-widget",
+    "build-context",
+    "animation-controller"
+   ]
+  },
+  {
+   "slug": "stream",
+   "nameEn": "Stream",
+   "nameFa": "جریان داده (Stream)",
+   "category": "dart",
+   "definition": "`Stream` دنباله‌ای از داده‌های غیرهمزمان است که یکی‌یکی و در طول زمان می‌رسند؛ برخلاف `Future` که فقط یک نتیجه دارد. مثل تابلوی ایستگاه اتوبوس که هر چند ثانیه زمان رسیدن تازه را نشان می‌دهد. با `listen` یا `await for` به داده‌هایش گوش می‌دهی.",
+   "example": "Stream<int> countdown(int from) async* {\n  for (var i = from; i > 0; i--) {\n    await Future.delayed(const Duration(seconds: 1));\n    yield i;\n  }\n}\n\nFuture<void> main() async {\n  await for (final n in countdown(3)) {\n    print('اتوبوس $n دقیقه‌ی دیگر می‌رسد');\n  }\n}",
+   "related": [
+    "future",
+    "async-await",
+    "bloc",
+    "event-loop"
+   ]
+  },
+  {
+   "slug": "state-management",
+   "nameEn": "State Management",
+   "nameFa": "مدیریت وضعیت",
+   "category": "flutter",
+   "definition": "مدیریت وضعیت یعنی تصمیم بگیری داده‌های در حال تغییر اپ (State) کجا نگه‌داری شوند، چطور عوض شوند و کدام ویجت‌ها باخبر شوند. مثل سبد خرید فروشگاه اینترنتی که باید در صفحه‌ی محصول و صفحه‌ی پرداخت یکی باشد. ابزارهای رایج: `setState`، Provider، BLoC و Riverpod.",
+   "example": "import 'package:flutter/material.dart';\nfinal cartCount = ValueNotifier<int>(0);\nclass CartBadge extends StatelessWidget {\n  const CartBadge({super.key});\n  @override\n  Widget build(BuildContext context) => ValueListenableBuilder<int>(\n        valueListenable: cartCount,\n        builder: (context, count, _) => Text('سبد: $count'),\n      );\n}\nvoid addToCart() => cartCount.value++; // every listener rebuilds",
+   "related": [
+    "provider",
+    "bloc",
+    "stateful-widget",
+    "immutability"
+   ]
+  },
+  {
+   "slug": "solid",
+   "nameEn": "SOLID",
+   "nameFa": "اصول SOLID",
+   "category": "software-engineering",
+   "definition": "SOLID پنج اصل طراحی شی‌گراست: مسئولیت واحد، باز/بسته، جایگزینی لیسکوف، تفکیک رابط و وارونگی وابستگی. هدفش کدی است که با اضافه‌شدن امکانات تازه نشکند. مثلاً اگر کلاس سفارش هم قیمت را حساب کند و هم پیامک بفرستد، اصل مسئولیت واحد را زیر پا گذاشته‌ای.",
+   "example": "",
+   "related": [
+    "oop",
+    "design-patterns",
+    "dependency-injection",
+    "clean-architecture"
+   ]
+  },
+  {
+   "slug": "null-safety",
+   "nameEn": "Null Safety",
+   "nameFa": "ایمنی در برابر null",
+   "category": "dart",
+   "definition": "Null Safety در Dart یعنی متغیر به‌طور پیش‌فرض نمی‌تواند `null` باشد، مگر نوعش را با `?` بنویسی، مثل `String?`. کامپایلر پیش از اجرا جلوی استفاده‌ی ناامن را می‌گیرد. مثلاً کد معرف در فرم ثبت‌نام اختیاری است، پس `String?` می‌شود و با `??` مقدار پیش‌فرض می‌گیرد.",
+   "example": "String describe(String? referralCode) {\n  final code = referralCode ?? 'ندارد';\n  return 'کد معرف: $code';\n}\n\nvoid main() {\n  print(describe(null));\n  print(describe('ALI123'));\n}",
+   "related": [
+    "variable",
+    "generics",
+    "json-serialization"
+   ]
+  },
+  {
+   "slug": "provider",
+   "nameEn": "Provider",
+   "nameFa": "پکیج Provider",
+   "category": "flutter",
+   "definition": "Provider پکیجی برای رساندن داده و State به ویجت‌های پایین درخت است، بدون این‌که آن را دستی از سازنده‌ها پاس بدهی. روی `InheritedWidget` ساخته شده و با `ChangeNotifier` خوب کار می‌کند. مثلاً سبد خرید را یک بار بالای اپ می‌گذاری و هر صفحه با `context.watch` آن را می‌خواند.",
+   "example": "import 'package:flutter/material.dart';\nimport 'package:provider/provider.dart';\nclass Cart extends ChangeNotifier {\n  int count = 0;\n  void add() { count++; notifyListeners(); }\n}\nclass CartBadge extends StatelessWidget {\n  const CartBadge({super.key});\n  @override\n  Widget build(BuildContext context) =>\n      Text('سبد: ${context.watch<Cart>().count}');\n}\nvoid main() => runApp(ChangeNotifierProvider(\n    create: (_) => Cart(), child: const MaterialApp(home: CartBadge())));",
+   "related": [
+    "state-management",
+    "build-context",
+    "dependency-injection"
+   ]
+  },
+  {
+   "slug": "repository-pattern",
+   "nameEn": "Repository Pattern",
+   "nameFa": "الگوی Repository (مخزن داده)",
+   "category": "software-engineering",
+   "definition": "Repository لایه‌ای بین منطق برنامه و منبع داده است که جزئیات API، دیتابیس یا کش را پنهان می‌کند. بقیه‌ی اپ فقط می‌گوید «سفارش‌ها را بده» و کاری ندارد از کجا می‌آیند؛ مثل انبارداری که می‌داند جنس در کدام قفسه است. این‌طوری عوض‌کردن منبع داده و تست‌نویسی آسان می‌شود.",
+   "example": "class Order {\n  Order(this.id, this.total);\n  final String id;\n  final int total;\n}\nabstract class OrderRepository {\n  Future<List<Order>> getOrders();\n}\nclass FakeOrderRepository implements OrderRepository {\n  @override\n  Future<List<Order>> getOrders() async => [Order('A1', 320000)];\n}",
+   "related": [
+    "clean-architecture",
+    "use-case",
+    "rest-api",
+    "caching"
+   ]
+  },
+  {
+   "slug": "unit-test",
+   "nameEn": "Unit Test",
+   "nameFa": "تست واحد",
+   "category": "software-engineering",
+   "definition": "تست واحد کدی است که رفتار یک تابع یا کلاس را جدا از بقیه‌ی برنامه بررسی می‌کند. سریع اجرا می‌شود و وقتی چیزی را تغییر می‌دهی، فوراً می‌گوید کجا خراب شده. مثلاً مطمئن می‌شوی تابع تخفیف برای خرید ۲۰۰ هزار تومانی عدد درست برمی‌گرداند.",
+   "example": "import 'package:flutter_test/flutter_test.dart';\nint applyDiscount(int price) => price >= 200000 ? price * 90 ~/ 100 : price;\nvoid main() {\n  test('10% discount from 200k toman', () {\n    expect(applyDiscount(200000), 180000);\n    expect(applyDiscount(150000), 150000);\n  });\n}",
+   "related": [
+    "mocking",
+    "widget-test",
+    "integration-test"
+   ]
+  },
+  {
+   "slug": "async-await",
+   "nameEn": "async/await",
+   "nameFa": "کد غیرهمزمان با async/await",
+   "category": "dart",
+   "definition": "`async` و `await` کلیدواژه‌هایی‌اند که کد غیرهمزمان را مثل کد معمولی، خط‌به‌خط و خوانا می‌کنند. داخل تابع `async` با `await` منتظر نتیجه‌ی یک `Future` می‌مانی، بدون این‌که UI قفل شود. مثل صف نانوایی که شماره می‌گیری و تا نوبتت برسد کار دیگری می‌کنی. خطاها را هم با `try/catch` می‌گیری.",
+   "example": "Future<String> login(String phone) async {\n  await Future.delayed(const Duration(milliseconds: 500));\n  if (!phone.startsWith('09')) throw const FormatException('شماره نامعتبر');\n  return 'خوش آمدی';\n}\nFuture<void> main() async {\n  try {\n    print(await login('09121234567'));\n  } on FormatException catch (e) {\n    print(e.message);\n  }\n}",
+   "related": [
+    "future",
+    "stream",
+    "event-loop"
+   ]
+  },
+  {
+   "slug": "variable",
+   "nameEn": "Variable",
+   "nameFa": "متغیر",
+   "category": "dart",
+   "definition": "متغیر اسمی برای یک مقدار در حافظه است تا بعداً از آن استفاده کنی. در Dart مقدار `var` قابل‌تغییر است، `final` فقط یک بار مقدار می‌گیرد و `const` باید در زمان کامپایل معلوم باشد. مثل برچسب روی کشوی جاکفشی: برچسب ثابت است، ولی محتوای کشو می‌تواند عوض شود.",
+   "example": "void main() {\n  var balance = 500000; // can change\n  balance -= 120000;\n  final name = 'مریم'; // assigned once\n  const maxTransfer = 10000000; // compile-time constant\n  print('$name: $balance / $maxTransfer');\n}",
+   "related": [
+    "immutability",
+    "null-safety",
+    "function"
+   ]
+  },
+  {
+   "slug": "function",
+   "nameEn": "Function",
+   "nameFa": "تابع",
+   "category": "dart",
+   "definition": "تابع بلوکی از کد با یک اسم است که کار مشخصی انجام می‌دهد، ورودی (پارامتر) می‌گیرد و می‌تواند خروجی برگرداند. در Dart تابع هم یک مقدار است: می‌توانی آن را در متغیر بگذاری یا به تابع دیگری بدهی. مثلاً یک بار تابع کرایه‌ی تاکسی را می‌نویسی و همه‌جا صدایش می‌زنی.",
+   "example": "int taxiFare(int km, {int base = 30000}) => base + km * 8000;\n\nvoid main() {\n  print(taxiFare(5));\n  print(taxiFare(5, base: 40000));\n  final fares = [2, 7].map(taxiFare); // function passed as a value\n  print(fares.toList());\n}",
+   "related": [
+    "variable",
+    "recursion",
+    "generics"
+   ]
+  },
+  {
+   "slug": "oop",
+   "nameEn": "Object-Oriented Programming",
+   "nameFa": "برنامه‌نویسی شی‌گرا",
+   "category": "software-engineering",
+   "definition": "برنامه‌نویسی شی‌گرا روشی است که کد را حول «شیء» می‌چیند؛ هر شیء داده (فیلد) و رفتار (متد) خودش را دارد. چهار ستون آن کپسوله‌سازی، وراثت، چندریختی و انتزاع است. مثلاً در اپ بانکی هر حساب یک شیء است که موجودی‌اش را خودش نگه می‌دارد و فقط با متدهایش تغییر می‌کند.",
+   "example": "class Account {\n  Account(this.owner);\n  final String owner;\n  int _balance = 0; // hidden from outside\n  int get balance => _balance;\n  void deposit(int toman) {\n    if (toman > 0) _balance += toman;\n  }\n}\nvoid main() {\n  final acc = Account('رضا')..deposit(200000);\n  print('${acc.owner}: ${acc.balance}');\n}",
+   "related": [
+    "solid",
+    "mixin",
+    "design-patterns"
+   ]
+  },
+  {
+   "slug": "mixin",
+   "nameEn": "Mixin",
+   "nameFa": "میکسین (رفتار اشتراکی)",
+   "category": "dart",
+   "definition": "`mixin` مجموعه‌ای از فیلد و متد است که با `with` به چند کلاس اضافه می‌کنی، بدون این‌که آن‌ها از یک والد مشترک ارث ببرند. مثلاً قابلیت «ثبت لاگ» را یک بار می‌نویسی و به کلاس سفارش و پرداخت می‌دهی. در Flutter هم `SingleTickerProviderStateMixin` نمونه‌ی رایج آن است.",
+   "example": "mixin Logger {\n  void log(String msg) => print('[$runtimeType] $msg');\n}\nclass OrderService with Logger {\n  void submit() => log('سفارش ثبت شد');\n}\nclass PaymentService with Logger {\n  void pay() => log('پرداخت انجام شد');\n}\nvoid main() {\n  OrderService().submit();\n  PaymentService().pay();\n}",
+   "related": [
+    "oop",
+    "animation-controller",
+    "design-patterns"
+   ]
+  },
+  {
+   "slug": "generics",
+   "nameEn": "Generics",
+   "nameFa": "جنریک‌ها (نوع‌های پارامتری)",
+   "category": "dart",
+   "definition": "Generics یعنی کلاس یا تابعی بنویسی که نوع داده را به‌شکل پارامتر بگیرد، مثل `List<T>`. این‌طوری یک کد برای نوع‌های مختلف کار می‌کند و کامپایلر هم نوع را چک می‌کند. مثلاً یک کلاس `ApiResult<T>` می‌سازی که یک بار اطلاعات کاربر و یک بار لیست سفارش‌ها را نگه می‌دارد.",
+   "example": "class ApiResult<T> {\n  ApiResult(this.data, {this.error});\n  final T? data;\n  final String? error;\n  bool get isOk => error == null;\n}\nvoid main() {\n  final user = ApiResult<String>('سارا');\n  final orders = ApiResult<List<int>>(null, error: 'خطای شبکه');\n  print('${user.isOk} ${orders.isOk}');\n}",
+   "related": [
+    "collections",
+    "null-safety",
+    "oop"
+   ]
+  },
+  {
+   "slug": "collections",
+   "nameEn": "Collections (List/Map/Set)",
+   "nameFa": "مجموعه‌ها (List، Map و Set)",
+   "category": "dart",
+   "definition": "Collectionها ساختارهایی برای نگه‌داری چند مقدار با هم‌اند. `List` ترتیب را حفظ می‌کند و تکرار را می‌پذیرد، `Map` هر مقدار را به یک کلید وصل می‌کند و `Set` فقط مقدار یکتا نگه می‌دارد. مثلاً سبد خرید `List` است، قیمت کالاها `Map` و کدهای تخفیف استفاده‌شده `Set`.",
+   "example": "void main() {\n  final cart = ['نان', 'شیر', 'نان'];\n  final prices = {'نان': 15000, 'شیر': 45000};\n  final usedCodes = {'OFF10', 'OFF20'}..add('OFF10'); // duplicate ignored\n  final total = cart.fold<int>(0, (sum, item) => sum + prices[item]!);\n  print('$total ${usedCodes.length}'); // 75000 2\n}",
+   "related": [
+    "generics",
+    "big-o",
+    "immutability"
+   ]
+  },
+  {
+   "slug": "big-o",
+   "nameEn": "Big-O Notation",
+   "nameFa": "نماد O بزرگ (پیچیدگی زمانی)",
+   "category": "software-engineering",
+   "definition": "Big-O نشان می‌دهد زمان اجرا یا حافظه‌ی یک الگوریتم با بزرگ‌شدن ورودی چطور رشد می‌کند. `O(1)` یعنی ثابت، `O(n)` یعنی خطی و `O(n^2)` یعنی با دوبرابر شدن ورودی، حدوداً چهاربرابر کند می‌شود. مثلاً جست‌وجوی کد ملی در `Set` به‌طور میانگین `O(1)` است و در `List` ‏`O(n)`.",
+   "example": "// O(n): may check every item\nbool inList(List<String> ids, String id) => ids.contains(id);\n// O(1) on average: hash lookup\nbool inSet(Set<String> ids, String id) => ids.contains(id);\nvoid main() {\n  final ids = List.generate(100000, (i) => '$i');\n  print(inList(ids, '99999'));\n  print(inSet(ids.toSet(), '99999'));\n}",
+   "related": [
+    "collections",
+    "recursion",
+    "scalability",
+    "performance-profiling"
+   ]
+  },
+  {
+   "slug": "recursion",
+   "nameEn": "Recursion",
+   "nameFa": "بازگشت (تابع بازگشتی)",
+   "category": "software-engineering",
+   "definition": "بازگشت یعنی تابع برای حل مسئله، خودش را با ورودی کوچک‌تر صدا بزند. هر تابع بازگشتی به «حالت پایه» نیاز دارد تا جایی متوقف شود، وگرنه به خطای stack overflow می‌رسی. مثل عروسک‌های تودرتو که یکی‌یکی بازشان می‌کنی تا به کوچک‌ترین برسی؛ مثلاً برای پیمایش دسته‌بندی‌های تودرتوی فروشگاه.",
+   "example": "class Category {\n  Category(this.name, [this.children = const []]);\n  final String name;\n  final List<Category> children;\n}\n// base case: a category with no children returns 1\nint countAll(Category c) =>\n    1 + c.children.fold<int>(0, (sum, child) => sum + countAll(child));\nvoid main() {\n  final root = Category('کالای دیجیتال', [Category('موبایل', [Category('گوشی')])]);\n  print(countAll(root)); // 3\n}",
+   "related": [
+    "function",
+    "big-o",
+    "debugging"
+   ]
+  },
+  {
+   "slug": "git-branch",
+   "nameEn": "Git Branch",
+   "nameFa": "شاخه در Git (branch)",
+   "category": "professional-skills",
+   "definition": "branch در Git یک مسیر جدا برای توسعه است تا روی یک قابلیت یا رفع باگ کار کنی، بدون این‌که به `main` دست بزنی. مثل نوشتن پیش‌نویس روی برگه‌ای جدا که اگر خوب شد به متن اصلی اضافه‌اش می‌کنی. با `git switch -c feature/login` می‌سازی‌اش و بعد با merge یا Pull Request برمی‌گردانی.",
+   "example": "",
+   "related": [
+    "pull-request",
+    "code-review",
+    "ci-cd"
+   ]
+  },
+  {
+   "slug": "pull-request",
+   "nameEn": "Pull Request",
+   "nameFa": "درخواست ادغام (Pull Request)",
+   "category": "professional-skills",
+   "definition": "Pull Request درخواستی برای ادغام تغییرات یک branch در branch دیگر است، همراه با توضیح این‌که چه چیزی و چرا عوض شده. هم‌تیمی‌ها کد را بازبینی می‌کنند و CI تست‌ها را اجرا می‌کند. در GitLab به آن Merge Request می‌گویند. PR کوچک و متمرکز زودتر بررسی و ادغام می‌شود.",
+   "example": "",
+   "related": [
+    "git-branch",
+    "code-review",
+    "ci-cd"
+   ]
+  },
+  {
+   "slug": "debugging",
+   "nameEn": "Debugging",
+   "nameFa": "اشکال‌زدایی (دیباگ)",
+   "category": "professional-skills",
+   "definition": "Debugging یعنی پیدا کردن علت واقعی یک باگ و رفع آن. به‌جای حدس‌زدن، مشکل را بازتولید می‌کنی، با breakpoint کد را خط‌به‌خط جلو می‌بری و مقدار متغیرها را می‌بینی. مثلاً وقتی جمع سبد خرید اشتباه است، روی تابع محاسبه breakpoint می‌گذاری. در Flutter ابزار DevTools کمک بزرگی است.",
+   "example": "import 'package:flutter/foundation.dart';\n\nint cartTotal(List<int> prices) {\n  final total = prices.fold<int>(0, (sum, p) => sum + p);\n  debugPrint('cartTotal: $prices -> $total'); // temporary log\n  assert(total >= 0, 'total must not be negative'); // checked in debug mode\n  return total;\n}",
+   "related": [
+    "performance-profiling",
+    "unit-test",
+    "code-review"
+   ]
+  },
+  {
+   "slug": "stateless-widget",
+   "nameEn": "StatelessWidget",
+   "nameFa": "ویجت بدون State",
+   "category": "flutter",
+   "definition": "`StatelessWidget` ویجتی است که State داخلی ندارد و ظاهرش فقط به ورودی‌هایش بستگی دارد. اگر ورودی عوض شود، والد نمونه‌ی تازه‌ای می‌سازد و `build` دوباره اجرا می‌شود. برای بخش‌هایی مثل کارت محصول، عنوان صفحه یا آیکون که خودشان تغییر نمی‌کنند مناسب است.",
+   "example": "import 'package:flutter/material.dart';\n\nclass ProductCard extends StatelessWidget {\n  const ProductCard({super.key, required this.title, required this.price});\n  final String title;\n  final int price;\n\n  @override\n  Widget build(BuildContext context) {\n    return ListTile(title: Text(title), subtitle: Text('$price تومان'));\n  }\n}",
+   "related": [
+    "stateful-widget",
+    "build-context",
+    "widget-test"
+   ]
+  },
+  {
+   "slug": "stateful-widget",
+   "nameEn": "StatefulWidget",
+   "nameFa": "ویجت دارای State",
+   "category": "flutter",
+   "definition": "`StatefulWidget` ویجتی است که داده‌ی قابل‌تغییر دارد. خود ویجت تغییرناپذیر است و داده در شیء جداگانه‌ی `State` می‌ماند؛ با `setState` به Flutter می‌گویی دوباره `build` کند. مثلاً دکمه‌ی «+» که تعداد یک غذا را در اپ سفارش غذا زیاد می‌کند.",
+   "example": "import 'package:flutter/material.dart';\nclass QuantityPicker extends StatefulWidget {\n  const QuantityPicker({super.key});\n  @override\n  State<QuantityPicker> createState() => _QuantityPickerState();\n}\nclass _QuantityPickerState extends State<QuantityPicker> {\n  int _count = 1;\n  @override\n  Widget build(BuildContext context) => TextButton(\n        onPressed: () => setState(() => _count++),\n        child: Text('تعداد: $_count'),\n      );\n}",
+   "related": [
+    "stateless-widget",
+    "widget-lifecycle",
+    "state-management"
+   ]
+  },
+  {
+   "slug": "build-context",
+   "nameEn": "BuildContext",
+   "nameFa": "BuildContext (جایگاه ویجت در درخت)",
+   "category": "flutter",
+   "definition": "`BuildContext` نشانی جایگاه یک ویجت در درخت ویجت‌هاست و در `build` به دستت می‌رسد. با آن از ویجت‌های بالاتر چیزی می‌گیری، مثل `Theme.of(context)`، یا صفحه عوض می‌کنی و SnackBar نشان می‌دهی. مثل نشانی پستی است. بعد از `await` پیش از استفاده، `context.mounted` را چک کن.",
+   "example": "import 'package:flutter/material.dart';\nclass SaveButton extends StatelessWidget {\n  const SaveButton({super.key});\n  @override\n  Widget build(BuildContext context) {\n    final color = Theme.of(context).colorScheme.primary;\n    return TextButton(\n      onPressed: () => ScaffoldMessenger.of(context)\n          .showSnackBar(const SnackBar(content: Text('ذخیره شد'))),\n      child: Text('ذخیره', style: TextStyle(color: color)),\n    );\n  }\n}",
+   "related": [
+    "stateless-widget",
+    "navigation-routing",
+    "provider",
+    "widget-lifecycle"
+   ]
+  },
+  {
+   "slug": "layout-constraints",
+   "nameEn": "Layout Constraints",
+   "nameFa": "محدودیت‌های چیدمان",
+   "category": "flutter",
+   "definition": "قانون چیدمان Flutter این است: محدودیت‌ها از والد پایین می‌آیند، اندازه‌ها از فرزند بالا می‌روند و والد جای فرزند را تعیین می‌کند. هر ویجت فقط در بازه‌ی حداقل و حداکثری که والد داده اندازه می‌گیرد. فهم این قانون یعنی حل خطاهایی مثل overflow یا ارتفاع نامحدود در `ListView`.",
+   "example": "import 'package:flutter/material.dart';\n\nclass SearchRow extends StatelessWidget {\n  const SearchRow({super.key});\n\n  @override\n  Widget build(BuildContext context) {\n    return const Row(children: [\n      Icon(Icons.search),\n      // Expanded gives a bounded width; a bare TextField in a Row throws\n      Expanded(child: TextField()),\n    ]);\n  }\n}",
+   "related": [
+    "stateless-widget",
+    "build-context",
+    "debugging"
+   ]
+  },
+  {
+   "slug": "navigation-routing",
+   "nameEn": "Navigation & Routing",
+   "nameFa": "ناوبری و مسیریابی",
+   "category": "flutter",
+   "definition": "ناوبری یعنی جابه‌جایی بین صفحه‌های اپ. `Navigator` صفحه‌ها را مثل یک پشته نگه می‌دارد: با `push` صفحه‌ای رویش می‌گذاری و با `pop` برش می‌داری. مثلاً از لیست رستوران‌ها به منوی یک رستوران می‌روی و برمی‌گردی. برای مسیرهای مبتنی بر URL و deep link معمولاً `go_router` به کار می‌رود.",
+   "example": "import 'package:flutter/material.dart';\nclass MenuPage extends StatelessWidget {\n  const MenuPage({super.key});\n  @override\n  Widget build(BuildContext context) => Scaffold(\n        body: TextButton(\n          onPressed: () => Navigator.pop(context),\n          child: const Text('بازگشت'),\n        ),\n      );\n}\nvoid openMenu(BuildContext context) =>\n    Navigator.push(context, MaterialPageRoute<void>(builder: (_) => const MenuPage()));",
+   "related": [
+    "build-context",
+    "stateless-widget",
+    "state-management"
+   ]
+  },
+  {
+   "slug": "bloc",
+   "nameEn": "BLoC",
+   "nameFa": "الگوی BLoC",
+   "category": "flutter",
+   "definition": "BLoC (Business Logic Component) الگویی برای مدیریت State است که منطق را از UI جدا می‌کند: UI رویداد (event) می‌فرستد و BLoC حالت (state) تازه بیرون می‌دهد. پشت صحنه روی `Stream` کار می‌کند و پکیج `flutter_bloc` نسخه‌ی ساده‌ترش یعنی `Cubit` را هم دارد. برای اپ‌های بزرگ و تیمی، مثل اپ بانکی، مناسب است.",
+   "example": "import 'package:flutter_bloc/flutter_bloc.dart';\nsealed class CartEvent {}\nfinal class ItemAdded extends CartEvent {}\nclass CartBloc extends Bloc<CartEvent, int> {\n  CartBloc() : super(0) {\n    on<ItemAdded>((event, emit) => emit(state + 1));\n  }\n}\nFuture<void> main() async {\n  final bloc = CartBloc()..add(ItemAdded());\n  await Future<void>.delayed(Duration.zero);\n  print(bloc.state); // 1\n  await bloc.close();\n}",
+   "related": [
+    "state-management",
+    "stream",
+    "immutability",
+    "clean-architecture"
+   ]
+  },
+  {
+   "slug": "rest-api",
+   "nameEn": "REST API",
+   "nameFa": "وب‌سرویس REST",
+   "category": "software-engineering",
+   "definition": "REST API سبکی برای طراحی وب‌سرویس است که هر منبع (مثل کاربر یا سفارش) یک URL دارد و با متدهای HTTP کار می‌کند: `GET` برای خواندن، `POST` برای ساختن، `PUT`/`PATCH` برای ویرایش و `DELETE` برای حذف. داده معمولاً JSON است؛ مثلاً اپ با `GET /orders` سفارش‌های کاربر را می‌گیرد.",
+   "example": "import 'dart:convert';\nimport 'package:http/http.dart' as http;\n\nFuture<List<dynamic>> fetchOrders() async {\n  final res = await http.get(Uri.parse('https://api.example.com/orders'));\n  if (res.statusCode != 200) {\n    throw Exception('خطای سرور: ${res.statusCode}');\n  }\n  return jsonDecode(res.body) as List<dynamic>;\n}",
+   "related": [
+    "json-serialization",
+    "repository-pattern",
+    "caching"
+   ]
+  },
+  {
+   "slug": "json-serialization",
+   "nameEn": "JSON Serialization",
+   "nameFa": "سریال‌سازی JSON",
+   "category": "software-engineering",
+   "definition": "سریال‌سازی JSON یعنی تبدیل شیء Dart به متن JSON برای ارسال یا ذخیره، و برعکس آن (deserialization). معمولاً برای هر مدل `fromJson` و `toJson` می‌نویسی یا با `json_serializable` تولیدشان می‌کنی. مثلاً پاسخ سرور را به شیء `User` تبدیل می‌کنی تا به‌جای `Map` خام با نوع امن کار کنی.",
+   "example": "import 'dart:convert';\nclass User {\n  User({required this.name, required this.phone});\n  factory User.fromJson(Map<String, dynamic> json) =>\n      User(name: json['name'] as String, phone: json['phone'] as String);\n  final String name;\n  final String phone;\n  Map<String, dynamic> toJson() => {'name': name, 'phone': phone};\n}\nvoid main() {\n  final json = jsonDecode('{\"name\":\"علی\",\"phone\":\"09121234567\"}');\n  final user = User.fromJson(json as Map<String, dynamic>);\n  print(jsonEncode(user.toJson()));\n}",
+   "related": [
+    "rest-api",
+    "null-safety",
+    "collections"
+   ]
+  },
+  {
+   "slug": "widget-test",
+   "nameEn": "Widget Test",
+   "nameFa": "تست ویجت",
+   "category": "flutter",
+   "definition": "تست ویجت یک ویجت را بدون گوشی واقعی می‌سازد، با آن تعامل می‌کند و خروجی را بررسی می‌کند. با `testWidgets` و `WidgetTester` مثلاً روی دکمه‌ی «افزودن به سبد» ضربه می‌زنی و چک می‌کنی عدد سبد بیشتر شده. از تست واحد به UI نزدیک‌تر و از تست یکپارچگی سریع‌تر است.",
+   "example": "import 'package:flutter/material.dart';\nimport 'package:flutter_test/flutter_test.dart';\n\nvoid main() {\n  testWidgets('shows greeting', (tester) async {\n    await tester.pumpWidget(const MaterialApp(home: Text('سلام سارا')));\n    expect(find.text('سلام سارا'), findsOneWidget);\n  });\n}",
+   "related": [
+    "unit-test",
+    "integration-test",
+    "mocking",
+    "stateless-widget"
+   ]
+  },
+  {
+   "slug": "integration-test",
+   "nameEn": "Integration Test",
+   "nameFa": "تست یکپارچگی",
+   "category": "flutter",
+   "definition": "تست یکپارچگی بررسی می‌کند چند بخش برنامه با هم درست کار می‌کنند؛ مثلاً کل مسیر ورود با شماره موبایل تا دیدن صفحه‌ی اصلی. در Flutter با پکیج `integration_test` روی گوشی یا شبیه‌ساز اجرا می‌شود. کندتر از تست واحد است، پس آن را برای مسیرهای مهم کاربر نگه دار.",
+   "example": "import 'package:flutter/material.dart';\nimport 'package:flutter_test/flutter_test.dart';\nimport 'package:integration_test/integration_test.dart';\n\nvoid main() {\n  IntegrationTestWidgetsFlutterBinding.ensureInitialized();\n  testWidgets('login screen opens', (tester) async {\n    await tester.pumpWidget(const MaterialApp(home: Text('ورود')));\n    expect(find.text('ورود'), findsOneWidget);\n  });\n}",
+   "related": [
+    "unit-test",
+    "widget-test",
+    "ci-cd"
+   ]
+  },
+  {
+   "slug": "mocking",
+   "nameEn": "Mocking",
+   "nameFa": "ماک‌کردن (شبیه‌سازی وابستگی)",
+   "category": "software-engineering",
+   "definition": "Mocking یعنی در تست، به‌جای وابستگی واقعی مثل API یا درگاه پرداخت، نسخه‌ای ساختگی بگذاری که رفتارش را خودت تعیین می‌کنی. این‌طوری تست سریع و تکرارپذیر است و به اینترنت وابسته نیست. مثلاً شکست پرداخت را شبیه‌سازی می‌کنی تا ببینی اپ پیام درست نشان می‌دهد. پکیج رایج: `mocktail`.",
+   "example": "import 'package:flutter_test/flutter_test.dart';\nimport 'package:mocktail/mocktail.dart';\nabstract class PaymentApi {\n  Future<bool> pay(int toman);\n}\nclass MockPaymentApi extends Mock implements PaymentApi {}\nvoid main() {\n  test('handles failed payment', () async {\n    final api = MockPaymentApi();\n    when(() => api.pay(any())).thenAnswer((_) async => false);\n    expect(await api.pay(50000), isFalse);\n    verify(() => api.pay(50000)).called(1);\n  });\n}",
+   "related": [
+    "unit-test",
+    "dependency-injection",
+    "widget-test"
+   ]
+  },
+  {
+   "slug": "isolate",
+   "nameEn": "Isolate",
+   "nameFa": "Isolate (اجرای موازی مستقل)",
+   "category": "dart",
+   "definition": "Isolate واحد اجرای مستقل در Dart است که حافظه‌ی جدای خودش را دارد و فقط با پیام با بقیه ارتباط می‌گیرد. کد تو معمولاً در isolate اصلی، کنار UI، اجرا می‌شود؛ کار سنگین مثل پردازش یک JSON خیلی بزرگ را به isolate دیگری بده تا اپ هنگ نکند. ساده‌ترین راه: `Isolate.run`.",
+   "example": "import 'dart:isolate';\n\nint sumTo(int n) {\n  var sum = 0;\n  for (var i = 1; i <= n; i++) {\n    sum += i;\n  }\n  return sum;\n}\n\nFuture<void> main() async {\n  final result = await Isolate.run(() => sumTo(100000000));\n  print(result);\n}",
+   "related": [
+    "event-loop",
+    "future",
+    "performance-profiling"
+   ]
+  },
+  {
+   "slug": "event-loop",
+   "nameEn": "Event Loop",
+   "nameFa": "حلقه‌ی رویداد",
+   "category": "dart",
+   "definition": "Event Loop سازوکاری است که Dart با آن، در هر isolate و با یک رشته، کارهای غیرهمزمان را نوبتی اجرا می‌کند. اول کد همزمان تمام می‌شود، بعد صف microtask و سپس صف event (مثل تایمر، لمس کاربر و پاسخ شبکه). مثل صف نانوایی: نانوا یکی است و هر بار فقط یک نفر را راه می‌اندازد.",
+   "example": "import 'dart:async';\n\nvoid main() {\n  Future(() => print('3: event queue'));\n  scheduleMicrotask(() => print('2: microtask'));\n  print('1: sync code');\n}",
+   "related": [
+    "future",
+    "async-await",
+    "isolate",
+    "stream"
+   ]
+  },
+  {
+   "slug": "animation-controller",
+   "nameEn": "AnimationController",
+   "nameFa": "کنترل‌گر انیمیشن",
+   "category": "flutter",
+   "definition": "`AnimationController` کلاسی در Flutter است که یک مقدار را در مدت مشخص، به‌طور پیش‌فرض از ۰ تا ۱، جلو می‌برد و با `forward`، `reverse` و `repeat` کنترلش می‌کنی. به `vsync` نیاز دارد که معمولاً `SingleTickerProviderStateMixin` می‌دهد. حتماً در `dispose` آزادش کن. مثال: چشمک‌زدن آیکون سبد خرید.",
+   "example": "import 'package:flutter/material.dart';\nclass Pulse extends StatefulWidget {\n  const Pulse({super.key});\n  @override\n  State<Pulse> createState() => _PulseState();\n}\nclass _PulseState extends State<Pulse> with SingleTickerProviderStateMixin {\n  late final _c = AnimationController(vsync: this, duration: const Duration(seconds: 1))..repeat(reverse: true);\n  @override\n  void dispose() { _c.dispose(); super.dispose(); }\n  @override\n  Widget build(BuildContext context) => FadeTransition(opacity: _c, child: const Icon(Icons.shopping_cart));\n}",
+   "related": [
+    "stateful-widget",
+    "mixin",
+    "widget-lifecycle"
+   ]
+  },
+  {
+   "slug": "performance-profiling",
+   "nameEn": "Performance Profiling",
+   "nameFa": "پروفایل‌گیری کارایی",
+   "category": "professional-skills",
+   "definition": "Performance Profiling یعنی اندازه‌گیری مصرف CPU، حافظه و زمان ساخت هر فریم تا گلوگاه واقعی را پیدا کنی، نه این‌که حدس بزنی. در Flutter اپ را در حالت profile اجرا کن و نمودار فریم‌ها را در DevTools ببین؛ در نمایشگر ۶۰ هرتز، فریم بالای ۱۶ میلی‌ثانیه یعنی لگ. مثلاً اسکرول کند لیست محصولات.",
+   "example": "int sumAll(List<int> xs) => xs.fold(0, (a, b) => a + b);\n\nvoid main() {\n  final data = List.generate(1000000, (i) => i);\n  final sw = Stopwatch()..start();\n  sumAll(data);\n  print('took ${sw.elapsedMilliseconds} ms'); // measure, don't guess\n}",
+   "related": [
+    "debugging",
+    "big-o",
+    "isolate",
+    "scalability"
+   ]
+  },
+  {
+   "slug": "design-patterns",
+   "nameEn": "Design Patterns",
+   "nameFa": "الگوهای طراحی",
+   "category": "software-engineering",
+   "definition": "الگوهای طراحی راه‌حل‌های آزموده برای مسئله‌های تکراری در طراحی نرم‌افزارند، مثل Singleton، Factory، Observer و Strategy. کد آماده نیستند، نقشه‌ی راه‌اند و به تیم زبان مشترک می‌دهند. مثلاً روش‌های پرداخت (کارت، کیف پول) را با Strategy جدا می‌کنی تا افزودن روش تازه ساده باشد.",
+   "example": "abstract interface class PaymentMethod {\n  String pay(int toman);\n}\nclass CardPayment implements PaymentMethod {\n  @override\n  String pay(int toman) => 'پرداخت $toman تومان با کارت';\n}\nclass WalletPayment implements PaymentMethod {\n  @override\n  String pay(int toman) => 'پرداخت $toman تومان از کیف پول';\n}\nvoid checkout(PaymentMethod method) => print(method.pay(90000));\nvoid main() => checkout(WalletPayment());",
+   "related": [
+    "solid",
+    "oop",
+    "repository-pattern",
+    "bloc"
+   ]
+  },
+  {
+   "slug": "code-review",
+   "nameEn": "Code Review",
+   "nameFa": "بازبینی کد",
+   "category": "professional-skills",
+   "definition": "Code Review یعنی هم‌تیمی‌ها پیش از ادغام، تغییرات تو را (معمولاً در یک Pull Request) بخوانند و درباره‌اش نظر بدهند. هدف فقط پیدا کردن باگ نیست؛ دانش در تیم پخش می‌شود و سبک کد یکدست می‌ماند. نظر خوب مشخص و محترمانه است، مثل «اگر این لیست خالی باشد چه می‌شود؟»",
+   "example": "",
+   "related": [
+    "pull-request",
+    "git-branch",
+    "technical-debt"
+   ]
+  },
+  {
+   "slug": "ci-cd",
+   "nameEn": "CI/CD",
+   "nameFa": "یکپارچه‌سازی و تحویل پیوسته (CI/CD)",
+   "category": "professional-skills",
+   "definition": "CI/CD یعنی Continuous Integration و Continuous Delivery/Deployment. در CI با هر push یا Pull Request، کد خودکار build و تست می‌شود؛ در CD نسخه‌ی سالم خودکار برای انتشار آماده یا منتشر می‌شود. مثلاً با GitHub Actions هر PR اول باید `flutter test` را پاس کند تا ادغام شود.",
+   "example": "",
+   "related": [
+    "pull-request",
+    "unit-test",
+    "integration-test",
+    "git-branch"
+   ]
+  },
+  {
+   "slug": "caching",
+   "nameEn": "Caching",
+   "nameFa": "کش (ذخیره‌سازی موقت)",
+   "category": "software-engineering",
+   "definition": "Caching یعنی نتیجه‌ی یک کار پرهزینه، مثل درخواست شبکه، را نگه داری تا دفعه‌ی بعد سریع برگردانی. مثل نانوایی که چند نان آماده کنار گذاشته است. کش می‌تواند در حافظه، روی دیسک (مثلاً `shared_preferences`) یا سمت سرور باشد. سخت‌ترین بخشش این است که بدانی کی داده‌ی کهنه را دور بریزی.",
+   "example": "class CityRepository {\n  final _cache = <String, List<String>>{};\n\n  Future<List<String>> cities(String province) async {\n    final cached = _cache[province];\n    if (cached != null) return cached; // cache hit\n    await Future.delayed(const Duration(seconds: 1)); // fake network call\n    return _cache[province] = ['تهران', 'ری'];\n  }\n}",
+   "related": [
+    "repository-pattern",
+    "rest-api",
+    "scalability",
+    "performance-profiling"
+   ]
+  },
+  {
+   "slug": "scalability",
+   "nameEn": "Scalability",
+   "nameFa": "مقیاس‌پذیری",
+   "category": "software-engineering",
+   "definition": "Scalability یعنی سیستم وقتی کاربر، داده یا درخواست زیاد می‌شود، همچنان سریع و پایدار بماند. مثلاً اپ تاکسی اینترنتی باید ساعت شلوغ عصر هم مثل نیمه‌شب جواب بدهد. با افزودن سرور (افقی)، سرور قوی‌تر (عمودی)، کش و الگوریتم کارآمد به آن می‌رسی؛ در اپ هم صفحه‌بندی لیست‌ها کمک می‌کند.",
+   "example": "",
+   "related": [
+    "caching",
+    "big-o",
+    "performance-profiling",
+    "clean-architecture"
+   ]
+  },
+  {
+   "slug": "technical-debt",
+   "nameEn": "Technical Debt",
+   "nameFa": "بدهی فنی",
+   "category": "professional-skills",
+   "definition": "بدهی فنی هزینه‌ی آینده‌ی راه‌حل‌های سریع و موقت امروز است. مثل وام: الان سرعت می‌گیری، ولی هر چه اصلاح کد را عقب بیندازی، «بهره»اش یعنی سختی تغییرات بیشتر می‌شود. گاهی پذیرفتنش برای رسیدن به ددلاین منطقی است، به شرطی که ثبتش کنی و برای پرداختش زمان بگذاری.",
+   "example": "",
+   "related": [
+    "code-review",
+    "clean-architecture",
+    "design-patterns"
+   ]
+  },
+  {
+   "slug": "immutability",
+   "nameEn": "Immutability",
+   "nameFa": "تغییرناپذیری",
+   "category": "software-engineering",
+   "definition": "Immutability یعنی شیء بعد از ساخته‌شدن عوض نشود و برای تغییر، نسخه‌ی تازه‌ای بسازی؛ معمولاً با `copyWith`. در Dart فیلدهای `final` و سازنده‌ی `const` ابزار اصلی‌اند. در BLoC این کار ضروری است، چون مقایسه‌ی state قدیم و جدید فقط وقتی درست کار می‌کند که کسی state قبلی را دستکاری نکند.",
+   "example": "class Cart {\n  const Cart({this.items = const []});\n  final List<String> items;\n  Cart copyWith({List<String>? items}) => Cart(items: items ?? this.items);\n}\n\nvoid main() {\n  const empty = Cart();\n  final updated = empty.copyWith(items: [...empty.items, 'پیتزا']);\n  print('${empty.items.length} ${updated.items.length}'); // 0 1\n}",
+   "related": [
+    "variable",
+    "state-management",
+    "bloc"
+   ]
+  },
+  {
+   "slug": "use-case",
+   "nameEn": "Use Case",
+   "nameFa": "مورد کاربرد (Use Case)",
+   "category": "software-engineering",
+   "definition": "Use Case در Clean Architecture کلاسی است که یک کار مشخص از منطق کسب‌وکار را انجام می‌دهد، مثل «ثبت سفارش» یا «انتقال وجه». معمولاً یک متد `call` دارد و از طریق Repository به داده می‌رسد، بی‌خبر از UI و دیتابیس. این‌طوری قانونی مثل «سقف انتقال روزانه» یک جا نوشته و راحت تست می‌شود.",
+   "example": "abstract class TransferRepository {\n  Future<void> transfer(String toCard, int toman);\n}\nclass TransferMoney {\n  TransferMoney(this.repo);\n  final TransferRepository repo;\n  static const dailyLimit = 50000000;\n  Future<void> call(String toCard, int toman) {\n    if (toman > dailyLimit) throw ArgumentError('بیش از سقف روزانه');\n    return repo.transfer(toCard, toman);\n  }\n}",
+   "related": [
+    "clean-architecture",
+    "repository-pattern",
+    "dependency-injection",
+    "unit-test"
+   ]
+  }
+ ]
+}

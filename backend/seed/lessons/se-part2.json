@@ -1,0 +1,798 @@
+{
+ "courses": [
+  {
+   "course": "se-490",
+   "lessons": [
+    {
+     "title": "فاز اول: انتخاب پروژه و نوشتن Use Caseها",
+     "estimatedMinutes": 25,
+     "what": "فرض کن خانه‌ای را بازسازی می‌کنی. اول نقشه‌ی خرابی‌ها را می‌کشی، بعد کلنگ می‌زنی. این پروژه هم همین است: یکی از اپ‌های قبلی‌ات (مثلاً اپ مدیریت کارها یا اپ لیست خرید) را انتخاب می‌کنی و قبل از هر کدی، مشکلاتش را فهرست می‌کنی.\n\nخروجی این فاز یک سند یک‌صفحه‌ای است: مشکلات نسخه‌ی فعلی، فهرست Use Caseها با فعل مشخص (افزودن کار، فیلتر کارها) و معیار پذیرش قابل اندازه‌گیری.",
+     "why": "بدون این سند، بازنویسی فقط جابه‌جا کردن فایل‌ها در پوشه‌های جدید می‌شود و همان منطقِ قاطی‌شده با UI باقی می‌ماند. هر Use Case بعداً یک کلاس در لایه‌ی Domain می‌شود؛ پس فهرست دقیق آن یعنی نیمی از طراحی. معیار پذیرش هم در جلسه‌ی تحویل ثابت می‌کند کار واقعاً تمام شده است.",
+     "simpleExample": {
+      "language": "dart",
+      "code": "class Task {\n  final String id, title;\n  const Task({required this.id, required this.title});\n}\nabstract interface class TaskRepository {\n  Future<void> add(Task task);\n}\n\n// One requirement (\"add a task\") = one small use case class\nclass AddTask {\n  final TaskRepository _repo;\n  AddTask(this._repo);\n  Future<void> call(String title) {\n    if (title.trim().isEmpty) throw ArgumentError('title is empty');\n    return _repo.add(Task(id: DateTime.now().toIso8601String(), title: title.trim()));\n  }\n}",
+      "explanation": "نیازمندی «افزودن کار» به کلاس `AddTask` تبدیل شده است. این کلاس Flutter نمی‌شناسد و فقط به یک interface وابسته است؛ پس بدون اجرای اپ قابل تست است. قانون «عنوان خالی ممنوع» هم همین‌جا زندگی می‌کند، نه داخل ویجت."
+     },
+     "realExample": {
+      "language": "markdown",
+      "code": "# سند بازنویسی: اپ مدیریت کارها\n\n## مشکلات نسخه‌ی فعلی\n- فیلتر کارها داخل `build()` ویجت نوشته شده است\n- هیچ تستی برای ذخیره‌سازی وجود ندارد\n- عوض کردن SharedPreferences با دیتابیس یعنی بازنویسی کل صفحه\n\n## Use Caseها\n1. `AddTask`: افزودن کار با عنوان غیرخالی\n2. `ToggleTask`: تغییر وضعیت انجام‌شده\n3. `GetTasks`: گرفتن کارها با فیلتر (همه، انجام‌شده، مانده)\n4. `DeleteTask`: حذف کار\n\n## معیار پذیرش (Definition of Done)\n- هر Use Case حداقل یک Unit Test دارد\n- پوشه‌ی `presentation` هیچ import از `data` ندارد\n- تعویض منبع داده فقط یک کلاس در `data` را تغییر می‌دهد\n- پوشش تست لایه‌ی Domain حداقل ۸۰٪",
+      "explanation": "سند کوتاه است اما هر خطش قابل بررسی است. «پوشه‌ی presentation هیچ import از data ندارد» را می‌شود با یک grep چک کرد؛ این یعنی معیار پذیرش واقعی، نه آرزو."
+     },
+     "mistakes": [
+      "Use Caseهای کلی مثل «مدیریت کارها» که نه قابل تست‌اند و نه به یک کلاس مشخص تبدیل می‌شوند.",
+      "انتخاب پروژه‌ای آن‌قدر کوچک (یک صفحه، بدون داده) که Clean Architecture در آن معنایی ندارد.",
+      "معیار پذیرش مبهم مثل «کد تمیز باشد» که در جلسه‌ی دفاع قابل اثبات نیست."
+     ],
+     "bestPractices": [
+      "هر Use Case را با یک فعل و یک خروجی مشخص نام‌گذاری کن: `AddTask`، `GetTasks`، `DeleteTask`.",
+      "از نسخه‌ی فعلی یک tag در Git بزن (مثلاً `v1-before`) تا در دفاع، قبل و بعد را کنار هم نشان بدهی.",
+      "برای هر معیار پذیرش بنویس چطور چک می‌شود: با تست، با grep یا با گزارش پوشش."
+     ],
+     "relatedTerms": [
+      "use-case",
+      "clean-architecture",
+      "technical-debt"
+     ],
+     "tryIt": "یکی از پروژه‌های قبلی‌ات را انتخاب کن و سند یک‌صفحه‌ای بنویس: حداقل ۳ مشکل واقعی با اشاره به فایل، ۴ Use Case با فعل مشخص و ۳ معیار پذیرش قابل چک. خروجی: فایل `docs/requirements.md` در مخزن پروژه."
+    },
+    {
+     "title": "فاز دوم: لایه‌ها، Entity و Repository",
+     "estimatedMinutes": 30,
+     "what": "Clean Architecture مثل آشپزخانه‌ی رستوران است: سرآشپز (Domain) دستور پخت را می‌داند و کاری ندارد مواد از کدام بازار آمده؛ انباردار (Data) مواد را می‌آورد؛ گارسون (Presentation) فقط سفارش را می‌گیرد و غذا را می‌برد.\n\nدر این فاز سه پوشه می‌سازی: `domain` با Entity و interface ریپازیتوری، `data` با Model و پیاده‌سازی، و `presentation` با ویجت‌ها. قانون طلایی: وابستگی‌ها فقط به سمت Domain اشاره می‌کنند.",
+     "why": "اگر Entity همان کلاسی باشد که از JSON پر می‌شود، با تغییر یک اسم فیلد در API، از صفحه‌ی اصلی تا تست‌ها همه می‌شکنند. Repository این تغییر را در لایه‌ی Data حبس می‌کند. همچنین Domain بدون Flutter و بدون شبکه، سریع و مستقل تست می‌شود.",
+     "simpleExample": {
+      "language": "dart",
+      "code": "// domain: pure Dart, knows nothing about JSON or Flutter\nclass Task {\n  final String id;\n  final String title;\n  final bool done;\n  const Task({required this.id, required this.title, required this.done});\n}\n// data: knows the API field names and maps them to the entity\nclass TaskModel {\n  final Map<String, dynamic> json;\n  const TaskModel(this.json);\n\n  Task toEntity() => Task(\n        id: json['id'] as String,\n        title: json['title'] as String,\n        done: json['is_done'] as bool? ?? false,\n      );\n}",
+      "explanation": "API فیلد را `is_done` می‌نامد، ولی Entity اسم تمیز `done` دارد. اگر فردا backend اسم فیلد را عوض کند، فقط `TaskModel` تغییر می‌کند و Domain و UI دست‌نخورده می‌مانند."
+     },
+     "realExample": {
+      "language": "dart",
+      "code": "import 'package:dio/dio.dart';\n\nclass Task {\n  final String id, title;\n  const Task(this.id, this.title);\n}\n\n// domain/repositories/task_repository.dart\nabstract interface class TaskRepository {\n  Future<List<Task>> getTasks();\n}\n\n// data/repositories/task_repository_impl.dart\nclass TaskRepositoryImpl implements TaskRepository {\n  final Dio _dio;\n  List<Task> _lastGood = const [];\n  TaskRepositoryImpl(this._dio);\n\n  @override\n  Future<List<Task>> getTasks() async {\n    try {\n      final res = await _dio.get<List<dynamic>>('/tasks');\n      _lastGood = (res.data ?? const []).map((e) {\n        final m = e as Map<String, dynamic>;\n        return Task(m['id'] as String, m['title'] as String);\n      }).toList();\n      return _lastGood;\n    } on DioException {\n      return _lastGood; // offline: show the last known list\n    }\n  }\n}",
+      "explanation": "Domain فقط `TaskRepository` را می‌شناسد. جزئیات Dio، تبدیل JSON و رفتار آفلاین همه در `TaskRepositoryImpl` پنهان‌اند. صفحه‌ی لیست کارها حتی نمی‌داند داده از شبکه آمده یا از حافظه."
+     },
+     "mistakes": [
+      "import کردن `package:flutter/material.dart` یا `dio` در پوشه‌ی `domain`؛ این یعنی Domain دیگر مستقل نیست.",
+      "برگرداندن `Response` یا `Map` خام از Repository به‌جای Entity، که جزئیات API را تا UI نشت می‌دهد.",
+      "ساختن interface برای هر کلاس کوچک، حتی جایی که هیچ‌وقت دو پیاده‌سازی نخواهد داشت."
+     ],
+     "bestPractices": [
+      "اول پوشه‌ی `domain` را کامل کن و تستش را بنویس، بعد سراغ `data` برو؛ این ترتیب جهت وابستگی را درست نگه می‌دارد.",
+      "خطاهای شبکه را در Repository به خطای Domain (مثل `NetworkFailure`) تبدیل کن تا UI با `DioException` درگیر نشود.",
+      "ساختار پوشه‌ها را feature-first بچین: `features/tasks/domain`، `features/tasks/data`، `features/tasks/presentation`."
+     ],
+     "relatedTerms": [
+      "clean-architecture",
+      "repository-pattern",
+      "json-serialization"
+     ],
+     "tryIt": "برای پروژه‌ات پوشه‌های `domain`، `data` و `presentation` را بساز. یک Entity، یک interface ریپازیتوری و یک پیاده‌سازی با Model جدا بنویس. خروجی: دستور `grep -r \"package:flutter\" lib/features/*/domain` هیچ نتیجه‌ای نداشته باشد."
+    },
+    {
+     "title": "فاز سوم: سیم‌کشی با Dependency Injection",
+     "estimatedMinutes": 30,
+     "what": "کارخانه‌ای را تصور کن که هر دستگاهش برق خودش را با موتور دیزل شخصی تولید می‌کند. تعمیر و تعویضش کابوس است. بهتر است همه به یک تابلو برق وصل شوند. Dependency Injection همین تابلو برق است: هر کلاس وابستگی‌اش را از بیرون می‌گیرد، نه اینکه خودش `new` کند.\n\nدر این فاز همه‌ی اتصال‌ها را در یک نقطه (Composition Root) با `get_it` تعریف می‌کنی.",
+     "why": "وقتی `TaskRepositoryImpl` داخل ویجت ساخته شود، برای تست مجبوری سرور واقعی داشته باشی و برای عوض کردن منبع داده باید ده فایل را ویرایش کنی. با DI، در تست یک Mock تزریق می‌کنی و در اپ واقعی پیاده‌سازی اصلی را؛ بدون تغییر حتی یک خط از Use Caseها.",
+     "simpleExample": {
+      "language": "dart",
+      "code": "abstract interface class Clock {\n  DateTime now();\n}\n\nclass SystemClock implements Clock {\n  @override\n  DateTime now() => DateTime.now();\n}\n\n// Bad: class Greeting { final clock = SystemClock(); }\n// Good: the dependency comes from outside\nclass Greeting {\n  final Clock clock;\n  Greeting(this.clock);\n\n  String text() => clock.now().hour < 12 ? 'صبح بخیر' : 'وقت بخیر';\n}",
+      "explanation": "`Greeting` ساعت را از بیرون می‌گیرد. در اپ `SystemClock` را می‌دهی و در تست یک ساعت جعلی که همیشه ۹ صبح را برمی‌گرداند. به این کار Constructor Injection می‌گویند و ساده‌ترین شکل DI است."
+     },
+     "realExample": {
+      "language": "dart",
+      "code": "import 'package:dio/dio.dart';\nimport 'package:get_it/get_it.dart';\n\nfinal sl = GetIt.instance;\n\nclass Task {\n  const Task(this.title);\n  final String title;\n}\nabstract interface class TaskRepository {\n  Future<List<Task>> getTasks();\n}\n\nclass TaskRepositoryImpl implements TaskRepository {\n  final Dio dio;\n  TaskRepositoryImpl(this.dio);\n  @override\n  Future<List<Task>> getTasks() async => const [Task('خرید نان')];\n}\n\nclass GetTasks {\n  final TaskRepository repo;\n  GetTasks(this.repo);\n  Future<List<Task>> call() => repo.getTasks();\n}\n\n// Composition root: the only place that knows concrete classes\nvoid setupDependencies() {\n  sl.registerLazySingleton(() => Dio(BaseOptions(baseUrl: 'https://api.example.ir')));\n  sl.registerLazySingleton<TaskRepository>(() => TaskRepositoryImpl(sl()));\n  sl.registerFactory(() => GetTasks(sl()));\n}",
+      "explanation": "`setupDependencies` یک بار در `main` صدا زده می‌شود. `Dio` و Repository یک نمونه‌ی مشترک دارند (LazySingleton) و Use Case هر بار تازه ساخته می‌شود (Factory). بقیه‌ی کد فقط interface می‌بیند."
+     },
+     "mistakes": [
+      "صدا زدن `sl<TaskRepository>()` در عمق Use Caseها؛ این Service Locator پنهان است و وابستگی‌ها را از امضای کلاس مخفی می‌کند.",
+      "ثبت Repository به‌جای نوع interface با نوع پیاده‌سازی؛ آن‌وقت `sl<TaskRepository>()` پیدا نمی‌شود و تعویض پیاده‌سازی سخت می‌شود.",
+      "فراموش کردن `sl.reset()` بین تست‌ها و در نتیجه نشت Mock یک تست به تست بعدی."
+     ],
+     "bestPractices": [
+      "`get_it` را فقط در Composition Root و لایه‌ی Presentation صدا بزن؛ Domain و Data وابستگی را از constructor بگیرند.",
+      "همیشه با نوع interface ثبت کن: `registerLazySingleton<TaskRepository>(...)`.",
+      "برای هر محیط (dev، production، تست) یک تابع setup جدا داشته باش تا آدرس سرور یا Mock با یک خط عوض شود."
+     ],
+     "relatedTerms": [
+      "dependency-injection",
+      "solid",
+      "clean-architecture"
+     ],
+     "tryIt": "فایل `lib/injection.dart` را بساز و همه‌ی وابستگی‌های پروژه را در آن ثبت کن. سپس هر `new` مستقیم Repository را از ویجت‌ها حذف کن. خروجی: جست‌وجوی `RepositoryImpl(` فقط در همین یک فایل نتیجه بدهد."
+    },
+    {
+     "title": "فاز چهارم: پوشش تست، تحویل و دفاع",
+     "estimatedMinutes": 35,
+     "what": "تست مثل کمربند ایمنی است: تا روز تصادف قدرش را نمی‌دانی. حالا که لایه‌ها جدا شده‌اند، تست‌نویسی ساده شده است. Use Caseها را با Mock کردن Repository تست می‌کنی و Repository را با Mock کردن منبع داده.\n\nدر پایان یک گزارش پوشش تست می‌سازی و در جلسه‌ی دفاع نشان می‌دهی که معیارهای پذیرش فاز اول برآورده شده‌اند.",
+     "why": "بدون تست، نمی‌توانی ثابت کنی بازنویسی چیزی را خراب نکرده است. هیئت داوران معمولاً می‌پرسد «اگر منبع داده را عوض کنی، چه چیزی می‌شکند؟». جواب قانع‌کننده یک تست سبز و یک عدد پوشش است، نه توضیح شفاهی.",
+     "simpleExample": {
+      "language": "dart",
+      "code": "import 'package:flutter_test/flutter_test.dart';\nimport 'package:mocktail/mocktail.dart';\nabstract interface class TaskRepository { Future<void> add(String title); }\nclass MockRepo extends Mock implements TaskRepository {}\n\nclass AddTask {\n  const AddTask(this.repo);\n  final TaskRepository repo;\n  Future<void> call(String t) => repo.add(t.trim());\n}\nvoid main() {\n  test('AddTask trims the title before saving', () async {\n    final repo = MockRepo();\n    when(() => repo.add(any())).thenAnswer((_) async {});\n    await AddTask(repo)('  خرید نان ');\n    verify(() => repo.add('خرید نان')).called(1);\n  });\n}",
+      "explanation": "با `mocktail` یک Repository جعلی می‌سازی و فقط بررسی می‌کنی Use Case درست آن را صدا زده است. این تست در کسری از ثانیه اجرا می‌شود و به شبکه، دیتابیس یا شبیه‌ساز نیازی ندارد."
+     },
+     "realExample": {
+      "language": "bash",
+      "code": "# 1) Run all tests and write coverage/lcov.info\nflutter test --coverage\n\n# 2) Print a summary, e.g. \"lines......: 82.4% (412 of 500 lines)\"\nlcov --summary coverage/lcov.info\n\n# 3) Check the architecture rule from phase one\nif grep -rn \"features/.*/data/\" lib/features/*/presentation; then\n  echo \"Layer violation: presentation imports data\" >&2\n  exit 1\nfi\n\n# 4) Build an HTML report to show in the defense session\ngenhtml coverage/lcov.info -o coverage/html\necho \"Open coverage/html/index.html\"",
+      "explanation": "این اسکریپت همان معیارهای پذیرش فاز اول را خودکار چک می‌کند: پوشش تست و قانون وابستگی لایه‌ها. `lcov` و `genhtml` در لینوکس با `sudo apt install lcov` نصب می‌شوند."
+     },
+     "mistakes": [
+      "دنبال کردن عدد پوشش ۱۰۰٪ با تست‌هایی که فقط کد را اجرا می‌کنند و هیچ `expect` یا `verify` معناداری ندارند.",
+      "تست کردن ویجت‌ها پیش از Use Caseها؛ منطق اصلی در Domain است و ارزان‌ترین تست‌ها همان‌جاست.",
+      "آماده نکردن دموی قبل و بعد؛ داور باید ببیند تعویض منبع داده حالا فقط یک کلاس را تغییر می‌دهد."
+     ],
+     "bestPractices": [
+      "برای هر Use Case دست‌کم یک مسیر موفق و یک مسیر خطا تست کن.",
+      "در دفاع یک تغییر زنده انجام بده: پیاده‌سازی Repository را با نسخه‌ی آفلاین عوض کن و تست‌های سبز را نشان بده.",
+      "نمودار لایه‌ها و فهرست تصمیم‌ها را در README بگذار تا داور قبل از جلسه ساختار را بفهمد."
+     ],
+     "relatedTerms": [
+      "unit-test",
+      "mocking",
+      "clean-architecture"
+     ],
+     "tryIt": "برای همه‌ی Use Caseهای پروژه تست بنویس و اسکریپت بالا را اجرا کن. خروجی: پوشش لایه‌ی Domain حداقل ۸۰٪، قانون لایه‌ها بدون خطا و یک ارائه‌ی ۵ دقیقه‌ای با اسلاید «قبل/بعد» برای جلسه‌ی دفاع."
+    }
+   ]
+  },
+  {
+   "course": "se-510",
+   "lessons": [
+    {
+     "title": "نیازمندی‌ها و تخمین ظرفیت",
+     "estimatedMinutes": 30,
+     "what": "قبل از ساختن پل، مهندس می‌پرسد روزی چند ماشین از آن رد می‌شود. طراحی سیستم هم با دو سؤال شروع می‌شود: سیستم چه کاری باید بکند (نیازمندی کارکردی) و با چه کیفیتی (نیازمندی غیرکارکردی مثل سرعت و در دسترس بودن).\n\nبعد با حساب سرانگشتی (Back-of-the-envelope) تخمین می‌زنی: چند درخواست در ثانیه (QPS)، ساعت اوج چقدر است و سالانه چقدر داده جمع می‌شود.",
+     "why": "بدون عدد، یا برای اپی با هزار کاربر ده سرور و صف پیام راه می‌اندازی، یا اپ سفارش غذایت ظهر جمعه زیر بار می‌خوابد. تخمین ظرفیت مشخص می‌کند کش، صف یا شاردینگ واقعاً لازم است یا فقط پیچیدگی اضافه است.",
+     "simpleExample": {
+      "language": "text",
+      "code": "Functional requirements:\n- Users see nearby restaurants in Tehran\n- Users place an order and track its status\n\nNon-functional requirements:\n- p95 latency of restaurant list < 300 ms\n- Availability 99.9%  (about 8.8 hours downtime per year)\n- A paid order must never be lost\n- Peak hours: 12:30-14:00 and 20:00-22:00",
+      "explanation": "نیازمندی غیرکارکردی باید عدد داشته باشد. «سریع باشد» قابل طراحی نیست، اما «`p95` زیر ۳۰۰ میلی‌ثانیه» هست. `99.9%` یعنی حدود ۸.۸ ساعت قطعی مجاز در سال."
+     },
+     "realExample": {
+      "language": "dart",
+      "code": "// Back-of-the-envelope estimate for a Tehran food-ordering app\nclass Estimate {\n  final int dailyUsers;\n  final int requestsPerUser;\n  final double peakFactor;\n  final double orderRate; // share of daily users who order\n  final int orderBytes;\n\n  const Estimate({\n    required this.dailyUsers,\n    required this.requestsPerUser,\n    required this.peakFactor,\n    required this.orderRate,\n    required this.orderBytes,\n  });\n\n  double get avgQps => dailyUsers * requestsPerUser / 86400;\n  double get peakQps => avgQps * peakFactor;\n  int get ordersPerDay => (dailyUsers * orderRate).round();\n  double get gbPerYear => ordersPerDay * orderBytes * 365 / 1e9;\n}\n\nvoid main() {\n  const e = Estimate(dailyUsers: 500000, requestsPerUser: 20,\n      peakFactor: 5, orderRate: 0.1, orderBytes: 1000);\n  print('avg QPS: ${e.avgQps.toStringAsFixed(0)}'); // 116\n  print('peak QPS: ${e.peakQps.toStringAsFixed(0)}'); // 579\n  print('orders/day: ${e.ordersPerDay}'); // 50000\n  print('orders GB/year: ${e.gbPerYear.toStringAsFixed(1)}'); // 18.3\n}",
+      "explanation": "۵۰۰ هزار کاربر فعال روزانه با ۲۰ درخواست یعنی حدود ۱۱۶ درخواست در ثانیه، و در اوج ناهار حدود ۵۸۰. سفارش‌ها سالی حدود ۱۸ گیگابایت‌اند؛ یک دیتابیس معمولی از پسش برمی‌آید و شاردینگ فعلاً لازم نیست."
+     },
+     "mistakes": [
+      "فراموش کردن ساعت اوج؛ میانگین روزانه نشان نمی‌دهد ظهر جمعه بار چند برابر می‌شود.",
+      "دقیق‌کاری بی‌مورد در تخمین؛ هدف مرتبه‌ی بزرگی است (صد یا ده هزار QPS)، نه عدد تا رقم آخر.",
+      "نوشتن نیازمندی غیرکارکردی بدون عدد مثل «مقیاس‌پذیر و سریع» که هیچ تصمیمی را هدایت نمی‌کند."
+     ],
+     "bestPractices": [
+      "فرض‌هایت را صریح بنویس (مثلاً «۱۰٪ کاربران روزانه سفارش می‌دهند») تا دیگران بتوانند نقدش کنند.",
+      "عددهای کلیدی را حفظ کن: یک روز حدود `86400` ثانیه (تقریباً `10^5`)، و یک میلیون درخواست در روز حدود ۱۲ QPS است.",
+      "ترافیک خواندن و نوشتن را جدا تخمین بزن؛ معمولاً خواندن چند ده برابر نوشتن است و راه‌حلش هم فرق دارد."
+     ],
+     "relatedTerms": [
+      "scalability",
+      "use-case",
+      "big-o"
+     ],
+     "tryIt": "برای اپ تاکسی اینترنتی در تهران با ۲۰۰ هزار سفر روزانه، QPS میانگین و اوج و حجم سالانه‌ی داده‌ی سفرها را حساب کن. فرض‌ها را بنویس. خروجی: جدولی با ۴ عدد و یک جمله که بگوید یک دیتابیس کافی است یا نه."
+    },
+    {
+     "title": "Caching: سریع‌تر، ارزان‌تر، ولی با احتیاط",
+     "estimatedMinutes": 30,
+     "what": "نانوایی محله را تصور کن که چند نان داغ را جلوی دست گذاشته تا هر مشتری منتظر پخت نماند. Cache همین است: نگه داشتن نتیجه‌ای که پرتکرار خوانده می‌شود، نزدیک به مصرف‌کننده.\n\nکش لایه‌های مختلف دارد: حافظه‌ی اپ موبایل، CDN برای تصاویر، و کش سمت سرور مثل Redis. رایج‌ترین الگو Cache-aside است: اول کش را ببین، اگر نبود از منبع بخوان و در کش بگذار.",
+     "why": "منوی رستوران‌ها ساعت‌ها ثابت است، اما هزاران کاربر هم‌زمان آن را می‌خوانند. بدون کش، هر باز شدن صفحه یک کوئری دیتابیس است و در اوج ناهار دیتابیس زیر بار می‌رود. در موبایل هم کش یعنی مصرف اینترنت کمتر و صفحه‌ای که با اینترنت ضعیف هم باز می‌شود.",
+     "simpleExample": {
+      "language": "dart",
+      "code": "class TtlCache<K, V> {\n  final Duration ttl;\n  final _items = <K, (V, DateTime)>{};\n  TtlCache(this.ttl);\n\n  V? get(K key) {\n    final entry = _items[key];\n    if (entry == null) return null;\n    if (DateTime.now().difference(entry.$2) > ttl) {\n      _items.remove(key); // expired\n      return null;\n    }\n    return entry.$1;\n  }\n\n  void set(K key, V value) => _items[key] = (value, DateTime.now());\n  void invalidate(K key) => _items.remove(key);\n}",
+      "explanation": "هر مقدار همراه زمان ذخیره‌اش نگه داشته می‌شود (با Record). اگر از `ttl` گذشته باشد، کهنه حساب می‌شود و حذف می‌شود. `invalidate` برای وقتی است که می‌دانی داده عوض شده است."
+     },
+     "realExample": {
+      "language": "dart",
+      "code": "import 'package:dio/dio.dart';\n\nclass Menu {\n  const Menu(this.items);\n  final List<String> items;\n}\n\n// Cache-aside: read the cache first, go to the network on a miss\nclass MenuRepository {\n  final Dio _dio;\n  final _cache = <String, (Menu, DateTime)>{};\n  static const _ttl = Duration(minutes: 5);\n  MenuRepository(this._dio);\n\n  Future<Menu> getMenu(String restaurantId) async {\n    final hit = _cache[restaurantId];\n    if (hit != null && DateTime.now().difference(hit.$2) < _ttl) {\n      return hit.$1; // fresh hit: no network call\n    }\n    try {\n      final res = await _dio.get<List<dynamic>>('/restaurants/$restaurantId/menu');\n      final menu = Menu([for (final e in res.data ?? const []) e.toString()]);\n      _cache[restaurantId] = (menu, DateTime.now());\n      return menu;\n    } on DioException {\n      if (hit != null) return hit.$1; // stale beats an error screen\n      rethrow;\n    }\n  }\n  // Call when the server says \"price changed\" at checkout\n  void invalidate(String restaurantId) => _cache.remove(restaurantId);\n}",
+      "explanation": "منو تا ۵ دقیقه از حافظه خوانده می‌شود. اگر اینترنت قطع شود، نسخه‌ی کهنه نمایش داده می‌شود. اما قیمت نهایی همیشه موقع پرداخت روی سرور چک می‌شود؛ کش فقط برای نمایش است."
+     },
+     "mistakes": [
+      "کش کردن داده‌ای که باید همیشه دقیق باشد، مثل موجودی حساب یا قیمت نهایی سبد خرید در لحظه‌ی پرداخت.",
+      "کش بدون TTL یا بدون مسیر invalidate؛ کاربر تا ابد قیمت دیروز را می‌بیند.",
+      "منقضی شدن هم‌زمان هزاران کلید پرطرفدار که همه‌ی درخواست‌ها را یک‌جا به دیتابیس می‌فرستد (Cache Stampede)."
+     ],
+     "bestPractices": [
+      "برای هر داده بپرس «کهنه بودن چقدر مجاز است؟»؛ جواب همان TTL است: منو ۵ دقیقه، موقعیت راننده چند ثانیه.",
+      "به TTLها کمی تصادف (jitter) اضافه کن تا کلیدها هم‌زمان منقضی نشوند.",
+      "برای پاسخ‌های HTTP از هدرهای `Cache-Control` و `ETag` استفاده کن تا کلاینت و CDN هم بدون کد اضافه کش کنند."
+     ],
+     "relatedTerms": [
+      "caching",
+      "scalability",
+      "repository-pattern"
+     ],
+     "tryIt": "`TtlCache` را با TTL دو ثانیه بساز، مقداری بگذار، فوراً بخوان، بعد با `Future.delayed` سه ثانیه صبر کن و دوباره بخوان. خروجی مورد انتظار: بار اول مقدار چاپ شود و بار دوم `null`."
+    },
+    {
+     "title": "صف پیام و پردازش ناهمگام",
+     "estimatedMinutes": 30,
+     "what": "صف نانوایی را تصور کن: نانوا با سرعت خودش نان می‌دهد و مشتری‌ها منتظر نوبت می‌مانند، ولی کسی پشت در نمی‌ماند. Message Queue همین نقش را دارد: سرویس ثبت سفارش فقط پیام «سفارش جدید» را در صف می‌گذارد و فوراً جواب می‌دهد.\n\nسرویس‌های دیگر (پرداخت، ارسال به رستوران، پیامک) پیام را از صف برمی‌دارند و با سرعت خودشان پردازش می‌کنند.",
+     "why": "اگر ثبت سفارش منتظر بماند تا پیامک ارسال شود و سرویس پیامک کند باشد، کاربر ۱۰ ثانیه به صفحه‌ی سفید نگاه می‌کند یا دوباره دکمه را می‌زند. صف، اوج بار را صاف می‌کند و خرابی یک سرویس جانبی را از مسیر اصلی جدا می‌کند.",
+     "simpleExample": {
+      "language": "dart",
+      "code": "import 'dart:collection';\n\nvoid main() {\n  // The API only enqueues and replies fast: \"order received\"\n  final queue = Queue<String>()\n    ..add('order-101')\n    ..add('order-102')\n    ..add('order-103');\n  print('queued: ${queue.length}');\n\n  // A worker drains the queue at its own pace (FIFO)\n  while (queue.isNotEmpty) {\n    final order = queue.removeFirst();\n    print('processing $order: payment, kitchen, SMS');\n  }\n}",
+      "explanation": "این یک شبیه‌سازی درون‌حافظه‌ای است تا ایده را ببینی: تولیدکننده سریع پیام می‌گذارد و مصرف‌کننده به ترتیب ورود (FIFO) برمی‌دارد. در سیستم واقعی صف یک سرویس جداست (مثل RabbitMQ یا Kafka) تا با ری‌استارت سرور پیام‌ها گم نشوند."
+     },
+     "realExample": {
+      "language": "dart",
+      "code": "import 'dart:math';\nimport 'package:dio/dio.dart';\n\n// Retrying is safe only if the server can detect duplicates\nFuture<Response<dynamic>> placeOrder(Dio dio, Map<String, dynamic> order) async {\n  final rnd = Random();\n  final key = '${DateTime.now().microsecondsSinceEpoch}-${rnd.nextInt(1 << 32)}';\n\n  for (var attempt = 0; ; attempt++) {\n    try {\n      return await dio.post<dynamic>(\n        '/orders',\n        data: order,\n        options: Options(headers: {'Idempotency-Key': key}),\n      );\n    } on DioException catch (e) {\n      final status = e.response?.statusCode ?? 0;\n      final retryable = e.type == DioExceptionType.connectionTimeout ||\n          e.type == DioExceptionType.receiveTimeout ||\n          e.type == DioExceptionType.connectionError ||\n          status >= 500;\n      if (!retryable || attempt == 3) rethrow;\n      // Exponential backoff with jitter: ~1s, 2s, 4s\n      final waitMs = pow(2, attempt) * 1000 + rnd.nextInt(300);\n      await Future<void>.delayed(Duration(milliseconds: waitMs.toInt()));\n    }\n  }\n}",
+      "explanation": "در سیستم‌های صف‌دار، پیام ممکن است بیش از یک بار برسد (at-least-once). کلید یکتای `Idempotency-Key` که در همه‌ی تلاش‌ها ثابت است، به سرور اجازه می‌دهد سفارش تکراری را تشخیص دهد و کاربر دو بار پول ندهد."
+     },
+     "mistakes": [
+      "گذاشتن کاری در صف که کاربر همان لحظه به نتیجه‌اش نیاز دارد، مثل اعتبارسنجی کد تخفیف قبل از نمایش مبلغ.",
+      "فرض اینکه هر پیام دقیقاً یک بار پردازش می‌شود؛ بیشتر صف‌ها at-least-once هستند و مصرف‌کننده باید Idempotent باشد.",
+      "Retry فوری و بی‌پایان در کلاینت که هنگام کندی سرور، بار را چند برابر می‌کند."
+     ],
+     "bestPractices": [
+      "برای پیام‌هایی که بعد از چند تلاش شکست می‌خورند، Dead Letter Queue داشته باش تا گم نشوند و بررسی شوند.",
+      "طول صف را مانیتور کن؛ صفی که مدام بلندتر می‌شود یعنی مصرف‌کننده‌ها کم‌اند.",
+      "فقط خطاهای موقت (timeout و `5xx`) را retry کن، نه `400` یا `401` که با تکرار درست نمی‌شوند."
+     ],
+     "relatedTerms": [
+      "scalability",
+      "async-await",
+      "rest-api"
+     ],
+     "tryIt": "جریان سفارش اپ غذا را روی کاغذ بکش و برای هر مرحله (پرداخت، ارسال به رستوران، پیامک، امتیاز وفاداری) بنویس هم‌زمان باشد یا در صف برود و چرا. خروجی: جدول ۴ سطری با ستون‌های «مرحله»، «هم‌زمان یا صف» و «دلیل»."
+    },
+    {
+     "title": "پایگاه داده در مقیاس: Index، Replica، Shard و CAP",
+     "estimatedMinutes": 35,
+     "what": "کتابخانه‌ای بدون فهرست را تصور کن؛ برای پیدا کردن یک کتاب باید همه‌ی قفسه‌ها را بگردی. Index همان فهرست است. وقتی خواننده‌ها زیاد می‌شوند، چند نسخه از کتابخانه می‌سازی (Read Replica) و وقتی کتاب‌ها در یک ساختمان جا نمی‌شوند، آن‌ها را بین چند ساختمان پخش می‌کنی (Sharding).\n\nقضیه‌ی CAP می‌گوید وقتی شبکه بین سرورها قطع شود (Partition)، باید بین سازگاری (Consistency) و در دسترس بودن (Availability) یکی را انتخاب کنی.",
+     "why": "بیشتر کندی‌های اپ‌ها از یک کوئری بدون Index یا صفحه‌بندی بد شروع می‌شود، نه از کمبود سرور. از دید مهندس موبایل هم مهم است: اسکرول بی‌پایان سوابق سفر با `OFFSET` در صفحه‌های عمیق کند می‌شود و Replica با تأخیر ممکن است سفری را که کاربر همین الان ثبت کرده نشان ندهد.",
+     "simpleExample": {
+      "language": "sql",
+      "code": "-- Index that matches the query: a user's orders, newest first\nCREATE INDEX idx_orders_user_created\n  ON orders (user_id, created_at DESC, id DESC);\n\n-- OFFSET pagination: the DB still walks 2000 rows to skip them\nSELECT id, total_toman, created_at FROM orders\nWHERE user_id = 42\nORDER BY created_at DESC, id DESC\nLIMIT 20 OFFSET 2000;\n\n-- Keyset (cursor) pagination: jumps straight to the next page\nSELECT id, total_toman, created_at FROM orders\nWHERE user_id = 42\n  AND (created_at, id) < ('2026-09-20 13:05:00', 98765)\nORDER BY created_at DESC, id DESC\nLIMIT 20;",
+      "explanation": "در صفحه‌بندی Keyset، اپ آخرین `created_at` و `id` صفحه‌ی قبل را به‌عنوان cursor می‌فرستد. `id` برای وقتی است که دو سفارش زمان یکسان دارند. مقایسه‌ی Tuple در PostgreSQL پشتیبانی می‌شود."
+     },
+     "realExample": {
+      "language": "markdown",
+      "code": "# تصمیم‌های داده: اپ تاکسی اینترنتی\n\n| داده | الگوی دسترسی | تصمیم | در زمان Partition |\n|---|---|---|---|\n| پرداخت و کیف پول | نوشتن حساس | دیتابیس اصلی، تراکنش | CP: خطا بده، اشتباه ننویس |\n| سوابق سفر | خواندن زیاد | Read Replica | پاسخ کمی کهنه قابل قبول است |\n| موقعیت راننده | نوشتن هر ۵ ثانیه | ذخیره‌ی درون‌حافظه با TTL | AP: موقعیت چند ثانیه قدیمی اشکالی ندارد |\n| سفرهای قدیمی | حجم زیاد | Shard بر اساس `rider_id` | فقط کاربرانِ Shard قطع‌شده موقتاً سوابق قدیمی را نمی‌بینند |\n\n## نکته برای اپ موبایل\n- بعد از ثبت سفر، صفحه‌ی جزئیات را از دیتابیس اصلی بخوان\n  (Read-your-writes)، نه از Replica که ممکن است عقب باشد.\n- لیست سوابق با cursor صفحه‌بندی شود، نه با شماره‌ی صفحه.",
+      "explanation": "هر داده بر اساس اهمیتش تصمیم جدا دارد. پول نباید اشتباه ثبت شود، پس در زمان قطعی بهتر است خطا بدهد (CP). موقعیت راننده اگر چند ثانیه کهنه باشد ضرری ندارد، پس در دسترس بودن مهم‌تر است (AP)."
+     },
+     "mistakes": [
+      "ساختن Index روی هر ستون؛ هر Index نوشتن را کندتر می‌کند و فضا می‌گیرد.",
+      "Shard کردن زودهنگام دیتابیسی که با یک Index درست و یک Replica مشکلش حل می‌شود.",
+      "برداشت غلط از CAP به‌شکل «همیشه فقط دو تا از سه تا»؛ انتخاب فقط هنگام قطعی شبکه اجباری است."
+     ],
+     "bestPractices": [
+      "قبل از افزودن سخت‌افزار، کوئری کند را با `EXPLAIN ANALYZE` بررسی کن.",
+      "کلید Shard را طوری انتخاب کن که کوئری‌ها به یک Shard بروند و بار پخش شود؛ «شهر» یعنی یک Shard غول‌پیکر برای تهران.",
+      "در API موبایل، صفحه‌بندی را با `next_cursor` در پاسخ طراحی کن تا اسکرول بی‌پایان در هر عمقی سریع بماند."
+     ],
+     "relatedTerms": [
+      "scalability",
+      "caching",
+      "rest-api"
+     ],
+     "tryIt": "برای جدول `trips` اپ تاکسی (ستون‌های `id`، `rider_id`، `city`، `created_at`) Index مناسب صفحه‌ی «سفرهای من» را بنویس و کوئری Keyset آن را. خروجی: دو دستور SQL و یک جمله که بگوید چرا `city` کلید Shard بدی است."
+    }
+   ]
+  },
+  {
+   "course": "se-520",
+   "lessons": [
+    {
+     "title": "ذخیره‌سازی امن و ماسک کردن داده‌ی حساس",
+     "estimatedMinutes": 30,
+     "what": "`SharedPreferences` مثل یادداشتی است که به یخچال چسبانده‌ای؛ هر کسی به گوشی دسترسی داشته باشد (گوشی روت‌شده، بکاپ، بدافزار) می‌تواند بخواندش. Secure Storage گاوصندوق است: در iOS داده در Keychain می‌رود و در Android با کلیدی از Android Keystore رمز می‌شود.\n\nقاعده‌ی دوم مهم‌تر است: داده‌ای که لازم نداری را اصلاً ذخیره نکن، و آنچه نمایش می‌دهی را ماسک کن.",
+     "why": "ذخیره‌ی توکن به‌شکل متن ساده یعنی هر کسی فایل را بردارد، بدون رمز وارد حساب کاربر می‌شود. این همان Insecure Data Storage در `OWASP Mobile Top 10` است. در اپ بانکی، لاگ کردن شماره کارت کامل یا کد ملی هم به همان اندازه خطرناک است، چون لاگ‌ها به سرویس‌های دیگر فرستاده می‌شوند.",
+     "simpleExample": {
+      "language": "dart",
+      "code": "import 'package:flutter_secure_storage/flutter_secure_storage.dart';\n\n// iOS: Keychain. Android: encrypted with an Android Keystore key.\nclass TokenStore {\n  static const _storage = FlutterSecureStorage();\n  static const _key = 'refresh_token';\n\n  Future<void> save(String token) => _storage.write(key: _key, value: token);\n\n  Future<String?> read() => _storage.read(key: _key);\n\n  // Always call on logout\n  Future<void> clear() => _storage.delete(key: _key);\n}",
+      "explanation": "`flutter_secure_storage` رابط یکسانی روی هر دو پلتفرم می‌دهد. فقط رازهای کوچک (توکن، کلید) را این‌جا نگه دار؛ برای داده‌ی حجیم یا غیرحساس مناسب نیست."
+     },
+     "realExample": {
+      "language": "dart",
+      "code": "// Never store CVV2 or the card PIN. Show and log only masked values.\nString maskCard(String pan) {\n  final d = pan.replaceAll(RegExp(r'\\D'), '');\n  if (d.length != 16) return '****';\n  return '${d.substring(0, 4)}-${d.substring(4, 6)}**-****-${d.substring(12)}';\n}\n\nString maskNationalId(String id) =>\n    id.length == 10 ? '******${id.substring(6)}' : '**********';\n\n// Iranian national ID checksum (validate before sending)\nbool isValidNationalId(String id) {\n  if (!RegExp(r'^\\d{10}$').hasMatch(id)) return false;\n  if (RegExp(r'^(\\d)\\1{9}$').hasMatch(id)) return false; // 1111111111\n  final digits = id.split('').map(int.parse).toList();\n  var sum = 0;\n  for (var i = 0; i < 9; i++) {\n    sum += digits[i] * (10 - i);\n  }\n  final r = sum % 11;\n  final check = digits[9];\n  return r < 2 ? check == r : check == 11 - r;\n}\n\nvoid main() {\n  print(maskCard('6037 9912 3456 7890')); // 6037-99**-****-7890\n  print(maskNationalId('0012345679')); // ******5679\n  print(isValidNationalId('0012345679')); // true\n}",
+      "explanation": "شماره کارت فقط با ۶ رقم اول (شناسه‌ی بانک) و ۴ رقم آخر نمایش داده می‌شود. کد ملی قبل از ارسال با الگوریتم رقم کنترل چک می‌شود. رقم دهم کنترل است و بقیه با وزن ۱۰ تا ۲ جمع می‌شوند."
+     },
+     "mistakes": [
+      "ذخیره‌ی access token، رمز عبور یا PIN در `SharedPreferences` یا یک فایل JSON ساده.",
+      "`print` یا لاگ کردن پاسخ کامل API که شماره کارت، کد ملی یا توکن در آن است.",
+      "پاک نکردن توکن‌ها هنگام خروج از حساب؛ کاربر بعدی روی همان گوشی وارد حساب قبلی می‌شود."
+     ],
+     "bestPractices": [
+      "رازها را فقط در Secure Storage بگذار و access token کوتاه‌عمر را ترجیحاً فقط در حافظه‌ی اجرا نگه دار.",
+      "یک تابع ماسک مرکزی بساز و همه‌ی لاگ‌ها و گزارش‌های خطا را از آن عبور بده.",
+      "هیچ‌وقت `CVV2`، رمز دوم یا رمز پویا را ذخیره نکن؛ این داده‌ها فقط لحظه‌ی پرداخت به درگاه می‌روند."
+     ],
+     "relatedTerms": [
+      "repository-pattern",
+      "debugging",
+      "unit-test"
+     ],
+     "tryIt": "تابع `maskMobile` بنویس که `09121234567` را به `0912***4567` تبدیل کند و برای ورودی نامعتبر `***` برگرداند. بعد برای `isValidNationalId` سه تست بنویس. خروجی: همه‌ی تست‌ها سبز؛ `0012345679` معتبر و `0012345678` و `1111111111` نامعتبر."
+    },
+    {
+     "title": "احراز هویت، توکن و مدیریت نشست",
+     "estimatedMinutes": 35,
+     "what": "ورود با کد یک‌بارمصرف پیامکی (OTP) در اپ‌های ایرانی رایج است. بعد از تأیید کد، سرور دو توکن می‌دهد: Access Token کوتاه‌عمر (مثلاً ۱۵ دقیقه) مثل بلیت مترو، و Refresh Token بلندمدت مثل کارت شارژی که با آن بلیت تازه می‌گیری.\n\nهر درخواست Access Token را در هدر `Authorization` می‌فرستد. وقتی منقضی شد و سرور `401` داد، اپ بی‌صدا با Refresh Token توکن تازه می‌گیرد.",
+     "why": "اگر Access Token یک‌ماهه باشد و دزدیده شود، مهاجم یک ماه در حساب است. اگر هم کوتاه‌عمر باشد ولی Refresh خودکار نداشته باشی، کاربر هر ربع ساعت از اپ بیرون می‌افتد. یادت باشد تصمیم نهایی دسترسی همیشه با سرور است؛ چک کردن در اپ فقط برای تجربه‌ی کاربری است.",
+     "simpleExample": {
+      "language": "dart",
+      "code": "import 'dart:convert';\n\n// Reads \"exp\" from a JWT. Reading is NOT verifying: only the server verifies.\nbool isExpired(String jwt, {Duration skew = const Duration(seconds: 30)}) {\n  final parts = jwt.split('.');\n  if (parts.length != 3) return true;\n  final payload = utf8.decode(base64Url.decode(base64Url.normalize(parts[1])));\n  final exp = (jsonDecode(payload) as Map<String, dynamic>)['exp'];\n  if (exp is! int) return true;\n  final expiry = DateTime.fromMillisecondsSinceEpoch(exp * 1000);\n  return DateTime.now().add(skew).isAfter(expiry);\n}",
+      "explanation": "`exp` در JWT بر حسب ثانیه از ۱۹۷۰ است. با ۳۰ ثانیه حاشیه، توکنی که در آستانه‌ی انقضاست را هم منقضی حساب می‌کنی تا وسط درخواست باطل نشود. امضای توکن را اپ چک نمی‌کند؛ این کار سرور است."
+     },
+     "realExample": {
+      "language": "dart",
+      "code": "import 'package:dio/dio.dart';\nimport 'package:flutter_secure_storage/flutter_secure_storage.dart';\nclass AuthInterceptor extends QueuedInterceptor {\n  AuthInterceptor(this._plain, this._storage);\n  final Dio _plain; // same baseUrl, WITHOUT this interceptor: no loop, no deadlock\n  final FlutterSecureStorage _storage;\n  String? _access; // short-lived token: memory only\n  @override\n  void onRequest(RequestOptions options, RequestInterceptorHandler handler) {\n    if (_access != null) options.headers['Authorization'] = 'Bearer $_access';\n    handler.next(options);\n  }\n  @override\n  Future<void> onError(DioException err, ErrorInterceptorHandler handler) async {\n    final req = err.requestOptions;\n    if (err.response?.statusCode != 401) return handler.next(err);\n    try {\n      if (_access == null || req.headers['Authorization'] == 'Bearer $_access') await _refresh();\n      req.headers['Authorization'] = 'Bearer $_access';\n      handler.resolve(await _plain.fetch<dynamic>(req));\n    } on DioException catch (e) {\n      if (e.response?.statusCode == 401) await _storage.delete(key: 'refresh_token');\n      handler.next(e); // UI shows an error or the login screen\n    }\n  }\n  Future<void> _refresh() async {\n    final res = await _plain.post<Map<String, dynamic>>('/auth/refresh',\n        data: {'refresh_token': await _storage.read(key: 'refresh_token')});\n    _access = res.data!['access_token'] as String;\n    await _storage.write(key: 'refresh_token', value: res.data!['refresh_token'] as String);\n  }\n}",
+      "explanation": "روی `401` فقط اولین درخواست صف Refresh می‌کند؛ بقیه می‌بینند توکن عوض شده و فقط تکرار می‌شوند. تکرار با `_plain` (بدون این Interceptor) انجام می‌شود تا حلقه و قفل صف پیش نیاید. سرور هم باید Refresh Token قبلی را باطل کند (Rotation)."
+     },
+     "mistakes": [
+      "اعتماد به محتوای JWT در اپ برای تصمیم دسترسی، مثلاً نمایش پنل ادمین فقط چون `role` در توکن `admin` است.",
+      "چند Refresh هم‌زمان وقتی چند درخواست با هم `401` می‌گیرند؛ با `Interceptor` معمولی توکن‌ها همدیگر را باطل می‌کنند.",
+      "OTP بدون محدودیت تلاش که اجازه می‌دهد مهاجم همه‌ی کدهای ۵ رقمی را امتحان کند."
+     ],
+     "bestPractices": [
+      "Access Token را کوتاه‌عمر نگه دار و Refresh Token را در هر استفاده عوض کن (Rotation).",
+      "روی سرور برای OTP محدودیت تلاش، زمان انقضای کوتاه (مثلاً ۲ دقیقه) و محدودیت ارسال به هر شماره بگذار.",
+      "دکمه‌ی «خروج از همه‌ی دستگاه‌ها» بگذار که همه‌ی Refresh Tokenهای کاربر را روی سرور باطل کند."
+     ],
+     "relatedTerms": [
+      "rest-api",
+      "async-await",
+      "json-serialization"
+     ],
+     "tryIt": "جریان ورود با OTP را به‌صورت نمودار ترتیبی (کاربر، اپ، سرور، سرویس پیامک) روی کاغذ بکش؛ از وارد کردن `09121234567` تا اولین درخواست بعد از Refresh. خروجی: نمودار با حداقل ۸ پیام و محل ذخیره‌ی هر توکن."
+    },
+    {
+     "title": "ارتباط امن: HTTPS و Certificate Pinning",
+     "estimatedMinutes": 30,
+     "what": "HTTP مثل فرستادن کارت پستال است؛ هر کسی سر راه (Wi-Fi کافه، روتر آلوده) متنش را می‌خواند. HTTPS نامه را در پاکت مهروموم‌شده می‌گذارد و با گواهی (Certificate) ثابت می‌کند گیرنده واقعاً سرور توست.\n\nCertificate Pinning یک قدم جلوتر است: اپ به‌جای اعتماد به همه‌ی مراکز صدور گواهی گوشی، فقط به گواهی یا CA مشخص خودت اعتماد می‌کند.",
+     "why": "اگر مهاجم کاربر را قانع کند یک گواهی ریشه‌ی جعلی نصب کند، می‌تواند وسط ارتباط بنشیند (Man-in-the-Middle) و توکن و اطلاعات پرداخت را ببیند. Android از نسخه‌ی ۹ به‌طور پیش‌فرض HTTP بدون رمز را مسدود می‌کند و iOS هم با ATS همین کار را می‌کند؛ این سد را برای راحتی توسعه باز نکن.",
+     "simpleExample": {
+      "language": "dart",
+      "code": "import 'package:dio/dio.dart';\n\n// Fail fast if any request is not HTTPS\nclass HttpsOnlyInterceptor extends Interceptor {\n  @override\n  void onRequest(RequestOptions options, RequestInterceptorHandler handler) {\n    if (options.uri.scheme != 'https') {\n      handler.reject(DioException(\n        requestOptions: options,\n        message: 'Blocked: only HTTPS is allowed',\n      ));\n      return;\n    }\n    handler.next(options);\n  }\n}",
+      "explanation": "این Interceptor هر درخواستی را که با `http://` ساخته شده، قبل از خروج از گوشی رد می‌کند. یک اشتباه تایپی در آدرس سرور دیگر باعث نشت داده نمی‌شود."
+     },
+     "realExample": {
+      "language": "dart",
+      "code": "import 'dart:io';\nimport 'package:dio/dio.dart';\nimport 'package:dio/io.dart';\nimport 'package:flutter/services.dart';\n\n// Trust ONLY our bundled certificate, not every CA on the phone\nFuture<Dio> createPinnedDio() async {\n  final pem = await rootBundle.load('assets/certs/api_example_ir.pem');\n  final context = SecurityContext(withTrustedRoots: false)\n    ..setTrustedCertificatesBytes(pem.buffer.asUint8List());\n\n  final dio = Dio(BaseOptions(\n    baseUrl: 'https://api.example.ir',\n    connectTimeout: const Duration(seconds: 10),\n  ));\n  dio.httpClientAdapter = IOHttpClientAdapter(\n    createHttpClient: () {\n      final client = HttpClient(context: context);\n      // Never return true here, not even \"just for debug\"\n      client.badCertificateCallback = (cert, host, port) => false;\n      return client;\n    },\n  );\n  return dio;\n}",
+      "explanation": "با `withTrustedRoots: false` گواهی‌های سیستم کنار گذاشته می‌شوند و فقط گواهی داخل assets معتبر است. اگر گواهی سرور عوض شود و اپ آپدیت نشود، اپ قطع می‌شود؛ پس گواهی پشتیبان و برنامه‌ی تمدید لازم است."
+     },
+     "mistakes": [
+      "`badCertificateCallback = (_, __, ___) => true` برای دور زدن خطای گواهی در محیط تست که به نسخه‌ی release هم می‌رسد.",
+      "فعال کردن `usesCleartextTraffic` در Android برای کل اپ، فقط به‌خاطر یک سرور تستی.",
+      "Pin کردن گواهی بدون گواهی پشتیبان؛ با تمدید گواهی سرور، همه‌ی نسخه‌های قدیمی اپ از کار می‌افتند."
+     ],
+     "bestPractices": [
+      "همه‌ی آدرس‌ها را `https` نگه دار و سرور را فقط با `TLS 1.2` یا بالاتر پیکربندی کن.",
+      "برای اپ‌های بانکی و پرداخت Pinning بگذار، اما دو گواهی (فعلی و بعدی) را bundle کن و تاریخ انقضا را در تقویم تیم ثبت کن.",
+      "داده‌ی حساس را هرگز در query string نفرست (`?token=...`)؛ آدرس‌ها در لاگ سرورها و پراکسی‌ها ذخیره می‌شوند."
+     ],
+     "relatedTerms": [
+      "rest-api",
+      "debugging",
+      "code-review"
+     ],
+     "tryIt": "`HttpsOnlyInterceptor` را به یک `Dio` اضافه کن و یک درخواست به `http://example.com` بزن. خروجی مورد انتظار: `DioException` با پیام `Blocked: only HTTPS is allowed`، بدون اینکه درخواستی از گوشی خارج شود."
+    },
+    {
+     "title": "OWASP Mobile: چک‌لیست امنیت قبل از انتشار",
+     "estimatedMinutes": 35,
+     "what": "OWASP یک جامعه‌ی غیرانتفاعی امنیت است و فهرست `OWASP Mobile Top 10` (نسخه‌ی ۲۰۲۴) رایج‌ترین خطرهای اپ موبایل را نام می‌برد؛ مثل فهرست معاینه‌ی فنی ماشین قبل از سفر.\n\nاز `M1` تا `M10`: استفاده‌ی نادرست از اعتبارنامه‌ها، زنجیره‌ی تأمین، احراز هویت و مجوز، اعتبارسنجی ورودی و خروجی، ارتباط ناامن، حریم خصوصی، محافظت باینری، پیکربندی نادرست، ذخیره‌سازی ناامن و رمزنگاری ضعیف.",
+     "why": "امنیت بدون چک‌لیست یعنی فقط به چیزهایی فکر می‌کنی که یادت مانده است. کلید API هاردکد‌شده در کد یا پکیجی که ماه‌ها آپدیت نشده، معمولاً از چشم می‌افتد. این فهرست یک زبان مشترک برای Code Review و گفت‌وگو با تیم امنیت می‌سازد.",
+     "simpleExample": {
+      "language": "bash",
+      "code": "# M7: make reverse engineering harder (not impossible)\nflutter build appbundle --release \\\n  --obfuscate \\\n  --split-debug-info=build/symbols\n# Keep build/symbols private: needed to read crash stack traces\n\n# M1: look for hard-coded secrets before release\ngrep -rniE \"(api_key|secret|password)[[:space:]]*[:=]\" lib/ \\\n  || echo \"no obvious secrets found\"\n\n# M2: list outdated dependencies\nflutter pub outdated",
+      "explanation": "`--obfuscate` نام کلاس‌ها و توابع را در باینری مبهم می‌کند و `--split-debug-info` نمادها را جدا نگه می‌دارد. هر رازی که داخل اپ باشد با کمی تلاش استخراج می‌شود؛ مبهم‌سازی فقط کار را سخت‌تر می‌کند."
+     },
+     "realExample": {
+      "language": "markdown",
+      "code": "# چک‌لیست امنیت انتشار: اپ کیف پول\n\n- [ ] M1 اعتبارنامه: هیچ کلید سرور یا رمزی در کد و assets نیست\n- [ ] M2 زنجیره‌ی تأمین: `flutter pub outdated` بررسی شد، پکیج ناشناس نداریم\n- [ ] M3 احراز هویت: هر endpoint روی سرور مجوز را چک می‌کند، نه فقط UI\n- [ ] M4 ورودی/خروجی: کد ملی و مبلغ روی سرور هم اعتبارسنجی می‌شوند\n- [ ] M5 ارتباط: فقط HTTPS، Pinning برای دامنه‌ی پرداخت\n- [ ] M6 حریم خصوصی: شماره کارت و کد ملی در لاگ‌ها ماسک شده‌اند\n- [ ] M7 باینری: build با `--obfuscate`، نمادها خارج از مخزن\n- [ ] M8 پیکربندی: `android:debuggable` خاموش، بکاپ داده‌ی حساس غیرفعال\n- [ ] M9 ذخیره‌سازی: توکن فقط در Secure Storage\n- [ ] M10 رمزنگاری: الگوریتم خودساخته نداریم، از کتابخانه‌ی استاندارد استفاده شده\n\nمسئول بررسی: سارا — تاریخ: ۱۴۰۵/۰۷/۰۶",
+      "explanation": "هر مورد به یک بررسی مشخص در همین اپ تبدیل شده است، نه یک شعار کلی. این فایل را در Pull Request انتشار بگذار تا بازبین تیک‌ها را تأیید کند."
+     },
+     "mistakes": [
+      "فکر کردن به اینکه مبهم‌سازی کد، کلید API مخفی‌شده در اپ را امن می‌کند.",
+      "چک کردن مجوز فقط با مخفی کردن دکمه در UI، در حالی که endpoint روی سرور برای همه باز است.",
+      "نوشتن الگوریتم رمزنگاری خودساخته یا استفاده از `MD5` برای رمز عبور."
+     ],
+     "bestPractices": [
+      "رازهای واقعی را روی سرور نگه دار و اپ فقط با توکن کاربر به سرور خودت وصل شود.",
+      "چک‌لیست بالا را در قالب Pull Request انتشار بگذار تا هیچ نسخه‌ای بدون آن منتشر نشود.",
+      "حداقل ماهی یک بار `flutter pub outdated` را اجرا کن و آپدیت‌های امنیتی پکیج‌ها را جدی بگیر."
+     ],
+     "relatedTerms": [
+      "code-review",
+      "ci-cd",
+      "technical-debt"
+     ],
+     "tryIt": "یکی از پروژه‌های قبلی‌ات را با این چک‌لیست بررسی کن. خروجی: جدولی با ۱۰ سطر (`M1` تا `M10`)، وضعیت هر مورد (سالم، مشکل‌دار، نامربوط) و برای حداقل دو مشکل، راه‌حل مشخص با نام فایل."
+    }
+   ]
+  },
+  {
+   "course": "se-590",
+   "lessons": [
+    {
+     "title": "فاز اول: دامنه و نیازمندی‌های سرویس سفارش غذا",
+     "estimatedMinutes": 30,
+     "what": "سند طراحی سیستم مثل نقشه‌ی ساختمان قبل از ریختن فونداسیون است. در این پروژه برای یک سرویس سفارش غذا در چند شهر ایران سند می‌نویسی و در پایان از آن دفاع می‌کنی.\n\nفاز اول دامنه را مشخص می‌کند: بازیگرها (مشتری، رستوران، پیک، پشتیبانی)، نیازمندی‌های کارکردی، نیازمندی‌های غیرکارکردی با عدد، و مهم‌تر از همه، آنچه در این نسخه طراحی نمی‌کنی (Out of scope).",
+     "why": "پروژه‌ی طراحی سیستمی که مرز ندارد، در هفته‌ی سوم به «کل اینترنت» تبدیل می‌شود. با مرز مشخص، زمانت را صرف بخش‌های سخت (ثبت سفارش، پرداخت، ردیابی پیک) می‌کنی. داوران هم دقیقاً می‌پرسند «چه چیزی را عمداً کنار گذاشتی و چرا؟».",
+     "simpleExample": {
+      "language": "markdown",
+      "code": "## بازیگرها\n- مشتری: جست‌وجو، سفارش، پرداخت، پیگیری\n- رستوران: پذیرش سفارش، اعلام آماده بودن\n- پیک: دریافت درخواست، ارسال موقعیت، تحویل\n- پشتیبانی: لغو و بازگشت وجه\n\n## خارج از محدوده (این نسخه)\n- باشگاه مشتریان و امتیاز\n- پیشنهاد هوشمند غذا",
+      "explanation": "بخش «خارج از محدوده» به اندازه‌ی بقیه مهم است. نشان می‌دهد آگاهانه تصمیم گرفته‌ای و جلوی بزرگ شدن بی‌پایان پروژه را می‌گیرد."
+     },
+     "realExample": {
+      "language": "markdown",
+      "code": "# سند طراحی: سرویس سفارش غذا — فاز ۱\n\n## نیازمندی‌های کارکردی\n1. مشتری رستوران‌های باز در شعاع ۵ کیلومتری را می‌بیند\n2. مشتری سفارش ثبت و آنلاین پرداخت می‌کند\n3. رستوران ظرف ۳ دقیقه سفارش را می‌پذیرد یا رد می‌کند\n4. مشتری موقعیت پیک را روی نقشه می‌بیند\n5. بعد از تحویل، مشتری امتیاز می‌دهد\n\n## نیازمندی‌های غیرکارکردی\n| ویژگی | هدف |\n|---|---|\n| زمان پاسخ فهرست رستوران‌ها | p95 < 300ms |\n| در دسترس بودن ثبت سفارش | 99.95% |\n| تأخیر موقعیت پیک | کمتر از ۱۰ ثانیه |\n| سفارش پرداخت‌شده | هرگز گم نشود |\n| ساعت اوج | ۱۲:۳۰ تا ۱۴ و ۲۰ تا ۲۲ |\n\n## فرض‌ها\n- ۳ شهر: تهران، مشهد، اصفهان\n- ۲ میلیون کاربر فعال روزانه، ۳۰۰ هزار سفارش در روز",
+      "explanation": "هر نیازمندی کارکردی یک فعل و یک بازیگر دارد و هر غیرکارکردی یک عدد. فرض‌ها جدا نوشته شده‌اند تا در فاز دوم، تخمین ظرفیت بر پایه‌ی آن‌ها انجام شود."
+     },
+     "mistakes": [
+      "نوشتن نیازمندی‌های مبهم مثل «سیستم باید سریع و امن باشد» بدون عدد و معیار.",
+      "فراموش کردن بازیگرهای غیر از مشتری؛ پیک و رستوران بیشترین بار نوشتن را دارند.",
+      "نداشتن بخش خارج از محدوده و در نتیجه طراحی نیمه‌کاره‌ی ده قابلیت به‌جای طراحی کامل سه قابلیت."
+     ],
+     "bestPractices": [
+      "نیازمندی‌ها را شماره‌گذاری کن تا در فازهای بعد بتوانی بگویی هر مؤلفه کدام نیازمندی را پوشش می‌دهد.",
+      "برای «هرگز گم نشود» و «در دسترس بودن» جداگانه فکر کن؛ اولی درباره‌ی دوام داده است و دومی درباره‌ی پاسخ دادن.",
+      "سند را در مخزن Git و با Markdown بنویس تا تغییراتش مثل کد بازبینی شود."
+     ],
+     "relatedTerms": [
+      "use-case",
+      "scalability"
+     ],
+     "tryIt": "فایل `docs/design.md` را بساز و فاز اول را کامل کن: حداقل ۴ بازیگر، ۵ نیازمندی کارکردی شماره‌دار، ۴ نیازمندی غیرکارکردی با عدد، فرض‌ها و ۳ مورد خارج از محدوده. خروجی: سندی حداکثر دو صفحه‌ای."
+    },
+    {
+     "title": "فاز دوم: تخمین ظرفیت و مدل داده",
+     "estimatedMinutes": 35,
+     "what": "حالا فرض‌های فاز اول را به عدد تبدیل می‌کنی: چند سفارش در ثانیه در اوج، چند بار نوشتن موقعیت پیک در ثانیه و چند گیگابایت داده در سال. بعد جدول‌های اصلی را طراحی می‌کنی.\n\nنکته‌ی جالب: در سرویس غذا، سنگین‌ترین بار نوشتن معمولاً از سفارش‌ها نیست، بلکه از پیک‌هایی است که هر چند ثانیه موقعیتشان را می‌فرستند.",
+     "why": "بدون تخمین، ممکن است موقعیت پیک‌ها را در همان جدول سفارش‌ها بنویسی و دیتابیس اصلی در اوج شام زیر هزار نوشتن در ثانیه قفل شود. عددها نشان می‌دهند کدام داده به دیتابیس رابطه‌ای تعلق دارد و کدام به ذخیره‌ی درون‌حافظه‌ای.",
+     "simpleExample": {
+      "language": "text",
+      "code": "Orders\n  300,000 orders/day / 86,400 s  ~= 3.5 orders/s (average)\n  peak x10 (lunch, dinner)       ~= 35 orders/s\n  1 KB per order x 300,000       ~= 300 MB/day ~= 110 GB/year\n\nCourier locations\n  5,000 active couriers, 1 update every 5 s = 1,000 writes/s\n  100 bytes x 1,000/s x 86,400   ~= 8.6 GB/day  -> keep only recent\n\nConclusion\n  Orders: one relational DB + replica is enough\n  Locations: in-memory store with TTL, not the orders DB",
+      "explanation": "سفارش‌ها در اوج حدود ۳۵ نوشتن در ثانیه‌اند که برای یک PostgreSQL کم است. اما موقعیت پیک‌ها هزار نوشتن در ثانیه است که ارزش نگه‌داری طولانی ندارد؛ پس ذخیره‌ی جدا با انقضای کوتاه می‌گیرد."
+     },
+     "realExample": {
+      "language": "sql",
+      "code": "CREATE TABLE restaurants (\n  id          BIGSERIAL PRIMARY KEY,\n  name        TEXT NOT NULL,\n  city        TEXT NOT NULL,\n  lat         DOUBLE PRECISION NOT NULL,\n  lng         DOUBLE PRECISION NOT NULL,\n  is_open     BOOLEAN NOT NULL DEFAULT false\n);\n\nCREATE TABLE orders (\n  id              BIGSERIAL PRIMARY KEY,\n  customer_id     BIGINT NOT NULL,\n  restaurant_id   BIGINT NOT NULL REFERENCES restaurants(id),\n  status          TEXT NOT NULL DEFAULT 'placed',\n  total_toman     BIGINT NOT NULL CHECK (total_toman > 0),\n  idempotency_key TEXT NOT NULL UNIQUE,\n  created_at      TIMESTAMPTZ NOT NULL DEFAULT now()\n);\n\nCREATE TABLE order_items (\n  order_id    BIGINT NOT NULL REFERENCES orders(id),\n  food_name   TEXT NOT NULL,\n  unit_price  BIGINT NOT NULL,\n  quantity    INT NOT NULL CHECK (quantity > 0)\n);\n\nCREATE INDEX idx_orders_customer ON orders (customer_id, created_at DESC);\nCREATE INDEX idx_orders_restaurant_status ON orders (restaurant_id, status);",
+      "explanation": "مبلغ به تومان و با `BIGINT` ذخیره می‌شود، نه عدد اعشاری. `idempotency_key` یکتا جلوی ثبت دوباره‌ی سفارش را می‌گیرد. `unit_price` در `order_items` قیمت لحظه‌ی خرید را نگه می‌دارد، حتی اگر منو بعداً گران شود."
+     },
+     "mistakes": [
+      "ذخیره‌ی مبلغ با `DOUBLE` یا `FLOAT`؛ خطای گرد کردن در جمع صورت‌حساب‌ها پیش می‌آید.",
+      "ارجاع `order_items` به قیمت فعلی منو به‌جای کپی قیمت؛ با تغییر منو، فاکتورهای قدیمی عوض می‌شوند.",
+      "نوشتن موقعیت پیک‌ها در دیتابیس اصلی سفارش‌ها و گرفتن منابع آن در ساعت اوج."
+     ],
+     "bestPractices": [
+      "تخمین را با ضریب اوج (اینجا ۱۰ برابر) انجام بده و فرض ضریب را توضیح بده.",
+      "برای هر Index بنویس کدام کوئری یا صفحه‌ی اپ به آن نیاز دارد.",
+      "داده‌ی داغ و کوتاه‌عمر (موقعیت، وضعیت آنلاین پیک) را از داده‌ی ماندگار (سفارش، پرداخت) جدا کن."
+     ],
+     "relatedTerms": [
+      "scalability",
+      "caching",
+      "big-o"
+     ],
+     "tryIt": "فاز دوم سند را بنویس: جدول تخمین برای سفارش، موقعیت پیک و تصاویر منو، و طرح جدول‌ها با Indexها. خروجی: حداقل ۶ عدد تخمینی با فرض‌ها، و دستورهای `CREATE TABLE` که بدون خطا در PostgreSQL اجرا شوند."
+    },
+    {
+     "title": "فاز سوم: معماری، مؤلفه‌ها و جریان سفارش",
+     "estimatedMinutes": 35,
+     "what": "در این فاز جعبه‌ها و فلش‌ها را می‌کشی: اپ‌های موبایل، API Gateway، سرویس سفارش، پرداخت، ارسال به پیک، صف پیام، کش و دیتابیس. هر فلش باید بگوید هم‌زمان است (HTTP) یا ناهمگام (صف).\n\nقلب سیستم ماشین حالت سفارش است: سفارش از «ثبت‌شده» تا «تحویل‌شده» فقط از مسیرهای مجاز حرکت می‌کند، مثل مهره‌ی بازی که فقط به خانه‌های مجاز می‌رود.",
+     "why": "بدون ماشین حالت، یک باگ ساده باعث می‌شود سفارشی که لغو شده، به پیک هم ارسال شود یا مشتری برای سفارش تحویل‌شده بازگشت وجه بگیرد. ترسیم واضح هم‌زمان و ناهمگام هم نشان می‌دهد اگر سرویس پیامک از کار بیفتد، ثبت سفارش همچنان کار می‌کند.",
+     "simpleExample": {
+      "language": "text",
+      "code": "[Customer app]  [Restaurant app]  [Courier app]\n       \\               |               /\n        +----- API Gateway (auth, rate limit) -----+\n               |                |                  |\n        Order service    Restaurant service   Location service\n          |      \\                               |\n   PostgreSQL   Queue --> Payment worker     In-memory store (TTL)\n                  |  \\--> Notification worker (push, SMS)\n                  \\-----> Courier dispatch worker",
+      "explanation": "مسیر اصلی (ثبت سفارش) هم‌زمان است و بقیه‌ی کارها از طریق صف انجام می‌شوند. سرویس موقعیت ذخیره‌ی خودش را دارد تا هزار نوشتن در ثانیه به دیتابیس سفارش‌ها نرسد."
+     },
+     "realExample": {
+      "language": "dart",
+      "code": "enum OrderStatus { placed, paid, accepted, preparing, pickedUp, delivered, cancelled }\n\n// The only legal transitions. Anything else is a bug or an attack.\nconst _allowed = <OrderStatus, Set<OrderStatus>>{\n  OrderStatus.placed: {OrderStatus.paid, OrderStatus.cancelled},\n  OrderStatus.paid: {OrderStatus.accepted, OrderStatus.cancelled},\n  OrderStatus.accepted: {OrderStatus.preparing, OrderStatus.cancelled},\n  OrderStatus.preparing: {OrderStatus.pickedUp},\n  OrderStatus.pickedUp: {OrderStatus.delivered},\n};\n\nclass Order {\n  final int id;\n  final OrderStatus status;\n  const Order(this.id, this.status);\n\n  bool canMoveTo(OrderStatus next) => _allowed[status]?.contains(next) ?? false;\n\n  Order moveTo(OrderStatus next) {\n    if (!canMoveTo(next)) {\n      throw StateError('Order $id: ${status.name} -> ${next.name} is not allowed');\n    }\n    return Order(id, next);\n  }\n}\n\nvoid main() {\n  var order = const Order(1001, OrderStatus.placed);\n  order = order.moveTo(OrderStatus.paid).moveTo(OrderStatus.accepted);\n  print(order.status.name); // accepted\n  print(order.canMoveTo(OrderStatus.delivered)); // false: must be picked up first\n}",
+      "explanation": "`delivered` و `cancelled` هیچ مسیر خروجی ندارند، پس سفارش تحویل‌شده دیگر لغو نمی‌شود. همین جدول هم در سرور اجرا می‌شود و هم در اپ برای نمایش یا پنهان کردن دکمه‌ی «لغو سفارش»."
+     },
+     "mistakes": [
+      "کشیدن همه‌ی فلش‌ها به‌صورت HTTP هم‌زمان، که یعنی کندی سرویس پیامک ثبت سفارش را هم کند می‌کند.",
+      "تغییر مستقیم ستون `status` با UPDATE از هر جای کد، بدون عبور از قوانین ماشین حالت.",
+      "طراحی میکروسرویس‌های زیاد برای تیم سه‌نفره؛ یک Monolith ماژولار با مرزهای روشن اغلب انتخاب بهتری است."
+     ],
+     "bestPractices": [
+      "برای هر مؤلفه بنویس کدام نیازمندی فاز اول را پوشش می‌دهد؛ مؤلفه‌ی بی‌نیازمندی را حذف کن.",
+      "برای هر فلش بپرس «اگر این قطع شود چه می‌شود؟» و جوابش را در سند بنویس.",
+      "ماشین حالت را با تست پوشش بده: هر انتقال مجاز یک تست موفق و چند انتقال غیرمجاز یک تست شکست."
+     ],
+     "relatedTerms": [
+      "scalability",
+      "design-patterns",
+      "unit-test"
+     ],
+     "tryIt": "نمودار معماری خودت را بکش و ماشین حالت را با حالت `rejected` (رد توسط رستوران) گسترش بده. خروجی: نمودار، جدول انتقال‌های جدید و خروجی برنامه که نشان دهد `placed -> delivered` خطای `StateError` می‌دهد."
+    },
+    {
+     "title": "فاز چهارم: ریسک‌ها، ADR و دفاع از تصمیم‌ها",
+     "estimatedMinutes": 30,
+     "what": "هر تصمیم طراحی یک بده‌بستان است؛ مثل انتخاب بین تاکسی و مترو: یکی راحت‌تر است، دیگری قابل پیش‌بینی‌تر. ADR (Architecture Decision Record) سندی کوتاه است که می‌گوید چه گزینه‌هایی داشتی، چه انتخاب کردی و چه چیزی را از دست دادی.\n\nدر کنارش جدول ریسک می‌نویسی: چه چیزی ممکن است خراب شود، احتمال و اثرش چقدر است و برنامه‌ات چیست.",
+     "why": "در جلسه‌ی دفاع، داور کمتر می‌پرسد «چه ساختی» و بیشتر می‌پرسد «چرا این و نه آن؟». بدون ADR، جواب‌ها حدسی و متناقض می‌شوند. جدول ریسک هم نشان می‌دهد به خرابی‌ها فکر کرده‌ای؛ مثلاً اگر درگاه پرداخت ظهر جمعه قطع شود.",
+     "simpleExample": {
+      "language": "markdown",
+      "code": "# ADR-003: صف پیام برای ارسال اعلان‌ها\n\n## وضعیت\nپذیرفته‌شده\n\n## زمینه\nارسال پیامک گاهی ۵ ثانیه طول می‌کشد و گاهی خطا می‌دهد.\n\n## تصمیم\nثبت سفارش فقط پیام «سفارش ثبت شد» را در صف می‌گذارد.\nیک worker اعلان و پیامک را با retry ارسال می‌کند.\n\n## پیامدها\n+ ثبت سفارش به سرویس پیامک وابسته نیست\n- پیامک ممکن است با چند ثانیه تأخیر برسد\n- یک مؤلفه‌ی جدید برای نگه‌داری و مانیتورینگ داریم",
+      "explanation": "ADR خوب کوتاه است و بخش «پیامدها» صادقانه هزینه‌ها را هم می‌نویسد. داور با دیدن علامت منفی می‌فهمد بده‌بستان را واقعاً سنجیده‌ای."
+     },
+     "realExample": {
+      "language": "markdown",
+      "code": "# جدول ریسک‌ها\n\n| ریسک | احتمال | اثر | برنامه |\n|---|---|---|---|\n| قطعی درگاه پرداخت در اوج | متوسط | زیاد | پشتیبانی از دو درگاه، نمایش پیام شفاف و نگه داشتن سبد |\n| پرداخت موفق ولی پاسخ به اپ نرسد | زیاد | زیاد | `idempotency_key` و استعلام وضعیت پرداخت از سرور |\n| هجوم ترافیک با کد تخفیف همگانی | متوسط | متوسط | Rate limit، کش منو، تست بار قبل از کمپین |\n| پیک موقعیت نمی‌فرستد (اینترنت ضعیف) | زیاد | کم | نمایش «آخرین موقعیت» با زمان آن |\n| از دست رفتن دیتابیس | کم | بسیار زیاد | بکاپ روزانه، Replica، تمرین بازیابی هر فصل |\n\n## سؤال‌های احتمالی داوران\n1. چرا Monolith ماژولار و نه میکروسرویس؟ (ADR-001)\n2. اگر تعداد سفارش ۱۰ برابر شود، اولین گلوگاه کجاست؟\n3. چطور مطمئن می‌شوی کاربر دو بار پول نمی‌دهد؟",
+      "explanation": "ریسک «پرداخت موفق ولی پاسخ نرسیده» در ایران با اینترنت ناپایدار موبایل بسیار رایج است و داوران معمولاً سراغش می‌روند. آماده کردن جواب سؤال‌های احتمالی، نیمی از آمادگی دفاع است."
+     },
+     "mistakes": [
+      "نوشتن ADR فقط برای تصمیم‌های برنده و پنهان کردن گزینه‌های ردشده.",
+      "جدول ریسکی که همه‌ی موارد در آن «احتمال کم» دارند و هیچ برنامه‌ی مشخصی ندارد.",
+      "حفظ کردن جواب‌ها به‌جای فهم بده‌بستان؛ داور با یک سؤال «اگر... چه؟» تفاوت را می‌فهمد."
+     ],
+     "bestPractices": [
+      "برای هر تصمیم مهم (دیتابیس، صف، Monolith یا میکروسرویس، کش) یک ADR یک‌صفحه‌ای بنویس.",
+      "ریسک‌ها را بر اساس احتمال ضرب در اثر مرتب کن و برای سه ریسک اول برنامه‌ی عملی داشته باش.",
+      "یک هفته قبل از دفاع، جلسه‌ی دفاع آزمایشی با هم‌کلاسی‌ها بگذار و سؤال‌های سخت را جمع کن."
+     ],
+     "relatedTerms": [
+      "technical-debt",
+      "scalability",
+      "code-review"
+     ],
+     "tryIt": "سه ADR (دیتابیس، صف، کش) و جدول ۵ ریسک برای سندت بنویس و یک ارائه‌ی ۱۰ دقیقه‌ای آماده کن. خروجی: پوشه‌ی `docs/adr` با ۳ فایل، جدول ریسک و فهرست ۵ سؤال احتمالی داوران با جواب کوتاه."
+    }
+   ]
+  },
+  {
+   "course": "se-610",
+   "lessons": [
+    {
+     "title": "فاز اول: انتخاب محصول و تعریف MVP",
+     "estimatedMinutes": 30,
+     "what": "پروژه‌ی پایانی قرار است شبیه یک محصول واقعی باشد، نه تمرین کلاسی. مثلاً «اپ نوبت‌دهی مطب پزشک» برای شهر خودت. اول مسئله‌ی واقعی را پیدا می‌کنی: الان مردم چطور نوبت می‌گیرند و کجایش اذیت می‌کند؟\n\nبعد MVP (Minimum Viable Product) را تعریف می‌کنی: کوچک‌ترین نسخه‌ای که مسئله را واقعاً حل می‌کند. هر قابلیت به‌صورت User Story با معیار پذیرش نوشته می‌شود.",
+     "why": "بیشتر پروژه‌های پایانی به‌خاطر دامنه‌ی بزرگ نیمه‌کاره می‌مانند: چت، پرداخت، نقشه و پنل ادمین، همه نصفه. داوران یک محصول کوچکِ کامل، تست‌شده و منتشرشده را به ده قابلیت ناقص ترجیح می‌دهند. تعریف MVP همین انتخاب سخت را اول کار انجام می‌دهد.",
+     "simpleExample": {
+      "language": "markdown",
+      "code": "## User Story: رزرو نوبت\n\nبه‌عنوان بیمار، می‌خواهم نوبت خالی دکتر را ببینم و رزرو کنم،\nتا مجبور نباشم صبح زود به مطب زنگ بزنم.\n\n### معیار پذیرش\n- Given دکتر برای شنبه ساعت ۱۰ نوبت خالی دارد\n  When بیمار آن را رزرو می‌کند\n  Then نوبت برای دیگران «پر» نمایش داده می‌شود\n- Given نوبت قبلاً رزرو شده است\n  When بیمار دیگری هم‌زمان آن را رزرو کند\n  Then پیام «این نوبت دیگر خالی نیست» می‌بیند",
+      "explanation": "User Story می‌گوید چه کسی، چه می‌خواهد و چرا. معیارهای Given/When/Then آن‌قدر دقیق‌اند که مستقیم به تست تبدیل می‌شوند؛ حتی حالت سخت رزرو هم‌زمان را پوشش می‌دهند."
+     },
+     "realExample": {
+      "language": "markdown",
+      "code": "# پیشنهاد پروژه‌ی پایانی: اپ نوبت‌دهی مطب\n\n## مسئله\nبیماران برای نوبت باید در ساعت اداری تماس بگیرند و خط اشغال است.\nمنشی مطب نوبت‌ها را در دفتر کاغذی می‌نویسد.\n\n## کاربران\n- بیمار: دیدن نوبت خالی، رزرو، لغو، یادآوری\n- منشی: تعریف ساعت‌های کاری، دیدن فهرست روز\n\n## MVP (باید تحویل شود)\n1. ورود با شماره موبایل و کد یک‌بارمصرف\n2. تقویم شمسی نوبت‌های خالی\n3. رزرو و لغو تا ۲ ساعت قبل\n4. پنل ساده‌ی منشی\n\n## بعد از MVP (اگر وقت شد)\n- پرداخت بیعانه\n- امتیازدهی به پزشک\n\n## معیار موفقیت\n- ۲۰ کاربر آزمایشی واقعی، ۵۰ رزرو بدون خطا\n- پوشش تست Domain ≥ ۸۰٪، اپ روی گوشی واقعی نصب‌شدنی",
+      "explanation": "پیشنهاد یک‌صفحه‌ای مسئله، کاربران، MVP و معیار موفقیت را روشن می‌کند. بخش «بعد از MVP» به داور نشان می‌دهد ایده‌های بیشتری داری ولی آگاهانه تحویل را اولویت داده‌ای."
+     },
+     "mistakes": [
+      "انتخاب ایده‌ای که فقط کپی یک اپ مشهور است، بدون مسئله‌ی مشخص و کاربر واقعی برای آزمایش.",
+      "MVP با ده قابلیت؛ اگر با حذف یک قابلیت محصول هنوز مسئله را حل می‌کند، آن قابلیت جزو MVP نیست.",
+      "User Story بدون معیار پذیرش که معلوم نمی‌کند «تمام شده» یعنی چه."
+     ],
+     "bestPractices": [
+      "با ۳ تا ۵ کاربر واقعی (مثلاً منشی یک مطب) قبل از نوشتن سند صحبت کن و جمله‌های خودشان را یادداشت کن.",
+      "هر User Story را آن‌قدر کوچک کن که در یک تا سه روز پیاده‌سازی شود.",
+      "پیشنهاد را قبل از شروع به تأیید استاد راهنما برسان و نسخه‌ی تأییدشده را در مخزن نگه دار."
+     ],
+     "relatedTerms": [
+      "use-case",
+      "clean-architecture"
+     ],
+     "tryIt": "پیشنهاد یک‌صفحه‌ای پروژه‌ات را بنویس: مسئله، کاربران، ۴ تا ۶ قابلیت MVP، فهرست «بعد از MVP» و ۲ معیار موفقیت عددی. برای دو قابلیت اصلی User Story با معیار Given/When/Then بنویس. خروجی: فایل `docs/proposal.md`."
+    },
+    {
+     "title": "فاز دوم: معماری، ساختار پروژه و ADR",
+     "estimatedMinutes": 30,
+     "what": "حالا تصمیم‌های فنی بزرگ را می‌گیری: مدیریت State (مثلاً BLoC یا Riverpod)، ساختار پوشه‌ها، مسیریابی، منبع داده و استراتژی تست. هر کدام را با یک ADR کوتاه ثبت می‌کنی.\n\nتصمیم خوب یعنی تصمیم متناسب با مسئله و تیم. برای اپ نوبت‌دهی با یک یا دو نفر، Clean Architecture ساده با ساختار feature-first کافی است؛ لازم نیست همه‌ی الگوهای کتاب را پیاده کنی.",
+     "why": "اگر معماری را وسط کار عوض کنی، هفته‌ها صرف بازنویسی می‌شود. اگر هم دلیل انتخاب‌ها را ننویسی، در جلسه‌ی دفاع به «چون همه این‌طور می‌کنند» می‌رسی. ADR هم حافظه‌ی پروژه است و هم آمادگی برای سؤال داوران.",
+     "simpleExample": {
+      "language": "markdown",
+      "code": "# ADR-002: مدیریت State با flutter_bloc\n\n## زمینه\nصفحه‌ی رزرو حالت‌های زیادی دارد: بارگذاری، خالی، خطا، در حال رزرو.\n\n## گزینه‌ها\n- setState: ساده، ولی منطق داخل ویجت می‌ماند\n- Riverpod: انعطاف زیاد، تیم تجربه‌ی کمتری دارد\n- flutter_bloc: رویداد و حالت صریح، تست با bloc_test\n\n## تصمیم\nflutter_bloc برای صفحه‌های دارای منطق، setState برای UI ساده.\n\n## پیامدها\n+ هر حالت صفحه قابل تست است\n- کد boilerplate بیشتر",
+      "explanation": "ADR گزینه‌های رقیب را منصفانه مقایسه می‌کند و تصمیم ترکیبی و واقع‌بینانه می‌گیرد: ابزار سنگین فقط جایی که لازم است."
+     },
+     "realExample": {
+      "language": "text",
+      "code": "lib/\n  main.dart\n  injection.dart              # get_it setup (composition root)\n  core/\n    router.dart               # go_router routes\n    errors/failure.dart\n    utils/jalali_formatter.dart\n  features/\n    auth/\n      domain/  data/  presentation/\n    booking/\n      domain/\n        entities/slot.dart\n        repositories/booking_repository.dart\n        usecases/book_slot.dart\n      data/\n        models/slot_model.dart\n        booking_repository_impl.dart\n      presentation/\n        bloc/booking_bloc.dart\n        pages/booking_page.dart\ntest/\n  features/booking/domain/book_slot_test.dart\n  features/booking/presentation/booking_bloc_test.dart\ndocs/\n  proposal.md\n  adr/",
+      "explanation": "ساختار feature-first یعنی هر قابلیت همه‌ی لایه‌هایش را کنار هم دارد و پوشه‌ی `test` همان ساختار `lib` را تکرار می‌کند. پیدا کردن هر فایل و تست آن ساده است."
+     },
+     "mistakes": [
+      "انتخاب ابزار بر اساس مد روز به‌جای نیاز پروژه و تجربه‌ی تیم.",
+      "ساختار layer-first (همه‌ی مدل‌ها در یک پوشه، همه‌ی صفحه‌ها در یک پوشه) که با رشد پروژه پیدا کردن کد را سخت می‌کند.",
+      "نوشتن ADR بعد از تمام شدن پروژه؛ آن موقع دیگر ثبت تصمیم نیست، توجیه است."
+     ],
+     "bestPractices": [
+      "برای هر تصمیمی که برگرداندنش بیش از یک روز کار دارد، ADR بنویس.",
+      "قبل از کدنویسی کامل، یک «برش عمودی» بساز: یک قابلیت از UI تا API با تست، تا معماری در عمل امتحان شود.",
+      "قواعد lint را از روز اول در `analysis_options.yaml` فعال کن تا بدهی فنی جمع نشود."
+     ],
+     "relatedTerms": [
+      "clean-architecture",
+      "design-patterns",
+      "bloc"
+     ],
+     "tryIt": "سه ADR (State Management، منبع داده، مسیریابی) بنویس و ساختار پوشه‌ها را بساز. سپس یک برش عمودی کامل برای «نمایش نوبت‌های خالی» پیاده کن. خروجی: پوشه‌ی `docs/adr` با ۳ فایل و صفحه‌ای که داده را از Repository جعلی نمایش دهد."
+    },
+    {
+     "title": "فاز سوم: پیاده‌سازی با تست",
+     "estimatedMinutes": 40,
+     "what": "در این فاز قابلیت‌های MVP را یکی‌یکی و با تست می‌سازی. هر User Story یک شاخه‌ی Git، یک Pull Request و تست‌های مربوط به معیارهای پذیرشش دارد.\n\nهرم تست را در نظر بگیر: پایه‌اش Unit Testهای زیاد و سریع برای Domain است، وسطش Widget Test برای صفحه‌ها، و نوک آن چند Integration Test برای مسیرهای حیاتی مثل ورود و رزرو.",
+     "why": "باگ‌های پروژه‌ی پایانی معمولاً در لبه‌ها پنهان‌اند: دو نوبت پشت‌سرهم که اشتباهاً تداخل حساب می‌شوند یا دکمه‌ای که با دو بار لمس دو رزرو ثبت می‌کند. تستی که از معیار پذیرش نوشته شده، این لبه‌ها را قبل از دیدن داور پیدا می‌کند.",
+     "simpleExample": {
+      "language": "dart",
+      "code": "import 'package:flutter_test/flutter_test.dart';\nclass Slot {\n  final DateTime start;\n  final Duration length;\n  const Slot(this.start, this.length);\n  DateTime get end => start.add(length);\n  bool overlaps(Slot o) => start.isBefore(o.end) && o.start.isBefore(end);\n}\n\nvoid main() {\n  final a = Slot(DateTime(2026, 10, 3, 10), const Duration(minutes: 20));\n  test('back-to-back slots do not overlap', () {\n    expect(a.overlaps(Slot(DateTime(2026, 10, 3, 10, 20), a.length)), isFalse);\n  });\n  test('slots that share time overlap', () {\n    expect(a.overlaps(Slot(DateTime(2026, 10, 3, 10, 10), a.length)), isTrue);\n  });\n}",
+      "explanation": "قانون تداخل نوبت‌ها یک تابع خالص در Domain است. تست اول لبه‌ی حساس را چک می‌کند: نوبتی که دقیقاً وقتی قبلی تمام شده شروع می‌شود، تداخل ندارد."
+     },
+     "realExample": {
+      "language": "dart",
+      "code": "import 'dart:async';\nimport 'package:flutter/material.dart';\nimport 'package:flutter_test/flutter_test.dart';\nclass BookButton extends StatefulWidget {\n  const BookButton({super.key, required this.onBook});\n  final Future<void> Function() onBook;\n  @override\n  State<BookButton> createState() => _BookButtonState();\n}\nclass _BookButtonState extends State<BookButton> {\n  bool _busy = false;\n  Future<void> _book() async {\n    setState(() => _busy = true);\n    await widget.onBook();\n    if (mounted) setState(() => _busy = false);\n  }\n  @override\n  Widget build(BuildContext context) => FilledButton(\n      onPressed: _busy ? null : _book, child: Text(_busy ? 'در حال ثبت…' : 'رزرو نوبت'));\n}\nvoid main() {\n  testWidgets('a double tap books only once', (tester) async {\n    final done = Completer<void>();\n    var calls = 0;\n    await tester.pumpWidget(MaterialApp(home: BookButton(onBook: () { calls++; return done.future; })));\n    await tester.tap(find.text('رزرو نوبت'));\n    await tester.pump();\n    await tester.tap(find.byType(FilledButton), warnIfMissed: false);\n    expect(calls, 1);\n    done.complete();\n  });\n}",
+      "explanation": "این Widget Test معیار «رزرو دوباره ممنوع» را چک می‌کند. دکمه در طول درخواست غیرفعال است، پس لمس دوم اثری ندارد. `Completer` درخواست را عمداً باز نگه می‌دارد تا حالت «در حال ثبت» را ببینی."
+     },
+     "mistakes": [
+      "نوشتن همه‌ی تست‌ها در هفته‌ی آخر؛ آن موقع کد برای تست طراحی نشده و تست‌نویسی سخت است.",
+      "تکیه‌ی فقط بر Integration Test که کند و شکننده است، به‌جای پایه‌ی محکم Unit Test.",
+      "merge کردن Pull Request بدون اجرای CI یا بدون حداقل یک بازبینی هم‌تیمی یا خودبازبینی."
+     ],
+     "bestPractices": [
+      "برای هر معیار Given/When/Then دست‌کم یک تست بنویس و نام تست را از جمله‌ی معیار بردار.",
+      "Pull Requestها را کوچک نگه دار (زیر ۴۰۰ خط تغییر) تا بازبینی واقعی ممکن باشد.",
+      "حداقل یک Integration Test برای مسیر حیاتی «ورود ← انتخاب نوبت ← رزرو» با `integration_test` بنویس."
+     ],
+     "relatedTerms": [
+      "unit-test",
+      "widget-test",
+      "integration-test"
+     ],
+     "tryIt": "برای قابلیت رزرو، تابع `overlaps` و `BookButton` را در پروژه‌ات بگذار و تست‌ها را اجرا کن. سپس تستی اضافه کن که نشان دهد بعد از کامل شدن درخواست، متن دکمه دوباره «رزرو نوبت» می‌شود. خروجی: `flutter test` با همه‌ی تست‌ها سبز."
+    },
+    {
+     "title": "فاز چهارم: انتشار، مستندسازی و دفاع",
+     "estimatedMinutes": 35,
+     "what": "دفاع پروژه مثل معرفی رستوران تازه‌تأسیس به منتقد غذاست: غذا باید آماده روی میز باشد، نه در حال پخت. تا این فاز باید نسخه‌ای نصب‌شدنی (APK یا لینک آزمایشی)، README کامل و ارائه‌ای کوتاه داشته باشی.\n\nارائه‌ی خوب قصه می‌گوید: مسئله، راه‌حل، دموی زنده، معماری و تصمیم‌ها، تست و کیفیت، درس‌ها و کارهای آینده.",
+     "why": "داوران در ۲۰ دقیقه باید بفهمند چه ساخته‌ای و چقدر عمیق فکر کرده‌ای. دموی زنده‌ای که روی اینترنت ضعیف دانشگاه قفل می‌شود یا README که نمی‌گوید پروژه چطور اجرا می‌شود، زحمت ماه‌ها را کم‌رنگ می‌کند. آمادگی فنی و ارائه‌ی شفاف به اندازه‌ی کد اهمیت دارد.",
+     "simpleExample": {
+      "language": "markdown",
+      "code": "# نوبت‌یار: اپ نوبت‌دهی مطب\n\n## اجرا\nflutter pub get\nflutter run --dart-define=API_URL=https://api.example.ir\n\n## تست\nflutter test --coverage   # Domain coverage: 84%\n\n## معماری\nClean Architecture، feature-first، flutter_bloc، go_router، get_it.\nتصمیم‌ها در `docs/adr`.\n\n## دانلود\nنسخه‌ی 1.0.0 در بخش Releases مخزن.",
+      "explanation": "README سه سؤال اول هر داور را جواب می‌دهد: چطور اجرا کنم، کیفیتش چقدر است و چرا این‌طور ساخته شده. کوتاه است ولی به سندهای مفصل‌تر لینک می‌دهد."
+     },
+     "realExample": {
+      "language": "markdown",
+      "code": "# طرح ارائه‌ی ۲۰ دقیقه‌ای\n\n1. مسئله (۲ دقیقه): صدای منشی مطب و عکس دفتر نوبت کاغذی\n2. راه‌حل و MVP (۲ دقیقه): چهار قابلیت اصلی\n3. دموی زنده (۵ دقیقه): ورود، رزرو، لغو، پنل منشی\n   - پشتیبان: ویدیوی ضبط‌شده اگر اینترنت قطع شد\n4. معماری (۴ دقیقه): نمودار لایه‌ها و ۳ ADR مهم\n5. کیفیت (۳ دقیقه): گزارش پوشش تست، CI سبز، نرخ crash نسخه‌ی آزمایشی\n6. نتیجه (۲ دقیقه): ۲۲ کاربر آزمایشی، ۶۱ رزرو موفق\n7. درس‌ها و آینده (۲ دقیقه): چه چیزی را متفاوت انجام می‌دادم\n\n## چک‌لیست روز دفاع\n- [ ] اپ روی دو گوشی نصب و وارد حساب آزمایشی شده است\n- [ ] داده‌ی نمایشی واقعی‌نما (نه «test123»)\n- [ ] ویدیوی پشتیبان دمو روی لپ‌تاپ",
+      "explanation": "زمان‌بندی دقیق جلوی طولانی شدن یک بخش را می‌گیرد. ویدیوی پشتیبان بیمه‌ی دمو در برابر قطعی اینترنت است. عددهای واقعی از کاربران آزمایشی از هر ادعای کلی قانع‌کننده‌ترند."
+     },
+     "mistakes": [
+      "شروع ارائه با جزئیات کد به‌جای مسئله؛ داور هنوز نمی‌داند چرا باید برایش مهم باشد.",
+      "دموی زنده بدون پشتیبان، روی اینترنت دانشگاه و با حساب کاربری که رمزش یادت رفته است.",
+      "پنهان کردن ضعف‌ها؛ گفتن «این بخش را با X بهتر می‌کردم» نشانه‌ی پختگی است، نه ضعف."
+     ],
+     "bestPractices": [
+      "دو بار ارائه را جلوی دوستانت تمرین کن و زمان بگیر.",
+      "یک نسخه‌ی release امضاشده منتشر کن و لینکش را در README بگذار تا داور خودش امتحان کند.",
+      "برای سؤال‌های احتمالی (امنیت، مقیاس، تست) یک اسلاید پشتیبان آماده داشته باش."
+     ],
+     "relatedTerms": [
+      "ci-cd",
+      "code-review",
+      "technical-debt"
+     ],
+     "tryIt": "README پروژه‌ات را با الگوی بالا کامل کن، یک release با tag `v1.0.0` بساز و ارائه‌ی ۲۰ دقیقه‌ای را یک بار با زمان‌سنج تمرین کن. خروجی: لینک release، README با بخش‌های اجرا، تست و معماری، و زمان واقعی ارائه."
+    }
+   ]
+  },
+  {
+   "course": "se-620",
+   "lessons": [
+    {
+     "title": "Pipeline تست و Build خودکار",
+     "estimatedMinutes": 30,
+     "what": "خط تولید کارخانه را تصور کن: هر قطعه قبل از رسیدن به بسته‌بندی از چند ایستگاه کنترل کیفیت رد می‌شود. CI (Continuous Integration) همین است: هر Pull Request به‌طور خودکار format، analyze، تست و build می‌شود.\n\nاگر یک ایستگاه قرمز شود، کد merge نمی‌شود. این کار روی سرور CI انجام می‌شود، نه روی لپ‌تاپ رضا که «روی سیستم من کار می‌کرد».",
+     "why": "در تیم پنج‌نفره بدون CI، هر کس یادش برود تست‌ها را اجرا کند، شاخه‌ی `main` را می‌شکند و صبح شنبه همه درگیر پیدا کردن مقصرند. CI خطا را در همان Pull Request و چند دقیقه بعد از push نشان می‌دهد، وقتی رفعش ارزان است.",
+     "simpleExample": {
+      "language": "bash",
+      "code": "#!/usr/bin/env bash\n# ci.sh: the same checks CI runs, runnable on your laptop\nset -euo pipefail\n\nflutter pub get\ndart format --output=none --set-exit-if-changed .\nflutter analyze\nflutter test\necho \"All checks passed\"",
+      "explanation": "`set -euo pipefail` باعث می‌شود با اولین خطا اسکریپت متوقف شود. `--set-exit-if-changed` اگر فایلی format نشده باشد کد خروج غیرصفر می‌دهد. قبل از push همین را اجرا کن تا CI غافلگیرت نکند."
+     },
+     "realExample": {
+      "language": "yaml",
+      "code": "# .github/workflows/ci.yml\nname: CI\n\non:\n  pull_request:\n  push:\n    branches: [main]\n\nconcurrency:\n  group: ci-${{ github.ref }}\n  cancel-in-progress: true\n\njobs:\n  test:\n    runs-on: ubuntu-latest\n    timeout-minutes: 20\n    steps:\n      - uses: actions/checkout@v4\n      - uses: subosito/flutter-action@v2\n        with:\n          flutter-version: 3.41.1\n          channel: stable\n          cache: true\n      - run: flutter pub get\n      - run: dart format --output=none --set-exit-if-changed .\n      - run: flutter analyze\n      - run: flutter test --coverage\n      - run: flutter build apk --debug",
+      "explanation": "با هر Pull Request این workflow اجرا می‌شود. `concurrency` اجراهای قدیمی همان شاخه را لغو می‌کند تا منابع هدر نرود. نسخه‌ی Flutter ثابت شده تا build امروز و ماه بعد یکسان باشد. مفهوم در GitLab CI هم همین است."
+     },
+     "mistakes": [
+      "استفاده از `channel: stable` بدون نسخه‌ی ثابت؛ یک روز صبح نسخه‌ی جدید Flutter می‌آید و CI بدون تغییر کد قرمز می‌شود.",
+      "Pipeline یک‌ساعته که کسی منتظرش نمی‌ماند و همه بدون دیدن نتیجه merge می‌کنند.",
+      "اجازه‌ی merge با CI قرمز چون «این تست همیشه flaky است»؛ تست flaky را درست یا موقتاً جدا کن."
+     ],
+     "bestPractices": [
+      "در تنظیمات مخزن، قبولی CI را شرط merge به `main` کن (Branch Protection).",
+      "مراحل سریع (format و analyze) را اول بگذار تا خطاهای ساده در کمتر از یک دقیقه معلوم شوند.",
+      "کش وابستگی‌ها را فعال کن (`cache: true`) تا هر اجرا پکیج‌ها را از اول دانلود نکند."
+     ],
+     "relatedTerms": [
+      "ci-cd",
+      "unit-test",
+      "pull-request"
+     ],
+     "tryIt": "فایل `.github/workflows/ci.yml` را به پروژه‌ات اضافه کن، یک Pull Request با یک فایل format‌نشده باز کن و ببین قرمز می‌شود. بعد format کن. خروجی: یک اجرای قرمز و یک اجرای سبز در تاریخچه‌ی Actions."
+    },
+    {
+     "title": "امضای اپ و مدیریت رازها در CI",
+     "estimatedMinutes": 30,
+     "what": "امضای اپ مثل مهر و امضای برابر اصل است: فروشگاه و گوشی کاربر با آن مطمئن می‌شوند آپدیت جدید از همان سازنده‌ی قبلی است. در Android این امضا با یک فایل keystore انجام می‌شود.\n\nاگر keystore گم شود، ممکن است دیگر نتوانی آپدیت همان اپ را منتشر کنی. اگر لو برود، هر کسی می‌تواند نسخه‌ی جعلی به‌نام تو امضا کند. پس در CI باید آن را از Secrets بخوانی، نه از مخزن.",
+     "why": "بارها پیش آمده که تیمی keystore را روی لپ‌تاپ یک نفر نگه داشته و با رفتن او یا خراب شدن دیسک، اپ برای همیشه قابل آپدیت نبوده است. commit کردن keystore در Git هم آن را به همه‌ی کسانی که به مخزن دسترسی دارند می‌دهد.",
+     "simpleExample": {
+      "language": "bash",
+      "code": "# Create the upload keystore once (keep it OUT of the repo)\nkeytool -genkey -v -keystore ~/upload-keystore.jks \\\n  -keyalg RSA -keysize 2048 -validity 10000 -alias upload\n\n# Show its SHA-256 fingerprint (some stores and APIs ask for it)\nkeytool -list -v -keystore ~/upload-keystore.jks -alias upload\n\n# Encode it to paste into a CI secret named KEYSTORE_BASE64\nbase64 -w 0 ~/upload-keystore.jks > keystore.b64\n\n# Make sure these never get committed\nprintf '%s\\n' '*.jks' 'android/key.properties' 'keystore.b64' >> .gitignore",
+      "explanation": "این دستورها از مستندات رسمی Flutter پیروی می‌کنند. `-validity 10000` یعنی حدود ۲۷ سال. فایل `keystore.b64` را بعد از کپی در Secret پاک کن و اصل keystore را در دو جای امن (مثلاً مدیر رمز تیم) بکاپ بگیر."
+     },
+     "realExample": {
+      "language": "yaml",
+      "code": "name: Signed build\n\non:\n  workflow_dispatch:\n\njobs:\n  android:\n    runs-on: ubuntu-latest\n    steps:\n      - uses: actions/checkout@v4\n      - uses: subosito/flutter-action@v2\n        with:\n          flutter-version: 3.41.1\n          cache: true\n      - name: Restore keystore from secrets\n        env:\n          KEYSTORE_BASE64: ${{ secrets.KEYSTORE_BASE64 }}\n          KEYSTORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}\n        run: |\n          echo \"$KEYSTORE_BASE64\" | base64 --decode > android/app/upload-keystore.jks\n          cat > android/key.properties <<EOF\n          storePassword=$KEYSTORE_PASSWORD\n          keyPassword=$KEYSTORE_PASSWORD\n          keyAlias=upload\n          storeFile=upload-keystore.jks\n          EOF\n      - run: flutter build appbundle --release\n      - name: Remove secrets from the runner\n        if: always()\n        run: rm -f android/app/upload-keystore.jks android/key.properties",
+      "explanation": "keystore و رمزش از GitHub Secrets خوانده و فقط در طول اجرا روی سرور CI ساخته می‌شوند. `storeFile` نسبت به پوشه‌ی `android/app` خوانده می‌شود. فایل `build.gradle` اپ هم باید طبق مستندات Flutter از `key.properties` بخواند."
+     },
+     "mistakes": [
+      "commit کردن `key.properties` یا فایل `.jks` در مخزن، حتی مخزن خصوصی.",
+      "چاپ کردن Secretها با `echo` در لاگ CI برای «دیباگ»؛ لاگ‌ها را همه‌ی اعضای تیم می‌بینند.",
+      "داشتن فقط یک نسخه از keystore روی یک لپ‌تاپ، بدون بکاپ و بدون ثبت رمزش در جای امن."
+     ],
+     "bestPractices": [
+      "از Play App Signing استفاده کن تا کلید اصلی نزد فروشگاه بماند و فقط upload key دست تیم باشد؛ upload key گم‌شده قابل تعویض است.",
+      "برای فروشگاه‌های دیگر (مثل فروشگاه‌های اپ ایرانی) همان کلید را نگه دار تا کاربر بتواند بین نسخه‌ها آپدیت کند.",
+      "دسترسی به Secretهای امضا را فقط به workflow انتشار و شاخه‌ی `main` محدود کن (Environments)."
+     ],
+     "relatedTerms": [
+      "ci-cd",
+      "code-review"
+     ],
+     "tryIt": "یک keystore آزمایشی بساز، آن را به‌شکل `KEYSTORE_BASE64` در Secrets مخزن تمرینی بگذار و workflow بالا را اجرا کن. خروجی: فایل `app-release.aab` امضاشده در خروجی build، و `git status` که هیچ فایل `.jks` یا `key.properties` نشان ندهد."
+    },
+    {
+     "title": "نسخه‌گذاری و انتشار خودکار",
+     "estimatedMinutes": 30,
+     "what": "انتشار دستی مثل پختن هر بار یک غذا بدون دستور پخت است؛ یک بار نمکش کم است، یک بار زیاد. در انتشار خودکار، با زدن یک tag مثل `v1.4.2`، CI اپ را تست، build، امضا و برای فروشگاه آماده می‌کند.\n\nهر نسخه دو عدد دارد: نام نسخه (`1.4.2`) که کاربر می‌بیند و شماره‌ی build که فروشگاه برای تشخیص نسخه‌ی جدیدتر استفاده می‌کند و باید همیشه بزرگ‌تر شود.",
+     "why": "وقتی انتشار دستی است، یک بار فراموش می‌کنی شماره‌ی build را بالا ببری و فروشگاه فایل را رد می‌کند، یک بار نسخه‌ی debug را آپلود می‌کنی. انتشار مرحله‌ای (Staged Rollout) هم کمک می‌کند اگر باگی جدی بود، فقط درصد کمی از کاربران آن را ببینند.",
+     "simpleExample": {
+      "language": "yaml",
+      "code": "# pubspec.yaml\nname: food_app\ndescription: Food ordering app\npublish_to: none\n\n# versionName+versionCode\n# 1.4.2 is shown to users, 37 must increase on every upload\nversion: 1.4.2+37\n\nenvironment:\n  sdk: ^3.9.0",
+      "explanation": "عدد بعد از `+` در Android به `versionCode` و در iOS به `CFBundleVersion` تبدیل می‌شود. این عدد را با `--build-number` در CI هم می‌شود بازنویسی کرد تا دستی بالا بردنش فراموش نشود."
+     },
+     "realExample": {
+      "language": "yaml",
+      "code": "# .github/workflows/release.yml\nname: Release\n\non:\n  push:\n    tags: ['v*']\n\njobs:\n  android:\n    runs-on: ubuntu-latest\n    steps:\n      - uses: actions/checkout@v4\n      - uses: subosito/flutter-action@v2\n        with:\n          flutter-version: 3.41.1\n          cache: true\n      - run: flutter test\n      # (restore keystore here, as in the signing lesson)\n      - name: Build release bundle\n        run: |\n          flutter build appbundle --release \\\n            --build-name=\"${GITHUB_REF_NAME#v}\" \\\n            --build-number=${{ github.run_number }} \\\n            --obfuscate --split-debug-info=build/symbols\n      - uses: actions/upload-artifact@v4\n        with:\n          name: release-${{ github.ref_name }}\n          path: |\n            build/app/outputs/bundle/release/app-release.aab\n            build/symbols",
+      "explanation": "tag `v1.4.2` نام نسخه‌ی `1.4.2` می‌شود و `run_number` شماره‌ی build همیشه‌صعودی است. فایل نمادها هم کنار AAB نگه داشته می‌شود تا گزارش crash نسخه‌ی مبهم‌شده خوانا باشد. مرحله‌ی آخر آپلود به فروشگاه با API آن است."
+     },
+     "mistakes": [
+      "دوباره استفاده کردن از شماره‌ی build قبلی؛ فروشگاه آپلود را رد می‌کند.",
+      "انتشار ۱۰۰ درصدی در همان روز اول، بدون فرصت دیدن crashهای نسخه‌ی جدید.",
+      "گم کردن فایل‌های `--split-debug-info`؛ بعد از آن گزارش crash نسخه‌ی مبهم‌شده قابل خواندن نیست."
+     ],
+     "bestPractices": [
+      "از Semantic Versioning استفاده کن: `MAJOR.MINOR.PATCH` (رفع باگ فقط PATCH را بالا می‌برد).",
+      "انتشار را مرحله‌ای کن، مثلاً ۵٪، ۲۰٪، ۵۰٪ و ۱۰۰٪، و در هر مرحله نرخ crash را چک کن.",
+      "برای هر tag یادداشت انتشار (Release Notes) فارسی و کوتاه بنویس؛ کاربر باید بفهمد چه چیزی بهتر شده است."
+     ],
+     "relatedTerms": [
+      "ci-cd",
+      "git-branch"
+     ],
+     "tryIt": "workflow انتشار را اضافه کن، سپس `git tag v0.1.0 && git push origin v0.1.0` را اجرا کن. خروجی: یک artifact به‌نام `release-v0.1.0` شامل `app-release.aab` و پوشه‌ی `symbols`، با نام نسخه‌ی `0.1.0`."
+    },
+    {
+     "title": "مانیتورینگ پس از انتشار",
+     "estimatedMinutes": 30,
+     "what": "انتشار پایان کار نیست؛ مثل رستورانی است که بعد از سرو غذا، به چهره‌ی مشتری نگاه می‌کند. باید بدانی اپ روی گوشی‌های واقعی چطور کار می‌کند: چند درصد کاربران crash نداشته‌اند (Crash-free users)، کدام صفحه کند است و چند درصد پرداخت‌ها شکست می‌خورد.\n\nدر Flutter با `FlutterError.onError` و `PlatformDispatcher.instance.onError` همه‌ی خطاهای catch‌نشده را جمع می‌کنی و به سرویس گزارش crash می‌فرستی.",
+     "why": "بیشتر کاربران وقتی اپ crash می‌کند گزارش نمی‌دهند؛ فقط اپ را پاک می‌کنند یا امتیاز یک ستاره می‌دهند. بدون مانیتورینگ، باگی که روی گوشی‌های اندرویدی قدیمی رخ می‌دهد تا وقتی نظرهای منفی سرازیر نشده دیده نمی‌شود.",
+     "simpleExample": {
+      "language": "dart",
+      "code": "import 'dart:ui';\nimport 'package:flutter/material.dart';\nvoid reportError(Object error, StackTrace? stack) {\n  // Send to your crash reporting service (with app version and screen)\n  debugPrint('[crash] $error');\n}\n\nvoid main() {\n  FlutterError.onError = (details) {\n    FlutterError.presentError(details);\n    reportError(details.exception, details.stack);\n  };\n  PlatformDispatcher.instance.onError = (error, stack) {\n    reportError(error, stack);\n    return true; // true = handled, skip default handling\n  };\n  runApp(const MaterialApp(home: Scaffold(body: Center(child: Text('سلام')))));\n}",
+      "explanation": "`FlutterError.onError` خطاهای فریم‌ورک (مثل خطا در `build`) را می‌گیرد و `PlatformDispatcher.instance.onError` خطاهای ناهمگام catch‌نشده را. هر دو به یک تابع گزارش می‌رسند."
+     },
+     "realExample": {
+      "language": "markdown",
+      "code": "# Runbook پایش انتشار: نسخه‌ی 1.4.2\n\n## شاخص‌ها و آستانه‌ها\n| شاخص | هدف | اقدام اگر بدتر شد |\n|---|---|---|\n| Crash-free users | ≥ 99.5% | توقف Rollout |\n| ANR rate (Android) | < 0.47% | بررسی کار سنگین روی main isolate |\n| شکست پرداخت | < 2% | بررسی درگاه و لاگ سرور |\n| زمان باز شدن اپ (p90) | < 2s | Profile و بررسی تغییرات اخیر |\n\n## روند روزهای اول\n1. روز اول: Rollout ۵٪، هر ۴ ساعت داشبورد چک شود (مسئول: مریم)\n2. روز دوم: اگر شاخص‌ها سبز بود، ۲۰٪\n3. روز چهارم: ۱۰۰٪\n4. crash جدید در ۳ کاربر یا بیشتر: issue فوری با برچسب `release-blocker`\n\n## حریم خصوصی\nدر گزارش‌ها شماره موبایل، کد ملی و شماره کارت فقط ماسک‌شده ارسال شوند.",
+      "explanation": "هر شاخص یک آستانه‌ی عددی و یک اقدام مشخص دارد، پس کسی سر اینکه «بد است یا نه» بحث نمی‌کند. آستانه‌ی ANR برابر حد رفتار نامطلوب Android vitals است."
+     },
+     "mistakes": [
+      "فرستادن گزارش crash بدون نسخه‌ی اپ و مدل گوشی؛ نمی‌فهمی باگ در کدام نسخه آمده است.",
+      "ارسال اطلاعات شخصی کاربر (شماره موبایل، کد ملی) به سرویس گزارش خطا بدون ماسک.",
+      "نگاه کردن به داشبورد فقط وقتی کاربران شکایت کرده‌اند، به‌جای بازه‌های ثابت بعد از انتشار."
+     ],
+     "bestPractices": [
+      "برای هر شاخص آستانه و اقدام از پیش تعیین کن تا تصمیم توقف Rollout سریع و بدون بحث باشد.",
+      "در کنار crashها، شاخص‌های کسب‌وکار مثل نرخ موفقیت پرداخت را هم پایش کن؛ باگ همیشه crash نیست.",
+      "فایل‌های نماد (`--split-debug-info`) هر نسخه را به سرویس گزارش crash بده تا stack trace خوانا باشد."
+     ],
+     "relatedTerms": [
+      "performance-profiling",
+      "ci-cd",
+      "debugging"
+     ],
+     "tryIt": "`reportError` را طوری کامل کن که نسخه‌ی اپ و نام صفحه‌ی فعلی را هم ثبت کند، سپس دکمه‌ای بساز که عمداً `throw StateError('test')` کند. خروجی: یک خط `[crash]` در کنسول با نسخه و نام صفحه."
+    }
+   ]
+  }
+ ]
+}

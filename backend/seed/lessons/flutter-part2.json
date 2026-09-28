@@ -1,0 +1,771 @@
+{
+ "courses": [
+  {
+   "course": "flutter-390",
+   "lessons": [
+    {
+     "title": "فاز اول: مدل و لایه‌ی داده‌ی خبرخوان",
+     "estimatedMinutes": 25,
+     "what": "یک خبرگزاری را تصور کن که خبرها لحظه‌به‌لحظه می‌رسند. خبرخوان تو هم باید همین‌طور باشد: به‌جای یک بار گرفتن لیست، یک Stream از خبرها دارد و با هر خبر تازه، UI خودش به‌روز می‌شود.\n\nدر فاز اول، قبل از هر صفحه‌ای، مدل `Article` و قرارداد `NewsRepository` را می‌سازی و یک نسخه‌ی Fake که داده‌ی فرضی تولید می‌کند. UI فقط با این قرارداد حرف می‌زند، نه با منبع داده.",
+     "why": "اگر از روز اول UI را مستقیم به داده‌ی ساختگی وصل کنی، روزی که API واقعی آمد باید همه‌ی صفحه‌ها را عوض کنی. با یک Repository انتزاعی، منبع داده را بدون دست زدن به UI عوض می‌کنی و در فاز تست هم نسخه‌ی Mock آن را جا می‌زنی.",
+     "simpleExample": {
+      "language": "dart",
+      "code": "class Article {\n  const Article({required this.id, required this.title, required this.source});\n  final int id;\n  final String title;\n  final String source;\n}\n\n// The contract the UI depends on. Where data comes from is hidden.\nabstract interface class NewsRepository {\n  Stream<List<Article>> watchLatest();\n}\n\nvoid main() {\n  const a = Article(id: 1, title: 'افتتاح ایستگاه جدید مترو', source: 'شهری');\n  print('${a.source}: ${a.title}');\n}",
+      "explanation": "`Article` تغییرناپذیر است و `NewsRepository` فقط قرارداد را تعریف می‌کند: «یک Stream از آخرین خبرها بده». هنوز مهم نیست داده از API می‌آید، از دیتابیس یا از یک فایل فرضی."
+     },
+     "realExample": {
+      "language": "dart",
+      "code": "import 'dart:async';\n\nclass Article {\n  const Article({required this.id, required this.title, required this.source});\n  final int id;\n  final String title;\n  final String source;\n}\n\nabstract interface class NewsRepository {\n  Stream<List<Article>> watchLatest();\n}\n\nclass FakeNewsRepository implements NewsRepository {\n  static const _titles = ['کاهش ترافیک صبحگاهی', 'افتتاح کتابخانه‌ی محله', 'بارش برف در البرز'];\n\n  @override\n  Stream<List<Article>> watchLatest() async* {\n    final items = <Article>[];\n    for (var i = 0; i < _titles.length; i++) {\n      await Future<void>.delayed(const Duration(seconds: 2));\n      items.insert(0, Article(id: i, title: _titles[i], source: 'خبرگزاری فرضی'));\n      yield List.unmodifiable(items); // a fresh, read-only snapshot\n    }\n  }\n}\n\nFuture<void> main() async {\n  await for (final list in FakeNewsRepository().watchLatest()) {\n    print('${list.length} خبر؛ تازه‌ترین: ${list.first.title}');\n  }\n}",
+      "explanation": "هر ۲ ثانیه یک خبر تازه به ابتدای لیست اضافه و یک کپی فقط‌خواندنی از کل لیست yield می‌شود. بعداً فقط همین کلاس با نسخه‌ی متصل به API عوض می‌شود و UI هیچ تغییری نمی‌کند."
+     },
+     "mistakes": [
+      "ساختن Stream داخل متد `build`؛ با هر rebuild یک Stream تازه ساخته می‌شود و خبرها از اول شروع می‌شوند.",
+      "yield کردن همان لیست قابل‌تغییر؛ اگر بعداً آن را عوض کنی، stateهای قبلی هم بی‌خبر عوض می‌شوند.",
+      "شروع کد از صفحه‌ها بدون نوشتن نیازمندی‌ها؛ وسط کار معلوم می‌شود جزئیات خبر یا به‌روزرسانی زنده جا افتاده است."
+     ],
+     "bestPractices": [
+      "قبل از کدنویسی نیازمندی‌ها را در یک فهرست کوتاه بنویس: لیست خبر، صفحه‌ی جزئیات، به‌روزرسانی زنده و تست.",
+      "UI را فقط به interface مخزن وابسته کن تا نسخه‌ی Fake، واقعی و Mock با هم جابه‌جا شوند.",
+      "ساختار پوشه‌ها را از اول مشخص کن؛ `data/`، `logic/` و `ui/` برای این پروژه کافی است."
+     ],
+     "relatedTerms": [
+      "repository-pattern",
+      "stream",
+      "immutability"
+     ],
+     "tryIt": "به `Article` فیلد `category` (مثلاً «ورزشی» یا «اقتصادی») اضافه کن و در `FakeNewsRepository` پنج خبر بساز. انتظار: کنسول ۵ خط چاپ کند، تعداد خبرها از ۱ تا ۵ بالا برود و تازه‌ترین خبر همیشه اول باشد."
+    },
+    {
+     "title": "فاز دوم: Cubit، state و چند مسیر",
+     "estimatedMinutes": 35,
+     "what": "Cubit مثل دبیر سرویس خبری است: خبرها را از Stream مخزن می‌گیرد و فقط «وضعیت فعلی» را به صفحه‌ها می‌دهد: در حال بارگذاری، لیست آماده یا خطا.\n\nدر این فاز دو صفحه داری: لیست خبرها در `/` و جزئیات در `/news/:id`. مسیرها را با `go_router` تعریف می‌کنی تا لینک مستقیم به یک خبر هم کار کند و دکمه‌ی برگشت درست رفتار کند.",
+     "why": "اگر هر صفحه جداگانه به Stream گوش بدهد، اشتراک‌ها تکراری می‌شوند و بستن‌شان فراموش می‌شود. یک Cubit مرکزی اشتراک را یک جا باز و در `close` می‌بندد، و state از نوع sealed همه‌ی حالت‌ها را صریح می‌کند تا کامپایلر حالت جاافتاده را بگیرد.",
+     "simpleExample": {
+      "language": "dart",
+      "code": "import 'dart:async';\nimport 'package:flutter_bloc/flutter_bloc.dart';\nsealed class NewsState {}\nclass NewsLoading extends NewsState {}\nclass NewsLoaded extends NewsState {\n  NewsLoaded(this.titles);\n  final List<String> titles;\n}\nclass NewsError extends NewsState {}\n\nclass NewsCubit extends Cubit<NewsState> {\n  NewsCubit(Stream<List<String>> source) : super(NewsLoading()) {\n    _sub = source.listen((t) => emit(NewsLoaded(t)), onError: (_) => emit(NewsError()));\n  }\n  late final StreamSubscription<List<String>> _sub;\n  @override\n  Future<void> close() async { await _sub.cancel(); return super.close(); }\n}",
+      "explanation": "Cubit در سازنده به Stream مخزن گوش می‌دهد و هر لیست را به `NewsLoaded` و هر خطا را به `NewsError` تبدیل می‌کند. در `close` اشتراک را لغو می‌کند تا بعد از بسته شدن، emit دیگری اتفاق نیفتد."
+     },
+     "realExample": {
+      "language": "dart",
+      "code": "import 'package:flutter/material.dart';\nimport 'package:flutter_bloc/flutter_bloc.dart';\nimport 'package:go_router/go_router.dart';\nsealed class NewsState {}\nclass NewsLoading extends NewsState {}\nclass NewsError extends NewsState {}\nclass NewsLoaded extends NewsState { NewsLoaded(this.titles); final List<String> titles; }\nclass NewsCubit extends Cubit<NewsState> { NewsCubit() : super(NewsLoading()); }\n\nfinal router = GoRouter(routes: [\n  GoRoute(path: '/', builder: (_, _) => const NewsListPage(), routes: [\n    GoRoute(path: 'news/:id', builder: (_, s) => Scaffold(\n        appBar: AppBar(title: Text('خبر ${s.pathParameters['id']}')))),\n  ]),\n]);\n\nclass NewsListPage extends StatelessWidget {\n  const NewsListPage({super.key});\n  @override\n  Widget build(BuildContext context) => Scaffold(\n        appBar: AppBar(title: const Text('خبرخوان')),\n        body: BlocBuilder<NewsCubit, NewsState>(\n          builder: (context, state) => switch (state) {\n            NewsLoading() => const Center(child: CircularProgressIndicator()),\n            NewsError() => const Center(child: Text('اتصال برقرار نشد')),\n            NewsLoaded(:final titles) => ListView.builder(\n                itemCount: titles.length,\n                itemBuilder: (_, i) => ListTile(title: Text(titles[i]), onTap: () => context.go('/news/$i'))),\n          },\n        ),\n      );\n}",
+      "explanation": "`switch` روی sealed state هر سه حالت را پوشش می‌دهد؛ اگر حالتی جا بیفتد کد کامپایل نمی‌شود. مسیر `news/:id` زیرمسیر `/` است، پس go_router صفحه‌ی لیست را زیر آن نگه می‌دارد و دکمه‌ی برگشت به لیست برمی‌گردد."
+     },
+     "mistakes": [
+      "فراموش کردن `cancel` اشتراک در `close`؛ Stream بعد از بسته شدن Cubit باز هم emit می‌کند و StateError می‌گیری.",
+      "فرستادن کل شیء خبر با `extra` در مسیر؛ با رفرش صفحه در وب یا لینک مستقیم، `extra` از دست می‌رود.",
+      "نگه داشتن لیست خبرها هم در state ویجت و هم در Cubit؛ دو منبع حقیقت دیر یا زود ناهماهنگ می‌شوند."
+     ],
+     "bestPractices": [
+      "state را sealed تعریف کن و در UI با `switch` همه‌ی حالت‌ها را صریح پوشش بده.",
+      "در مسیر فقط شناسه (مثل `/news/42`) بفرست و صفحه‌ی جزئیات خبر را با همان شناسه از Cubit پیدا کند.",
+      "`BlocProvider` را بالای `MaterialApp.router` بگذار تا همه‌ی مسیرها به همان یک Cubit دسترسی داشته باشند."
+     ],
+     "relatedTerms": [
+      "state-management",
+      "bloc",
+      "navigation-routing",
+      "stream"
+     ],
+     "tryIt": "صفحه‌ی جزئیات را کامل کن: با `context.read<NewsCubit>()` خبر مربوط به شناسه‌ی مسیر را پیدا کن و عنوانش را نشان بده. انتظار: با زدن هر خبر، عنوان همان خبر در AppBar دیده شود و دکمه‌ی برگشت به لیست برگردد."
+    },
+    {
+     "title": "فاز سوم: Unit Test و تحویل نهایی",
+     "estimatedMinutes": 30,
+     "what": "تست مثل بازرس کنترل کیفیت کارخانه است: قبل از این‌که محصول به دست مشتری برسد، رفتارش را با سناریوهای مشخص امتحان می‌کند.\n\nدر فاز آخر برای `NewsCubit` تست می‌نویسی: مخزن را با mocktail جعل می‌کنی، یک Stream کنترل‌شده به آن می‌دهی و بررسی می‌کنی Cubit دقیقاً چه stateهایی را به چه ترتیبی emit می‌کند.",
+     "why": "بدون تست، یک تغییر کوچک مثل مرتب‌سازی خبرها ممکن است بی‌صدا حالت خطا را خراب کند و فقط کاربر آن را ببیند. تست Cubit در چند میلی‌ثانیه اجرا می‌شود، به شبکه نیاز ندارد و شرط تحویل این پروژه است.",
+     "simpleExample": {
+      "language": "dart",
+      "code": "import 'package:flutter_test/flutter_test.dart';\n\nStream<int> countdown(int from) async* {\n  for (var i = from; i > 0; i--) {\n    yield i;\n  }\n}\n\nvoid main() {\n  test('countdown emits 3, 2, 1 and then closes', () {\n    expect(countdown(3), emitsInOrder([3, 2, 1, emitsDone]));\n  });\n}",
+      "explanation": "`emitsInOrder` ترتیب رویدادهای Stream را بررسی می‌کند و `emitsDone` مطمئن می‌شود Stream بسته شده است. فایل تست را در پوشه‌ی `test/` بگذار و با `flutter test` اجرا کن."
+     },
+     "realExample": {
+      "language": "dart",
+      "code": "import 'package:bloc_test/bloc_test.dart';\nimport 'package:flutter_bloc/flutter_bloc.dart';\nimport 'package:flutter_test/flutter_test.dart';\nimport 'package:mocktail/mocktail.dart';\nabstract interface class NewsRepository {\n  Stream<List<String>> watchLatest();\n}\nclass NewsCubit extends Cubit<List<String>?> {\n  NewsCubit(NewsRepository repo) : super(null) {\n    // Cancelling the subscription in close() is omitted here (see phase 2).\n    repo.watchLatest().listen(emit, onError: (_) => emit(const []));\n  }\n}\n\nclass MockNewsRepository extends Mock implements NewsRepository {}\nvoid main() {\n  late MockNewsRepository repo;\n  setUp(() => repo = MockNewsRepository());\n\n  blocTest<NewsCubit, List<String>?>('emits every list from the repository',\n      setUp: () => when(() => repo.watchLatest()).thenAnswer((_) => Stream.fromIterable([\n            ['خبر اول'],\n            ['خبر دوم', 'خبر اول'],\n          ])),\n      build: () => NewsCubit(repo),\n      expect: () => [['خبر اول'], ['خبر دوم', 'خبر اول']]);\n\n  blocTest<NewsCubit, List<String>?>('emits an empty list when offline',\n      setUp: () => when(() => repo.watchLatest()).thenAnswer((_) => Stream.error(Exception('offline'))),\n      build: () => NewsCubit(repo),\n      expect: () => [isEmpty]);\n}",
+      "explanation": "`blocTest` Cubit را می‌سازد، stateهای emit‌شده را جمع می‌کند و با `expect` مقایسه می‌کند. Mock اجازه می‌دهد هم مسیر موفق و هم قطع اینترنت را بدون سرور واقعی و در کسری از ثانیه شبیه‌سازی کنی."
+     },
+     "mistakes": [
+      "فراموش کردن `when` برای متد Mock؛ mocktail مقدار null برمی‌گرداند و تست با خطای نوع می‌شکند.",
+      "تست کردن فقط مسیر موفق؛ خطای شبکه همان حالتی است که در عمل بیشتر از همه پیش می‌آید.",
+      "صبر کردن با `Future.delayed` در تست به‌جای matcherهای Stream؛ تست کند و گاهی ناپایدار می‌شود."
+     ],
+     "bestPractices": [
+      "برای هر حالت state حداقل یک تست بنویس: بارگذاری، موفق و خطا.",
+      "نام تست را مثل یک رفتار بنویس، مثلاً `emits an empty list when offline`، تا گزارش شکست خودش گویا باشد.",
+      "قبل از تحویل، `flutter analyze` و `flutter test` را اجرا کن و طرز اجرای پروژه را در README بنویس."
+     ],
+     "relatedTerms": [
+      "unit-test",
+      "mocking",
+      "bloc",
+      "stream"
+     ],
+     "tryIt": "تستی بنویس که Stream مخزن اول دو لیست بدهد و بعد خطا (راهنما: `StreamController`). انتظار: `expect` دقیقاً سه state را به ترتیب «لیست اول، لیست دوم، لیست خالی» تأیید کند و `flutter test` سبز شود."
+    }
+   ]
+  },
+  {
+   "course": "flutter-410",
+   "lessons": [
+    {
+     "title": "http و dio: اولین درخواست به API",
+     "estimatedMinutes": 25,
+     "what": "درخواست HTTP مثل سفارش دادن به پیک است: آدرس (URL) و سفارش را می‌دهی، منتظر می‌مانی و بسته (Response) با یک کد وضعیت می‌رسد؛ `200` یعنی همه‌چیز درست است.\n\nدر Flutter دو ابزار رایج داری: `http` ساده و سبک است و برای چند درخواست کافی است. `dio` امکانات بیشتری دارد: `BaseOptions` مشترک، Interceptor برای توکن و لاگ، لغو درخواست و decode خودکار JSON.",
+     "why": "اپ قیمت ارز یا فروشگاه اینترنتی بدون API یک پوسته‌ی خالی است. اگر هر صفحه خودش URL بسازد و هدر توکن را دستی بگذارد، با عوض شدن آدرس سرور باید ده‌ها فایل را تغییر بدهی. یک کلاینت مرکزی این مشکل را از ریشه حل می‌کند.",
+     "simpleExample": {
+      "language": "dart",
+      "code": "import 'dart:convert';\nimport 'package:http/http.dart' as http;\n\n// Hypothetical API: {\"title\": \"طلای ۱۸ عیار\", \"price\": 7450000}\nFuture<Map<String, dynamic>> fetchGoldPrice() async {\n  final uri = Uri.https('api.example.ir', '/v1/prices/gold');\n  final res = await http.get(uri);\n  if (res.statusCode != 200) {\n    throw Exception('HTTP ${res.statusCode}');\n  }\n  // bodyBytes + utf8: Persian text stays correct even without a charset header\n  return jsonDecode(utf8.decode(res.bodyBytes)) as Map<String, dynamic>;\n}",
+      "explanation": "`http.get` یک Future برمی‌گرداند و `await` بدون قفل کردن UI منتظر پاسخ می‌ماند. قبل از استفاده از بدنه، کد وضعیت را چک کن؛ `http` برای `404` یا `500` خطا پرتاب نمی‌کند."
+     },
+     "realExample": {
+      "language": "dart",
+      "code": "import 'package:dio/dio.dart';\n\nclass ApiClient {\n  ApiClient(String token)\n      : dio = Dio(BaseOptions(\n          baseUrl: 'https://api.example.ir/v1',\n          connectTimeout: const Duration(seconds: 5),\n          receiveTimeout: const Duration(seconds: 10),\n        )) {\n    dio.interceptors.add(InterceptorsWrapper(\n      onRequest: (options, handler) {\n        options.headers['Authorization'] = 'Bearer $token';\n        handler.next(options);\n      },\n    ));\n    dio.interceptors.add(LogInterceptor(responseBody: false));\n  }\n\n  final Dio dio;\n\n  Future<List<dynamic>> fetchProducts({int page = 1}) async {\n    final res = await dio.get<List<dynamic>>(\n      '/products',\n      queryParameters: {'page': page, 'sort': 'cheapest'},\n    );\n    return res.data ?? [];\n  }\n}",
+      "explanation": "`BaseOptions` آدرس پایه و timeoutها را یک بار تعریف می‌کند و Interceptor توکن را به همه‌ی درخواست‌ها می‌چسباند. dio بدنه‌ی JSON را خودش decode می‌کند، پس `res.data` از قبل یک List است."
+     },
+     "mistakes": [
+      "ساختن `Dio()` تازه در هر متد؛ تنظیمات و Interceptorها گم می‌شوند و اتصال‌ها دوباره استفاده نمی‌شوند.",
+      "خواندن `res.body` برای متن فارسی وقتی سرور charset نمی‌فرستد؛ ممکن است حروف به‌هم‌ریخته ببینی.",
+      "ساختن URL با چسباندن رشته‌ها؛ فاصله یا حروف فارسی در query بدون encode درخواست را خراب می‌کند."
+     ],
+     "bestPractices": [
+      "یک `ApiClient` با `BaseOptions` بساز و با get_it یا Provider همان یک نمونه را در کل اپ به اشتراک بگذار.",
+      "پارامترها را با `queryParameters` یا `Uri.https` بفرست تا encode خودکار انجام شود.",
+      "برای چند درخواست ساده `http` کافی است؛ وقتی توکن، لاگ یا لغو درخواست لازم شد سراغ `dio` برو."
+     ],
+     "relatedTerms": [
+      "rest-api",
+      "future",
+      "async-await"
+     ],
+     "tryIt": "با dio متد `fetchRate(String code)` بنویس که از مسیر فرضی `/rates/USD` قیمت را بگیرد و چاپ کند، مثلاً «دلار: ۵۸۰۰۰ تومان». یک Interceptor هم اضافه کن که قبل از هر درخواست `options.path` را چاپ کند. انتظار: اول مسیر، بعد قیمت در کنسول دیده شود."
+    },
+    {
+     "title": "مدل‌سازی JSON و Serialization",
+     "estimatedMinutes": 30,
+     "what": "JSON برای Dart مثل نامه‌ای به زبان خارجی است: `jsonDecode` فقط آن را به `Map` و `List` خام تبدیل می‌کند. تا وقتی با `data['price']` کار می‌کنی، یک غلط تایپی یا نوع اشتباه تا زمان اجرا پیدا نمی‌شود.\n\nراه درست کلاس مدل است: `fromJson` ورودی را یک بار بررسی و به نوع امن تبدیل می‌کند و `toJson` آن را برای ارسال یا ذخیره برمی‌گرداند. در پروژه‌های بزرگ این کد را `json_serializable` تولید می‌کند.",
+     "why": "سرور امروز قیمت را `58000` می‌فرستد و فردا `58000.5`؛ کد `as int` ناگهان کرش می‌کند. یا فیلدی null می‌آید. مدل با یک نقطه‌ی تبدیل، این اتفاق‌ها را یک جا مدیریت می‌کند و بقیه‌ی اپ با نوع‌های مطمئن کار می‌کند.",
+     "simpleExample": {
+      "language": "dart",
+      "code": "class Product {\n  const Product({required this.id, required this.name, required this.price});\n\n  factory Product.fromJson(Map<String, dynamic> json) => Product(\n        id: json['id'] as int,\n        name: json['name'] as String,\n        price: (json['price'] as num).toInt(),\n      );\n\n  final int id;\n  final String name;\n  final int price; // Toman\n\n  Map<String, dynamic> toJson() => {'id': id, 'name': name, 'price': price};\n}",
+      "explanation": "`as num` هم int و هم double را می‌پذیرد و `toInt()` قیمت را به تومان صحیح تبدیل می‌کند. `toJson` دقیقاً همان کلیدها را برمی‌گرداند تا رفت‌وبرگشت داده سالم بماند."
+     },
+     "realExample": {
+      "language": "dart",
+      "code": "import 'dart:convert';\n\nclass CurrencyRate {\n  const CurrencyRate({required this.code, required this.title, required this.sell, this.change});\n  final String code, title;\n  final int sell; // Toman\n  final double? change; // percent, may be missing\n\n  factory CurrencyRate.fromJson(Map<String, dynamic> json) => switch (json) {\n        {'code': String code, 'title': String title, 'sell': num sell} => CurrencyRate(\n            code: code,\n            title: title,\n            sell: sell.toInt(),\n            change: (json['change'] as num?)?.toDouble(),\n          ),\n        _ => throw FormatException('Invalid rate: $json'),\n      };\n}\n\nList<CurrencyRate> parseRates(String body) {\n  final data = jsonDecode(body) as Map<String, dynamic>;\n  final items = data['items'] as List<dynamic>;\n  return [for (final e in items) CurrencyRate.fromJson(e as Map<String, dynamic>)];\n}\n\nvoid main() {\n  const body = '{\"items\":[{\"code\":\"USD\",\"title\":\"دلار\",\"sell\":58000,\"change\":1.2},'\n      '{\"code\":\"EUR\",\"title\":\"یورو\",\"sell\":63500}]}';\n  for (final r in parseRates(body)) {\n    print('${r.title}: ${r.sell} تومان (${r.change ?? 0}%)');\n  }\n}",
+      "explanation": "الگوی `switch` در Dart ۳ هم وجود کلیدها و هم نوعشان را یک‌جا بررسی می‌کند؛ اگر داده خراب باشد یک `FormatException` واضح می‌گیری، نه کرشی مبهم. `change` اختیاری است و نبودنش در یورو مشکلی ایجاد نمی‌کند."
+     },
+     "mistakes": [
+      "نوشتن `json['price'] as int` وقتی سرور گاهی عدد اعشاری می‌فرستد؛ `as num` و بعد `toInt()` امن‌تر است.",
+      "پخش کردن `Map<String, dynamic>` در ویجت‌ها؛ غلط تایپی مثل `json['prcie']` فقط در زمان اجرا null می‌دهد.",
+      "decode کردن JSON چند مگابایتی روی thread اصلی؛ UI لحظه‌ای یخ می‌زند. برای داده‌ی بزرگ `compute` یا `Isolate.run` بهتر است."
+     ],
+     "bestPractices": [
+      "تبدیل JSON را فقط در لایه‌ی data انجام بده؛ UI و منطق فقط مدل‌های تایپ‌شده ببینند.",
+      "برای مدل‌های زیاد از `json_serializable` و `build_runner` استفاده کن تا کد تبدیل دستی و خطادار ننویسی.",
+      "برای هر مدل یک تست رفت‌وبرگشت بنویس: `fromJson(p.toJson())` باید همان مقادیر را بدهد."
+     ],
+     "relatedTerms": [
+      "json-serialization",
+      "null-safety",
+      "immutability"
+     ],
+     "tryIt": "مدل `Order` با فیلدهای `id`، `items` (لیستی از `Product`) و `createdAt` از نوع `DateTime` بساز و با `DateTime.parse` تبدیلش کن. انتظار: برای JSONی با دو کالای ۱۲۰۰۰۰ و ۸۵۰۰۰ تومانی، «جمع: ۲۰۵۰۰۰ تومان» چاپ شود."
+    },
+    {
+     "title": "مدیریت خطا و Timeout در شبکه",
+     "estimatedMinutes": 30,
+     "what": "شبکه‌ی موبایل مثل جاده‌ی کوهستانی است: گاهی قطع می‌شود، گاهی کند است و گاهی سرور جواب `500` می‌دهد. اپ حرفه‌ای هر کدام را جدا می‌شناسد و پیام درست نشان می‌دهد.\n\nدر dio همه‌ی این‌ها با `DioException` می‌آیند و فیلد `type` نوعشان را می‌گوید: `connectionTimeout`، `receiveTimeout`، `badResponse` (کد وضعیت خارج از `2xx`)، `connectionError` و `cancel`. در `http` با `.timeout()` روی Future محدودیت زمانی می‌گذاری.",
+     "why": "اگر خطاها را نگیری، کاربر یا صفحه‌ی خطا می‌بیند یا لودینگ بی‌پایان. اگر همه را با یک پیام «خطایی رخ داد» نشان بدهی، کاربر نمی‌فهمد باید اینترنتش را چک کند یا بعداً برگردد. خطای دقیق یعنی تجربه‌ی بهتر و گزارش باگ قابل‌پیگیری.",
+     "simpleExample": {
+      "language": "dart",
+      "code": "import 'dart:async';\nimport 'package:http/http.dart' as http;\n\nFuture<String> loadNews() async {\n  try {\n    final res = await http\n        .get(Uri.https('api.example.ir', '/news'))\n        .timeout(const Duration(seconds: 8));\n    return res.statusCode == 200 ? res.body : 'خطای سرور: ${res.statusCode}';\n  } on TimeoutException {\n    return 'پاسخ سرور خیلی طول کشید';\n  } on http.ClientException {\n    return 'اتصال اینترنت را بررسی کن';\n  }\n}",
+      "explanation": "`.timeout` اگر پاسخ تا ۸ ثانیه نرسد `TimeoutException` پرتاب می‌کند. قطع اینترنت در `http` به شکل `ClientException` می‌رسد. هر خطا پیام مخصوص خودش را دارد."
+     },
+     "realExample": {
+      "language": "dart",
+      "code": "import 'package:dio/dio.dart';\n\nsealed class Failure implements Exception {\n  const Failure(this.message);\n  final String message;\n}\nclass NetworkFailure extends Failure { const NetworkFailure() : super('اتصال اینترنت برقرار نیست'); }\nclass TimeoutFailure extends Failure { const TimeoutFailure() : super('سرور دیر پاسخ داد؛ دوباره تلاش کن'); }\nclass ServerFailure extends Failure {\n  const ServerFailure(this.statusCode) : super('خطای سرور؛ کمی بعد دوباره امتحان کن');\n  final int? statusCode;\n}\n\nFailure mapDioError(DioException e) => switch (e.type) {\n      DioExceptionType.connectionTimeout ||\n      DioExceptionType.sendTimeout ||\n      DioExceptionType.receiveTimeout => const TimeoutFailure(),\n      DioExceptionType.connectionError => const NetworkFailure(),\n      DioExceptionType.badResponse => ServerFailure(e.response?.statusCode),\n      _ => const ServerFailure(null),\n    };\n\nFuture<int> fetchGoldPrice(Dio dio) async {\n  try {\n    final res = await dio.get<Map<String, dynamic>>('/prices/gold-18k');\n    return (res.data!['price'] as num).toInt();\n  } on DioException catch (e) {\n    throw mapDioError(e);\n  }\n}",
+      "explanation": "لایه‌ی data خطای فنی dio را به یک `Failure` قابل‌فهم تبدیل می‌کند. UI فقط `message` را نشان می‌دهد و با `switch` روی sealed class می‌تواند برای قطعی اینترنت دکمه‌ی «تلاش دوباره» بگذارد."
+     },
+     "mistakes": [
+      "`catch (e)` خالی که خطا را قورت می‌دهد و فقط null برمی‌گرداند؛ UI نمی‌فهمد مشکل از اینترنت است یا سرور.",
+      "گذاشتن timeout خیلی کوتاه (مثلاً ۳ ثانیه) برای آپلود عکس؛ روی اینترنت همراه کند همیشه شکست می‌خورد.",
+      "تکرار بی‌وقفه‌ی درخواست ناموفق در یک حلقه؛ سرور زیر بار می‌رود و باتری کاربر هم هدر می‌رود."
+     ],
+     "bestPractices": [
+      "خطاهای dio را فقط در لایه‌ی data به `Failure`های دامنه تبدیل کن تا UI به dio وابسته نباشد.",
+      "برای GET حداکثر ۲ تا ۳ بار retry با تأخیر فزاینده بگذار، مثلاً ۱، ۲ و ۴ ثانیه.",
+      "وقتی کاربر صفحه را می‌بندد درخواست را با `CancelToken` لغو کن تا پاسخ دیررس به state بسته نرسد."
+     ],
+     "relatedTerms": [
+      "rest-api",
+      "future",
+      "debugging"
+     ],
+     "tryIt": "در `mapDioError` برای کد `401` یک `AuthFailure` با پیام «دوباره وارد شو» اضافه کن. بعد `fetchGoldPrice` را با `Dio` صدا بزن که `baseUrl` آن دامنه‌ای ناموجود است. انتظار: پیام «اتصال اینترنت برقرار نیست» چاپ شود، نه یک stack trace."
+    },
+    {
+     "title": "کش و Pagination در لیست محصولات",
+     "estimatedMinutes": 35,
+     "what": "Pagination مثل ورق زدن کاتالوگ فروشگاه است: لازم نیست ۱۰ هزار محصول را یک‌جا بیاوری؛ صفحه‌ی اول را نشان می‌دهی و وقتی کاربر به انتهای لیست نزدیک شد، صفحه‌ی بعد را می‌گیری.\n\nکش هم مثل یخچال خانه است: چیزی را که تازه خریدی دوباره از مغازه نمی‌خری. داده‌ی اخیر را در حافظه یا `shared_preferences` نگه می‌داری تا صفحه فوری باز شود، حتی وقتی اینترنت ضعیف است.",
+     "why": "گرفتن کل کاتالوگ یک فروشگاه اینترنتی یعنی چند مگابایت داده، حافظه‌ی زیاد و لیستی که چند ثانیه دیر باز می‌شود. بدون کش هم هر بار برگشتن به صفحه یعنی درخواست تکراری و لودینگ دوباره؛ روی اینترنت همراه این یعنی هزینه برای کاربر.",
+     "simpleExample": {
+      "language": "dart",
+      "code": "class CachedValue<T> {\n  CachedValue(this.value) : savedAt = DateTime.now();\n  final T value;\n  final DateTime savedAt;\n  bool isFresh(Duration ttl) => DateTime.now().difference(savedAt) < ttl;\n}\n\nclass RateCache {\n  final _items = <String, CachedValue<int>>{};\n\n  int? read(String code) {\n    final hit = _items[code];\n    return (hit != null && hit.isFresh(const Duration(minutes: 5))) ? hit.value : null;\n  }\n\n  void write(String code, int priceToman) => _items[code] = CachedValue(priceToman);\n}",
+      "explanation": "قیمت هر ارز همراه با زمان ذخیره نگه داشته می‌شود و تا ۵ دقیقه تازه حساب می‌شود. بعد از آن `read` مقدار null می‌دهد و Repository باید قیمت را دوباره از API بگیرد."
+     },
+     "realExample": {
+      "language": "dart",
+      "code": "import 'package:flutter/material.dart';\n\nclass ProductList extends StatefulWidget {\n  const ProductList({super.key, required this.fetchPage});\n  final Future<List<String>> Function(int page) fetchPage; // GET /products?page=..&limit=20\n  @override\n  State<ProductList> createState() => _ProductListState();\n}\n\nclass _ProductListState extends State<ProductList> {\n  static const _pageSize = 20;\n  final _items = <String>[];\n  var _page = 1, _loading = false, _hasMore = true;\n  Future<void> _loadMore() async {\n    if (_loading || !_hasMore) return;\n    _loading = true;\n    try {\n      final next = await widget.fetchPage(_page);\n      if (mounted) setState(() { _items.addAll(next); _page++; _hasMore = next.length == _pageSize; });\n    } finally {\n      _loading = false; // also after an error, so the next scroll can retry\n    }\n  }\n  @override\n  Widget build(BuildContext context) => ListView.builder(\n        itemCount: _items.length + (_hasMore ? 1 : 0),\n        itemBuilder: (_, i) {\n          if (i >= _items.length - 5) _loadMore(); // near the end: fetch the next page\n          return i < _items.length ? ListTile(title: Text(_items[i])) : const Center(child: CircularProgressIndicator());\n        },\n      );\n}",
+      "explanation": "وقتی ۵ ردیف آخر ساخته می‌شوند، صفحه‌ی بعد درخواست می‌شود و پرچم `_loading` جلوی درخواست تکراری را می‌گیرد. اگر صفحه‌ای کمتر از ۲۰ آیتم داشت یعنی به آخر رسیده‌ایم و لودینگ پایین لیست حذف می‌شود."
+     },
+     "mistakes": [
+      "نداشتن پرچمی مثل `_loading`؛ اسکرول سریع چند درخواست هم‌زمان برای یک صفحه می‌فرستد و محصولات تکراری می‌شوند.",
+      "استفاده از `ListView` با `children` برای هزاران محصول؛ همه‌ی ردیف‌ها یک‌جا ساخته می‌شوند و حافظه پر می‌شود.",
+      "کش بدون تاریخ انقضا برای قیمت طلا و ارز؛ کاربر قیمت دیروز را به‌عنوان قیمت امروز می‌بیند."
+     ],
+     "bestPractices": [
+      "برای داده‌های حساس به زمان TTL کوتاه بگذار و کنار داده‌ی کش‌شده زمان آخرین به‌روزرسانی را نشان بده.",
+      "الگوی «اول کش، بعد شبکه» را پیاده کن: داده‌ی ذخیره‌شده را فوری نشان بده و بعد در پس‌زمینه تازه‌اش کن.",
+      "اگر API از cursor پشتیبانی می‌کند آن را به شماره‌ی صفحه ترجیح بده تا با اضافه شدن محصول جدید، آیتم تکراری نگیری."
+     ],
+     "relatedTerms": [
+      "caching",
+      "rest-api",
+      "scalability"
+     ],
+     "tryIt": "`ProductList` را با یک `fetchPage` فرضی اجرا کن که بعد از ۱ ثانیه ۲۰ محصول برگرداند و در صفحه‌ی ۴ فقط ۱۰ محصول. انتظار: با اسکرول تا ته، ۷۰ محصول بدون تکرار ببینی و لودینگ پایین لیست ناپدید شود."
+    }
+   ]
+  },
+  {
+   "course": "flutter-420",
+   "lessons": [
+    {
+     "title": "Implicit Animation: انیمیشن با یک setState",
+     "estimatedMinutes": 20,
+     "what": "Implicit Animation مثل ترموستات است: فقط دمای مقصد را می‌گویی و دستگاه خودش آرام‌آرام به آن می‌رسد. در Flutter کافی است مقدار جدید را با `setState` بدهی؛ ویجت‌هایی مثل `AnimatedContainer`، `AnimatedOpacity` و `AnimatedSwitcher` تغییر را با `duration` و `curve` نرم می‌کنند.\n\nبرای مقداری که ویجت آماده ندارد، `TweenAnimationBuilder` هر مقدار قابل‌درون‌یابی را از قبلی به جدید انیمیت می‌کند.",
+     "why": "تغییر ناگهانی رنگ یا اندازه چشم را اذیت می‌کند و کاربر نمی‌فهمد چه چیزی عوض شد. وقتی کالا به سبد خرید اضافه می‌شود، پرش نرم نشان سبد بازخورد فوری می‌دهد. Implicit Animation این کار را بدون Controller و بدون dispose با چند خط انجام می‌دهد.",
+     "simpleExample": {
+      "language": "dart",
+      "code": "import 'package:flutter/material.dart';\nclass LikeButton extends StatefulWidget {\n  const LikeButton({super.key});\n  @override\n  State<LikeButton> createState() => _LikeButtonState();\n}\nclass _LikeButtonState extends State<LikeButton> {\n  bool _liked = false;\n  @override\n  Widget build(BuildContext context) => GestureDetector(\n        onTap: () => setState(() => _liked = !_liked),\n        child: AnimatedContainer(\n          duration: const Duration(milliseconds: 300), curve: Curves.easeOut,\n          width: _liked ? 72 : 56, height: _liked ? 72 : 56,\n          decoration: BoxDecoration(color: _liked ? Colors.red : Colors.grey, shape: BoxShape.circle),\n          child: const Icon(Icons.favorite, color: Colors.white),\n        ));\n}",
+      "explanation": "فقط مقدار `_liked` عوض می‌شود؛ `AnimatedContainer` خودش اندازه و رنگ را در ۳۰۰ میلی‌ثانیه از مقدار قبلی به جدید می‌برد. هیچ Controller و dispose لازم نیست."
+     },
+     "realExample": {
+      "language": "dart",
+      "code": "import 'package:flutter/material.dart';\n\nclass CartBadge extends StatelessWidget {\n  const CartBadge({super.key, required this.count, required this.total});\n  final int count;\n  final int total; // Toman\n\n  @override\n  Widget build(BuildContext context) {\n    return Row(mainAxisSize: MainAxisSize.min, children: [\n      AnimatedSwitcher(\n        duration: const Duration(milliseconds: 250),\n        transitionBuilder: (child, anim) => ScaleTransition(scale: anim, child: child),\n        child: Badge(\n          key: ValueKey(count), // new key => AnimatedSwitcher animates\n          label: Text('$count'),\n          child: const Icon(Icons.shopping_cart),\n        ),\n      ),\n      const SizedBox(width: 12),\n      TweenAnimationBuilder<double>(\n        tween: Tween(end: total.toDouble()),\n        duration: const Duration(milliseconds: 600),\n        builder: (_, value, _) => Text('${value.round()} تومان'),\n      ),\n    ]);\n  }\n}",
+      "explanation": "`AnimatedSwitcher` وقتی `key` عوض می‌شود، نشان قبلی را کوچک و نشان جدید را بزرگ می‌کند. `TweenAnimationBuilder` جمع سبد را از عدد فعلی تا عدد جدید می‌شمارد، مثل نمایشگر صندوق فروشگاه."
+     },
+     "mistakes": [
+      "فراموش کردن `key` در فرزند `AnimatedSwitcher`؛ نوع ویجت عوض نشده، پس Flutter آن را همان ویجت می‌داند و انیمیشنی نمی‌بینی.",
+      "انتظار تکرار یا رفت‌وبرگشت از Implicit Animation؛ برای حرکت پیوسته مثل لودینگ تپنده به AnimationController نیاز داری.",
+      "گذاشتن `duration` طولانی مثل ۲ ثانیه برای دکمه‌ها؛ اپ کند به نظر می‌رسد. بیشتر انیمیشن‌های UI بین ۱۵۰ تا ۴۰۰ میلی‌ثانیه‌اند."
+     ],
+     "bestPractices": [
+      "اول سراغ ویجت‌های `Animated...` برو؛ فقط وقتی تکرار، توقف یا هماهنگی چند انیمیشن لازم شد Controller بساز.",
+      "برای ورود و خروج از `Curves.easeOut` و برای حرکت بازیگوش مثل نشان سبد از `Curves.elasticOut` استفاده کن.",
+      "مدت‌ها را در یک کلاس ثابت مثل `AppDurations.short` نگه دار تا حس حرکت در کل اپ یکدست باشد."
+     ],
+     "relatedTerms": [
+      "stateful-widget",
+      "animation-controller"
+     ],
+     "tryIt": "دکمه‌ی «افزودن به سبد» بساز که با هر بار زدن، `CartBadge` را با تعداد یکی بیشتر و جمع ۴۵۰۰۰ تومان بیشتر به‌روز کند. انتظار: عدد نشان با پرش کوچک عوض شود و جمع قیمت در حدود ۶۰۰ میلی‌ثانیه تا عدد جدید بشمارد."
+    },
+    {
+     "title": "AnimationController و Explicit Animation",
+     "estimatedMinutes": 35,
+     "what": "AnimationController مثل راننده‌ی مترو است: تو تعیین می‌کنی کی حرکت کند (`forward`)، کی برگردد (`reverse`)، کی بایستد (`stop`) یا مدام رفت‌وبرگشت کند (`repeat`). خودش در هر فریم عددی بین ۰ و ۱ تولید می‌کند.\n\nاین عدد را با `Tween` و `CurvedAnimation` به اندازه، زاویه یا جابه‌جایی تبدیل می‌کنی. Controller برای هماهنگی با فریم‌های صفحه به یک `TickerProvider` نیاز دارد که معمولاً `SingleTickerProviderStateMixin` است.",
+     "why": "لودینگ تپنده، لرزش فیلد رمز اشتباه یا انیمیشنی که با کشیدن انگشت جلو می‌رود با Implicit Animation ساخته نمی‌شود. `vsync` هم باعث می‌شود وقتی ویجت دیده نمی‌شود Ticker متوقف شود و باتری هدر نرود.",
+     "simpleExample": {
+      "language": "dart",
+      "code": "import 'package:flutter/material.dart';\n\nclass PulseDot extends StatefulWidget {\n  const PulseDot({super.key});\n  @override\n  State<PulseDot> createState() => _PulseDotState();\n}\nclass _PulseDotState extends State<PulseDot> with SingleTickerProviderStateMixin {\n  late final _c = AnimationController(vsync: this, duration: const Duration(milliseconds: 800))\n    ..repeat(reverse: true);\n  late final _scale = Tween<double>(begin: 0.8, end: 1.2)\n      .animate(CurvedAnimation(parent: _c, curve: Curves.easeInOut));\n  @override\n  void dispose() { _c.dispose(); super.dispose(); }\n  @override\n  Widget build(BuildContext context) =>\n      ScaleTransition(scale: _scale, child: const Icon(Icons.circle, color: Colors.green));\n}",
+      "explanation": "Controller با `repeat(reverse: true)` مدام بین ۰ و ۱ رفت‌وبرگشت می‌کند و Tween آن را به مقیاس ۰٫۸ تا ۱٫۲ تبدیل می‌کند؛ مثل چراغ «آنلاین» پشتیبانی. `dispose` Ticker را آزاد می‌کند."
+     },
+     "realExample": {
+      "language": "dart",
+      "code": "import 'dart:math' as math;\nimport 'package:flutter/material.dart';\nclass ShakePinField extends StatefulWidget {\n  const ShakePinField({super.key});\n  @override\n  State<ShakePinField> createState() => _ShakePinFieldState();\n}\n\nclass _ShakePinFieldState extends State<ShakePinField> with SingleTickerProviderStateMixin {\n  late final _controller = AnimationController(vsync: this, duration: const Duration(milliseconds: 500));\n  final _pin = TextEditingController();\n\n  void _submit() {\n    if (_pin.text != '1234') _controller.forward(from: 0); // demo only: real PINs are checked on the server\n  }\n  @override\n  void dispose() {\n    _controller.dispose();\n    _pin.dispose();\n    super.dispose();\n  }\n\n  @override\n  Widget build(BuildContext context) => AnimatedBuilder(\n        animation: _controller,\n        builder: (context, child) => Transform.translate(\n          offset: Offset(math.sin(_controller.value * math.pi * 6) * 12, 0),\n          child: child,\n        ),\n        child: TextField(controller: _pin, obscureText: true, onSubmitted: (_) => _submit()),\n      );\n}",
+      "explanation": "با هر رمز اشتباه، Controller از ۰ تا ۱ جلو می‌رود و `sin` آن را به سه رفت‌وبرگشت افقی تبدیل می‌کند. `TextField` به‌عنوان `child` فقط یک بار ساخته می‌شود و در هر فریم فقط `Transform` دوباره اجرا می‌شود."
+     },
+     "mistakes": [
+      "صدا نزدن `dispose` روی Controller؛ Flutter خطای «was disposed with an active Ticker» می‌دهد و منبع هدر می‌رود.",
+      "استفاده از `SingleTickerProviderStateMixin` برای دو Controller؛ برای چند Controller باید `TickerProviderStateMixin` بگذاری.",
+      "صدا زدن `setState` در listener کنترلر برای کل صفحه؛ به‌جایش `AnimatedBuilder` یا ویجت‌های `...Transition` را به کار ببر."
+     ],
+     "bestPractices": [
+      "Controller را با `late final` بساز و در `dispose` قبل از `super.dispose()` آزاد کن.",
+      "بخش ثابت درخت را به پارامتر `child` در `AnimatedBuilder` بده تا در هر فریم دوباره ساخته نشود.",
+      "Controller خطی را با `CurvedAnimation` و یک منحنی مناسب ترکیب کن تا حرکت طبیعی‌تر شود."
+     ],
+     "relatedTerms": [
+      "animation-controller",
+      "stateful-widget",
+      "widget-lifecycle"
+     ],
+     "tryIt": "دکمه‌ی پرداخت بساز که با زدنش آیکن قفل با `RotationTransition` یک دور کامل بچرخد و بعد با `reverse` برگردد. انتظار: هر چرخش حدود ۶۰۰ میلی‌ثانیه طول بکشد و با بستن صفحه هیچ خطای Ticker در کنسول نبینی."
+    },
+    {
+     "title": "Hero و گذار سفارشی بین صفحه‌ها",
+     "estimatedMinutes": 30,
+     "what": "Hero مثل کالایی است که از ویترین برمی‌داری و جلوی چشمت روی پیشخوان می‌آید: عکس محصول از لیست «پرواز» می‌کند و در صفحه‌ی جزئیات سر جای بزرگ‌ترش می‌نشیند.\n\nکافی است در هر دو صفحه یک `Hero` با `tag` یکسان بگذاری؛ Navigator بقیه‌ی کار را انجام می‌دهد. برای گذار سفارشی کل صفحه هم `PageRouteBuilder` با `transitionsBuilder` داری.",
+     "why": "وقتی صفحه ناگهان عوض می‌شود، کاربر لحظه‌ای گم می‌کند کجاست. Hero رابطه‌ی «این کارت» با «این صفحه» را نشان می‌دهد و اپ فروشگاهی را حرفه‌ای‌تر می‌کند، آن هم بدون نوشتن حتی یک AnimationController.",
+     "simpleExample": {
+      "language": "dart",
+      "code": "import 'package:flutter/material.dart';\n\nclass ProductThumb extends StatelessWidget {\n  const ProductThumb({super.key, required this.id});\n  final int id;\n  @override\n  Widget build(BuildContext context) => GestureDetector(\n        onTap: () => Navigator.of(context).push(MaterialPageRoute<void>(\n          builder: (_) => Scaffold(\n            appBar: AppBar(),\n            body: Hero(tag: 'product-$id', child: const Icon(Icons.watch, size: 240)),\n          ),\n        )),\n        child: Hero(tag: 'product-$id', child: const Icon(Icons.watch, size: 48)),\n      );\n}",
+      "explanation": "هر دو Hero برچسب `product-$id` دارند؛ هنگام push، آیکن کوچک از جای خودش تا جای آیکن بزرگ پرواز می‌کند و با pop برمی‌گردد."
+     },
+     "realExample": {
+      "language": "dart",
+      "code": "import 'package:flutter/material.dart';\n\nRoute<void> productRoute(int id, String name) => PageRouteBuilder<void>(\n      transitionDuration: const Duration(milliseconds: 450),\n      pageBuilder: (_, _, _) => ProductDetail(id: id, name: name),\n      transitionsBuilder: (_, animation, _, child) {\n        final curved = animation.drive(CurveTween(curve: Curves.easeOutCubic));\n        return FadeTransition(\n          opacity: curved,\n          child: SlideTransition(\n            position: curved.drive(Tween(begin: const Offset(0, 0.1), end: Offset.zero)),\n            child: child,\n          ),\n        );\n      },\n    );\n\nclass ProductDetail extends StatelessWidget {\n  const ProductDetail({super.key, required this.id, required this.name});\n  final int id;\n  final String name;\n  @override\n  Widget build(BuildContext context) => Scaffold(\n        appBar: AppBar(title: Text(name)),\n        body: Column(children: [\n          Hero(tag: 'product-$id', child: const Icon(Icons.watch, size: 200)),\n          Text(name, style: Theme.of(context).textTheme.headlineSmall),\n        ]),\n      );\n}",
+      "explanation": "`PageRouteBuilder` صفحه را هم‌زمان محو و کمی از پایین به بالا وارد می‌کند و Hero با همان `tag` کارت لیست، آیکن را بین دو صفحه پرواز می‌دهد. `drive` منحنی و Tween را به animation مسیر وصل می‌کند."
+     },
+     "mistakes": [
+      "دو Hero با `tag` یکسان در یک صفحه، مثلاً یک محصول در دو بخش لیست؛ Flutter خطای تکراری بودن tag می‌دهد.",
+      "فرزندهای خیلی متفاوت در دو سر Hero، مثلاً متن در یکی و عکس در دیگری؛ پرواز با پرش ناخوشایند تمام می‌شود.",
+      "گذار صفحه‌ی طولانی‌تر از نیم ثانیه؛ کاربری که سریع بین صفحه‌ها جابه‌جا می‌شود حس کندی می‌کند."
+     ],
+     "bestPractices": [
+      "tag را از شناسه‌ی یکتای داده بساز، مثل `product-$id`، نه از index لیست.",
+      "در go_router هم Hero کار می‌کند؛ برای گذار سفارشی در `GoRoute` از `pageBuilder` و `CustomTransitionPage` استفاده کن.",
+      "اگر در Hero متن داری، آن را در `Material` با `type: MaterialType.transparency` بپیچ تا استایل متن در پرواز خراب نشود."
+     ],
+     "relatedTerms": [
+      "navigation-routing",
+      "animation-controller"
+     ],
+     "tryIt": "یک لیست ۵ محصولی بساز که با زدن هر ردیف `productRoute` باز شود و در ردیف هم Hero با همان tag باشد. انتظار: آیکن هر محصول بدون خطا به صفحه‌ی جزئیات پرواز کند و با برگشت، سر جای همان ردیف بنشیند."
+    },
+    {
+     "title": "انیمیشن سفارشی: Staggered و CustomPainter",
+     "estimatedMinutes": 35,
+     "what": "Staggered Animation مثل ورود بازیکنان به زمین است: همه با یک سوت شروع می‌کنند، ولی هر کدام کمی دیرتر وارد می‌شود. در Flutter یک Controller داری و با `Interval` برای هر بخش بازه‌ی زمانی جدا تعریف می‌کنی.\n\nبرای شکلی که ویجت آماده ندارد، مثل حلقه‌ی پیشرفت آماده‌سازی سفارش غذا، `CustomPainter` را به Controller وصل می‌کنی تا در هر فریم فقط نقاشی تکرار شود.",
+     "why": "انیمیشن‌های هم‌زمان شلوغ به نظر می‌رسند. ترتیب زمانی درست، چشم کاربر را از عنوان به قیمت و بعد به دکمه‌ی خرید هدایت می‌کند. CustomPainter هم اجازه می‌دهد بدون کتابخانه‌ی جانبی، طرح اختصاصی اپ خودت را بسازی.",
+     "simpleExample": {
+      "language": "dart",
+      "code": "import 'package:flutter/material.dart';\n/// Item [index] of [count] fades and slides in, each one a little later.\nWidget staggeredItem({\n  required AnimationController controller,\n  required int index,\n  required int count,\n  required Widget child,\n}) {\n  final interval = Interval(index / (count + 1), (index + 2) / (count + 1), curve: Curves.easeOut);\n  final anim = controller.drive(CurveTween(curve: interval));\n  return FadeTransition(\n    opacity: anim,\n    child: SlideTransition(\n      position: anim.drive(Tween(begin: const Offset(0.2, 0), end: Offset.zero)),\n      child: child,\n    ),\n  );\n}",
+      "explanation": "هر آیتم بازه‌ی خودش را دارد که کمی بعد از آیتم قبلی شروع می‌شود و با آن هم‌پوشانی دارد. همه با یک `controller.forward()` اجرا می‌شوند و انتهای بازه‌ها هرگز از ۱ بیشتر نمی‌شود."
+     },
+     "realExample": {
+      "language": "dart",
+      "code": "import 'dart:math' as math;\nimport 'package:flutter/material.dart';\nclass RingPainter extends CustomPainter {\n  RingPainter(this.progress) : super(repaint: progress); // repaint on every tick\n  final Animation<double> progress;\n  @override\n  void paint(Canvas canvas, Size size) {\n    final rect = (Offset.zero & size).deflate(4);\n    final track = Paint()..style = PaintingStyle.stroke..strokeWidth = 8..color = Colors.black12;\n    final bar = Paint()\n      ..style = PaintingStyle.stroke..strokeWidth = 8..strokeCap = StrokeCap.round..color = Colors.orange;\n    canvas.drawArc(rect, 0, 2 * math.pi, false, track);\n    canvas.drawArc(rect, -math.pi / 2, 2 * math.pi * progress.value, false, bar);\n  }\n  @override\n  bool shouldRepaint(RingPainter oldDelegate) => oldDelegate.progress != progress;\n}\n\nclass OrderProgress extends StatefulWidget {\n  const OrderProgress({super.key});\n  @override\n  State<OrderProgress> createState() => _OrderProgressState();\n}\n\nclass _OrderProgressState extends State<OrderProgress> with SingleTickerProviderStateMixin {\n  late final _c = AnimationController(vsync: this, duration: const Duration(seconds: 2))..forward();\n  @override\n  void dispose() { _c.dispose(); super.dispose(); }\n  @override\n  Widget build(BuildContext context) =>\n      RepaintBoundary(child: CustomPaint(size: const Size.square(120), painter: RingPainter(_c)));\n}",
+      "explanation": "`super(repaint: progress)` باعث می‌شود با هر تیک Controller فقط `paint` اجرا شود، بدون rebuild هیچ ویجتی. حلقه از بالا (زاویه‌ی `-pi/2`) شروع می‌شود و در ۲ ثانیه کامل می‌شود."
+     },
+     "mistakes": [
+      "ساختن `CurvedAnimation` تازه داخل `build`؛ با هر rebuild شیء جدیدی به Controller گوش می‌دهد. `drive` یا ساخت یک‌باره بهتر است.",
+      "بازه‌ی `Interval` بیرون از ۰ تا ۱ یا begin بزرگ‌تر از end؛ Flutter در حالت debug خطای assert می‌دهد.",
+      "`shouldRepaint` که همیشه `true` برمی‌گرداند؛ حتی وقتی والد بی‌دلیل rebuild شود، نقاشی تکرار می‌شود."
+     ],
+     "bestPractices": [
+      "برای staggered یک Controller با چند `Interval` بساز، نه چند Controller که هماهنگ کردنشان سخت است.",
+      "Animation را به `repaint` در CustomPainter بده تا به‌جای `setState` فقط لایه‌ی نقاشی به‌روز شود.",
+      "CustomPaint متحرک را در `RepaintBoundary` بپیچ تا نقاشی مکررش بقیه‌ی صفحه را دوباره رنگ نکند."
+     ],
+     "relatedTerms": [
+      "animation-controller",
+      "performance-profiling"
+     ],
+     "tryIt": "با `staggeredItem` کارت‌های ۴ محصول را پشت‌سرهم وارد صفحه کن و زیرشان `OrderProgress` بگذار. انتظار: کارت‌ها یکی‌یکی از سمت راست محو و وارد شوند و حلقه‌ی نارنجی در ۲ ثانیه کامل شود."
+    }
+   ]
+  },
+  {
+   "course": "flutter-510",
+   "lessons": [
+    {
+     "title": "Rendering Pipeline: از Widget تا پیکسل",
+     "estimatedMinutes": 30,
+     "what": "ساخت هر فریم مثل خط تولید نانوایی است: خمیر (build)، چانه و اندازه (layout)، پخت (paint) و تحویل به مشتری (composite و raster). اگر یک مرحله کند شود، کل صف معطل می‌ماند.\n\nپشت صحنه سه درخت داری: Widget نقشه‌ی سبک و موقت است، Element جایگاه ماندگار آن در درخت است و RenderObject کار سنگین اندازه‌گیری و نقاشی را انجام می‌دهد. Flutter تا جای ممکن Element و RenderObject را دوباره استفاده می‌کند.",
+     "why": "برای ۶۰ فریم در ثانیه هر فریم حدود ۱۶ میلی‌ثانیه وقت دارد و روی نمایشگر ۱۲۰ هرتز حدود ۸ میلی‌ثانیه. تا ندانی زمان در کدام مرحله خرج می‌شود، بهینه‌سازی حدس است: شاید build را بهینه کنی در حالی که مشکل در paint یا raster است.",
+     "simpleExample": {
+      "language": "dart",
+      "code": "import 'package:flutter/material.dart';\n\n// Widget: a cheap, immutable description, recreated often\nclass PriceTag extends StatelessWidget {\n  const PriceTag({super.key, required this.price});\n  final int price;\n\n  @override\n  Widget build(BuildContext context) {\n    // context IS the Element: the long-lived slot in the tree\n    debugPrint('build PriceTag, element: ${context.runtimeType}');\n    // Text -> RichText -> RenderParagraph, which does layout and paint\n    return Text('$price تومان');\n  }\n}",
+      "explanation": "با هر تغییر قیمت یک `PriceTag` تازه ساخته می‌شود، اما Element قبلی (`StatelessElement`) و `RenderParagraph` زیر `Text` فقط به‌روز می‌شوند. ساختن Widget ارزان است؛ layout و paint گران‌اند."
+     },
+     "realExample": {
+      "language": "dart",
+      "code": "import 'package:flutter/widgets.dart';\n\n/// A bar that shows today's gold price change (0..1).\nclass RateBar extends LeafRenderObjectWidget {\n  const RateBar({super.key, required this.ratio});\n  final double ratio;\n  @override\n  RenderRateBar createRenderObject(BuildContext context) => RenderRateBar(ratio);\n  @override\n  void updateRenderObject(BuildContext context, RenderRateBar renderObject) =>\n      renderObject.ratio = ratio;\n}\n\nclass RenderRateBar extends RenderBox {\n  RenderRateBar(this._ratio);\n  double _ratio;\n  set ratio(double value) {\n    if (value == _ratio) return;\n    _ratio = value;\n    markNeedsPaint(); // size does not change, so layout is skipped\n  }\n\n  @override\n  void performLayout() => size = constraints.constrain(Size(constraints.maxWidth, 12));\n\n  @override\n  void paint(PaintingContext context, Offset offset) {\n    final rect = offset & Size(size.width * _ratio, size.height);\n    context.canvas.drawRect(rect, Paint()..color = const Color(0xFFFFA000));\n  }\n}",
+      "explanation": "Widget فقط تنظیمات را به RenderObject می‌رساند. وقتی `ratio` عوض می‌شود، `markNeedsPaint` فقط مرحله‌ی paint را دوباره اجرا می‌کند و چون اندازه ثابت است layout رد می‌شود. ویجت‌های خود Flutter هم همین‌طور ساخته شده‌اند."
+     },
+     "mistakes": [
+      "فکر کردن به این‌که هر `build` یعنی نقاشی دوباره‌ی کل صفحه؛ Flutter فقط RenderObjectهای تغییرکرده را layout و paint می‌کند.",
+      "صدا زدن `markNeedsLayout` برای تغییری که فقط ظاهر را عوض می‌کند؛ layout بی‌دلیل انجام می‌شود و ممکن است به والدها برسد.",
+      "سنجیدن سرعت در حالت debug؛ این حالت عمداً کند است و اعدادش درباره‌ی تجربه‌ی کاربر واقعی چیزی نمی‌گویند."
+     ],
+     "bestPractices": [
+      "هنگام بررسی فریم کند، اول ببین زمان در thread UI (build، layout، paint) رفته یا در thread raster.",
+      "کارایی را فقط با `flutter run --profile` روی گوشی واقعی، ترجیحاً یک گوشی میان‌رده، بسنج.",
+      "با گزینه‌ی Highlight Repaints در DevTools یا `debugRepaintRainbowEnabled` ببین کدام بخش دوباره نقاشی می‌شود."
+     ],
+     "relatedTerms": [
+      "performance-profiling",
+      "widget-lifecycle",
+      "stateless-widget",
+      "build-context"
+     ],
+     "tryIt": "`RateBar` را در یک `Column` بگذار و با دکمه‌ای `ratio` را هر بار ۰٫۱ زیاد کن. با Highlight Repaints اجرا کن، یک بار بدون و یک بار با `RepaintBoundary` دور نوار. انتظار: در حالت دوم فقط کادر دور نوار رنگ عوض کند."
+    },
+    {
+     "title": "شناسایی و کاهش Rebuildهای اضافی",
+     "estimatedMinutes": 30,
+     "what": "Rebuild اضافه مثل این است که برای عوض کردن یک لامپ، کل ساختمان را از نو بسازی. وقتی `setState` را بالای یک صفحه‌ی بزرگ صدا می‌زنی، `build` همه‌ی فرزندها دوباره اجرا می‌شود، حتی آن‌هایی که ربطی به تغییر ندارند.\n\nسه ابزار اصلی داری: ویجت `const` که Flutter دوباره buildش نمی‌کند، شکستن صفحه به ویجت‌های کوچک تا state پایین‌تر بنشیند، و گوش دادن دقیق با `context.select` یا `Selector`.",
+     "why": "در صفحه‌ی لیست محصولات، اگر تغییر تعداد سبد خرید کل لیست را rebuild کند، اسکرول روی گوشی میان‌رده می‌لرزد. rebuild معمولاً ارزان است، ولی نه وقتی با هر تغییر کوچک صدها ویجت سنگین را بی‌دلیل تکرار کند.",
+     "simpleExample": {
+      "language": "dart",
+      "code": "import 'package:flutter/material.dart';\n\nclass QtySelector extends StatefulWidget {\n  const QtySelector({super.key});\n  @override\n  State<QtySelector> createState() => _QtySelectorState();\n}\n\nclass _QtySelectorState extends State<QtySelector> {\n  int _qty = 1;\n  @override\n  Widget build(BuildContext context) => Row(children: [\n        const Icon(Icons.shopping_bag), // const: same instance, skipped on rebuild\n        Text('تعداد: $_qty'),\n        IconButton(onPressed: () => setState(() => _qty++), icon: const Icon(Icons.add)),\n      ]);\n}",
+      "explanation": "state تعداد فقط در همین ویجت کوچک است، پس `setState` فقط این ردیف را rebuild می‌کند، نه کل صفحه‌ی محصول را. ویجت‌های `const` هم در همین rebuild رد می‌شوند چون نمونه‌شان عوض نشده است."
+     },
+     "realExample": {
+      "language": "dart",
+      "code": "import 'package:flutter/material.dart';\nimport 'package:provider/provider.dart';\n\nclass Cart extends ChangeNotifier {\n  final _qty = <int, int>{};\n  int get totalItems => _qty.values.fold(0, (a, b) => a + b);\n  int qtyOf(int productId) => _qty[productId] ?? 0;\n  void add(int productId) {\n    _qty.update(productId, (q) => q + 1, ifAbsent: () => 1);\n    notifyListeners();\n  }\n}\n\nclass CartIcon extends StatelessWidget {\n  const CartIcon({super.key});\n  @override\n  Widget build(BuildContext context) {\n    final count = context.select<Cart, int>((c) => c.totalItems);\n    return Badge(label: Text('$count'), child: const Icon(Icons.shopping_cart));\n  }\n}\n\nclass ProductTile extends StatelessWidget {\n  const ProductTile({super.key, required this.id, required this.name});\n  final int id;\n  final String name;\n  @override\n  Widget build(BuildContext context) {\n    final qty = context.select<Cart, int>((c) => c.qtyOf(id)); // only this product\n    return ListTile(title: Text(name), trailing: Text('$qty'), onTap: () => context.read<Cart>().add(id));\n  }\n}",
+      "explanation": "با `context.select` هر `ProductTile` فقط وقتی rebuild می‌شود که تعداد همان محصول عوض شود. افزودن یک کالا از صد ردیف فقط یک ردیف و آیکن سبد را دوباره می‌سازد. در `onTap` از `read` استفاده شده چون فقط متد صدا زده می‌شود."
+     },
+     "mistakes": [
+      "`context.watch<Cart>()` در هر ردیف لیست؛ با هر تغییر سبد همه‌ی ردیف‌های ساخته‌شده rebuild می‌شوند.",
+      "برگرداندن List یا شیء تازه از `select`؛ مقایسه با `==` هر بار «متفاوت» است و select بی‌اثر می‌شود.",
+      "ساختن بخش‌های صفحه با متد (`Widget _buildHeader()`) به‌جای کلاس؛ نه `const` می‌شوند و نه جدا rebuild."
+     ],
+     "bestPractices": [
+      "lint `prefer_const_constructors` را فعال نگه دار و هر جا analyzer پیشنهاد داد `const` بگذار.",
+      "state را تا جای ممکن پایین درخت نگه دار، در نزدیک‌ترین ویجتی که واقعاً به آن نیاز دارد.",
+      "قبل و بعد از تغییر، rebuildها را با Rebuild Stats در DevTools یا یک `debugPrint` موقت بشمار."
+     ],
+     "relatedTerms": [
+      "state-management",
+      "provider",
+      "performance-profiling"
+     ],
+     "tryIt": "لیستی از ۵۰ `ProductTile` با یک `debugPrint` در `build` بساز. یک بار با `context.watch<Cart>()` و یک بار با `context.select` روی یک محصول بزن. انتظار: در حالت اول به تعداد ردیف‌های روی صفحه پیام ببینی و در حالت دوم فقط ۱ پیام."
+    },
+    {
+     "title": "Jank و علت‌های افت فریم",
+     "estimatedMinutes": 25,
+     "what": "Jank همان لرزش و گیر کردن اسکرول یا انیمیشن است، مثل فیلمی که چند فریمش افتاده. وقتی کار یک فریم از بودجه‌ی حدود ۱۶ میلی‌ثانیه بیشتر شود، آن فریم دیر می‌رسد و چشم کاربر پرش را می‌بیند.\n\nسه علت رایج: کار سنگین روی thread اصلی Dart (مثل parse یک JSON بزرگ)، ساختن هم‌زمان تعداد زیادی ویجت، و نقاشی گران مثل `Opacity` روی بخش‌های بزرگ یا decode عکس‌های خیلی بزرگ.",
+     "why": "بسیاری از کاربران با گوشی میان‌رده کار می‌کنند؛ اپی که روی گوشی پرچم‌دار روان است، روی همین گوشی‌ها هنگام اسکرول لیست محصولات می‌لرزد. این لرزش اولین چیزی است که کاربر را سراغ اپ رقیب می‌فرستد.",
+     "simpleExample": {
+      "language": "dart",
+      "code": "import 'dart:convert';\nimport 'dart:isolate';\n\nFuture<List<String>> parseTitles(String hugeJson) {\n  // Runs on a separate isolate, so the UI isolate keeps drawing frames\n  return Isolate.run(() {\n    final list = jsonDecode(hugeJson) as List<dynamic>;\n    return [for (final e in list) (e as Map<String, dynamic>)['title'] as String];\n  });\n}",
+      "explanation": "`Isolate.run` تابع را در یک Isolate جدا اجرا و نتیجه را برمی‌گرداند؛ در این مدت thread اصلی آزاد است و لودینگ روان می‌چرخد. وب Isolate ندارد؛ آن‌جا `compute` از foundation کار می‌کند، البته روی همان thread."
+     },
+     "realExample": {
+      "language": "dart",
+      "code": "import 'package:flutter/material.dart';\n\nclass ProductImageList extends StatelessWidget {\n  const ProductImageList({super.key, required this.imageUrls});\n  final List<String> imageUrls;\n\n  @override\n  Widget build(BuildContext context) {\n    final dpr = MediaQuery.devicePixelRatioOf(context);\n    return ListView.builder(\n      itemCount: imageUrls.length,\n      itemExtent: 96, // fixed row height: cheaper layout while scrolling\n      itemBuilder: (context, i) => Row(children: [\n        Image.network(\n          imageUrls[i],\n          width: 80,\n          height: 80,\n          cacheWidth: (80 * dpr).round(), // decode small, not the 4000px original\n          fit: BoxFit.cover,\n        ),\n        const SizedBox(width: 12),\n        // A translucent color is much cheaper than wrapping the text in Opacity\n        Text('محصول ${i + 1}', style: TextStyle(color: Colors.black.withValues(alpha: 0.6))),\n      ]),\n    );\n  }\n}",
+      "explanation": "`ListView.builder` فقط ردیف‌های نزدیک صفحه را می‌سازد، `itemExtent` layout را ساده می‌کند و `cacheWidth` عکس بزرگ را در اندازه‌ی نمایش decode می‌کند؛ هم حافظه کم مصرف می‌شود هم فریم‌ها سبک‌تر می‌شوند."
+     },
+     "mistakes": [
+      "`jsonDecode` یک پاسخ چند مگابایتی روی thread اصلی؛ اسکرول و لودینگ همان لحظه یخ می‌زنند.",
+      "پیچیدن بخش بزرگ و متحرک در `Opacity`؛ برای انیمیشن `FadeTransition` و برای شفافیت ثابت، رنگ شفاف ارزان‌تر است.",
+      "نمایش عکس اصلی چند هزار پیکسلی سرور در بندانگشتی ۸۰ پیکسلی؛ decode سنگین و مصرف حافظه‌ی زیاد."
+     ],
+     "bestPractices": [
+      "کار CPU سنگین مثل parse، رمزنگاری یا پردازش تصویر را با `Isolate.run` یا `compute` از thread اصلی بیرون ببر.",
+      "برای لیست بلند همیشه `ListView.builder` و در صورت امکان `itemExtent` یا `prototypeItem` بده.",
+      "از سرور عکس با اندازه‌ی مناسب بخواه و در کلاینت هم `cacheWidth` تنظیم کن."
+     ],
+     "relatedTerms": [
+      "performance-profiling",
+      "isolate",
+      "event-loop"
+     ],
+     "tryIt": "یک JSON با ۲۰۰ هزار خبر بساز و یک بار مستقیم با `jsonDecode` و یک بار با `parseTitles` parse کن، در حالی که یک `CircularProgressIndicator` می‌چرخد. انتظار: در حالت اول چرخش چند لحظه بایستد و در حالت دوم روان بماند."
+    },
+    {
+     "title": "DevTools، Profiling و نشتی حافظه",
+     "estimatedMinutes": 30,
+     "what": "DevTools مثل دستگاه‌های مرکز معاینه فنی خودرو است: به‌جای حدس، عدد دقیق می‌دهد. نمای Performance زمان هر فریم را در دو thread UI و Raster نشان می‌دهد و فریم‌های کند را قرمز می‌کند. CPU Profiler می‌گوید کدام تابع وقت را گرفته است.\n\nنمای Memory مصرف heap را نشان می‌دهد؛ با گرفتن دو snapshot و مقایسه‌شان، اشیائی را که باید آزاد می‌شدند ولی مانده‌اند، یعنی نشتی حافظه، پیدا می‌کنی.",
+     "why": "نشتی حافظه بی‌صدا کار می‌کند: کاربر ده بار صفحه‌ی جزئیات محصول را باز و بسته می‌کند و هر بار یک StreamSubscription زنده می‌ماند. بعد از نیم ساعت اپ کند می‌شود یا سیستم‌عامل آن را می‌بندد و تو هیچ خطایی در لاگ نمی‌بینی.",
+     "simpleExample": {
+      "language": "bash",
+      "code": "# Always measure in profile mode on a real device\nflutter run --profile\n\n# While it runs, press \"v\" in the terminal to open DevTools in the browser.\n# Performance tab: frame chart (UI vs Raster), CPU profiler, Rebuild Stats\n# Memory tab: take a heap snapshot, repeat the action, take another and diff\n\n# App size breakdown per package (needs one target platform)\nflutter build apk --analyze-size --target-platform android-arm64",
+      "explanation": "حالت profile تقریباً به سرعت release است ولی ابزارهای اندازه‌گیری را نگه می‌دارد. در debug کد با JIT و assertها اجرا می‌شود و اعداد کارایی گمراه‌کننده‌اند."
+     },
+     "realExample": {
+      "language": "dart",
+      "code": "import 'dart:async';\nimport 'package:flutter/material.dart';\n\nclass LivePricePage extends StatefulWidget {\n  const LivePricePage({super.key, required this.prices});\n  final Stream<int> prices; // live gold price, Toman\n  @override\n  State<LivePricePage> createState() => _LivePricePageState();\n}\n\nclass _LivePricePageState extends State<LivePricePage> {\n  late final StreamSubscription<int> _sub;\n  final _note = TextEditingController();\n  int? _price;\n  @override\n  void initState() {\n    super.initState();\n    _sub = widget.prices.listen((p) => setState(() => _price = p));\n  }\n\n  @override\n  void dispose() {\n    _sub.cancel(); // without this the State leaks and keeps calling setState\n    _note.dispose();\n    super.dispose();\n  }\n  @override\n  Widget build(BuildContext context) => Column(children: [\n        Text(_price == null ? 'در حال دریافت…' : '$_price تومان'),\n        TextField(controller: _note),\n      ]);\n}",
+      "explanation": "این صفحه به Stream قیمت طلا گوش می‌دهد. بدون `cancel`، بعد از بستن صفحه اشتراک زنده می‌ماند، State در حافظه می‌ماند و `setState` روی State مرده خطا می‌دهد. در Memory تعداد نمونه‌های `_LivePricePageState` را بشمار."
+     },
+     "mistakes": [
+      "پروفایل گرفتن روی شبیه‌ساز؛ سخت‌افزار و GPU آن با گوشی واقعی فرق دارد و نتیجه قابل اعتماد نیست.",
+      "رها کردن `StreamSubscription`، `Timer` یا `AnimationController` بدون cancel و dispose؛ State بسته‌شده در حافظه می‌ماند.",
+      "نگه داشتن `BuildContext` یا State در یک متغیر static یا singleton؛ کل درخت آن صفحه آزاد نمی‌شود."
+     ],
+     "bestPractices": [
+      "برای پیدا کردن نشتی، صفحه را ده بار باز و بسته کن، GC بزن و ببین تعداد نمونه‌های State ثابت می‌ماند یا نه.",
+      "قبل از بهینه‌سازی یک عدد پایه ثبت کن، مثلاً میانگین زمان فریم هنگام اسکرول، و بعد از تغییر دوباره بسنج.",
+      "هر منبعی را که در `initState` می‌سازی، همان لحظه آزادسازی‌اش را در `dispose` بنویس."
+     ],
+     "relatedTerms": [
+      "performance-profiling",
+      "debugging",
+      "widget-lifecycle",
+      "stream"
+     ],
+     "tryIt": "`_sub.cancel()` را حذف کن، صفحه را ۱۰ بار با Navigator باز و بسته کن و در Memory کلاس `_LivePricePageState` را جست‌وجو کن. انتظار: حدود ۱۰ نمونه‌ی زنده ببینی؛ با برگرداندن `cancel` و زدن GC این عدد به ۰ یا ۱ برسد."
+    }
+   ]
+  },
+  {
+   "course": "flutter-520",
+   "lessons": [
+    {
+     "title": "ماژول‌بندی: شکستن اپ به package",
+     "estimatedMinutes": 30,
+     "what": "اپ بزرگ مثل یک مجتمع تجاری است: هر مغازه ورودی، انبار و فروشنده‌ی خودش را دارد و اگر یکی تعمیر شود بقیه باز می‌مانند. ماژول‌بندی یعنی اپ را به package‌های Dart جدا بشکنی، مثل `core_network`، `feature_cart` و `feature_payment`.\n\nهر ماژول `pubspec.yaml` خودش را دارد، وابستگی‌هایش صریح نوشته می‌شود و فقط چیزی را export می‌کند که بقیه لازم دارند؛ کد داخلی `lib/src/` از بیرون دیده نمی‌شود.",
+     "why": "در یک پروژه‌ی تک‌پوشه با ده برنامه‌نویس، هر کس هر فایلی را import می‌کند؛ بعد از یک سال تغییر صفحه‌ی پرداخت، سبد خرید را هم می‌شکند. package جدا مرزها را برای analyzer قابل‌بررسی می‌کند و تست و build هر بخش را مستقل می‌کند.",
+     "simpleExample": {
+      "language": "yaml",
+      "code": "# packages/feature_cart/pubspec.yaml\nname: feature_cart\ndescription: Shopping cart feature.\npublish_to: none\n\nenvironment:\n  sdk: ^3.6.0\n\ndependencies:\n  flutter:\n    sdk: flutter\n  flutter_bloc: ^9.1.1\n  core_network:\n    path: ../core_network\n  core_ui:\n    path: ../core_ui",
+      "explanation": "ماژول سبد خرید فقط به `core_network`، `core_ui` و `flutter_bloc` وابسته است. اگر کسی در آن `feature_payment` را import کند، چون در `dependencies` نیست، analyzer هشدار می‌دهد و مرز حفظ می‌شود."
+     },
+     "realExample": {
+      "language": "text",
+      "code": "shop_app/\n├─ app/                       # thin shell: main.dart, router, DI setup\n└─ packages/\n   ├─ core_network/           # Dio client, interceptors, Failure types\n   ├─ core_ui/                # theme, buttons, Toman price formatter\n   ├─ core_auth/              # token storage (flutter_secure_storage)\n   ├─ feature_catalog/        # product list, search, pagination\n   ├─ feature_cart/\n   │  ├─ lib/\n   │  │  ├─ feature_cart.dart # public API only:\n   │  │  │                    #   export 'src/cart_page.dart' show CartPage;\n   │  │  └─ src/              # private implementation\n   │  └─ test/\n   └─ feature_payment/\n\nDependency rule:  app -> feature_* -> core_*\n                  core_* never imports a feature",
+      "explanation": "app فقط featureها را کنار هم می‌گذارد، featureها فقط به coreها وابسته‌اند و core هیچ‌وقت feature را نمی‌شناسد. فایل اصلی هر ماژول با `export ... show` فقط API عمومی را بیرون می‌دهد."
+     },
+     "mistakes": [
+      "import کردن `package:feature_cart/src/...` از ماژول دیگر؛ مرز ماژول عملاً از بین می‌رود و lint هشدار می‌دهد.",
+      "ساختن ماژول برای هر فایل کوچک؛ ده‌ها package با دو کلاس فقط build و نگهداری را سخت‌تر می‌کند.",
+      "وابستگی مستقیم feature به feature، مثل سبد خرید به پرداخت؛ کم‌کم وابستگی چرخشی و تغییرات زنجیره‌ای می‌سازد."
+     ],
+     "bestPractices": [
+      "ماژول‌ها را از روی مرزهای کسب‌وکار ببُر (کاتالوگ، سبد، پرداخت)، نه از روی نوع فایل.",
+      "در فایل اصلی هر ماژول فقط API عمومی را با `export ... show` در دسترس بگذار.",
+      "قانون جهت وابستگی را بنویس و در Code Review بررسی کن: app ← features ← core."
+     ],
+     "relatedTerms": [
+      "clean-architecture",
+      "solid",
+      "scalability"
+     ],
+     "tryIt": "در اپ فروشگاهی قبلی‌ات با `flutter create --template=package core_ui` یک package بساز، تم و دکمه‌ی اصلی را به آن منتقل کن و از اپ با `path` وابسته شو. انتظار: `flutter analyze` بدون خطا باشد و اپ دقیقاً مثل قبل اجرا شود."
+    },
+    {
+     "title": "ساختار Feature-first در برابر Layer-first",
+     "estimatedMinutes": 25,
+     "what": "Layer-first مثل انباری است که همه‌ی پیچ‌ها در یک قفسه و همه‌ی مهره‌ها در قفسه‌ی دیگرند: پوشه‌های `models/`، `screens/` و `services/`. Feature-first مثل جعبه‌ابزار جدا برای هر کار است: همه‌ی فایل‌های «سبد خرید» در `features/cart/` کنار هم‌اند.\n\nدر feature-first، داخل هر feature باز هم لایه‌های `data`، `domain` و `presentation` را جدا می‌کنی؛ یعنی لایه‌بندی حذف نمی‌شود، فقط یک سطح پایین‌تر می‌رود.",
+     "why": "در layer-first با ۲۰۰ فایل، برای یک تغییر ساده در سبد خرید باید در پنج پوشه بگردی و Pull Request تو فایل‌های تیم‌های دیگر را هم لمس می‌کند. در feature-first تغییر هر قابلیت در یک پوشه می‌ماند و حذف یک قابلیت یعنی حذف یک پوشه.",
+     "simpleExample": {
+      "language": "text",
+      "code": "# Layer-first: fine for a small app\nlib/\n  models/     product.dart, cart_item.dart, user.dart\n  screens/    product_screen.dart, cart_screen.dart\n  services/   api.dart, cart_service.dart\n\n# Feature-first: scales with the team and the number of features\nlib/\n  core/       network/, theme/, utils/\n  features/\n    cart/\n      data/          cart_repository_impl.dart\n      domain/        cart_item.dart, cart_repository.dart, get_cart_total.dart\n      presentation/  cart_page.dart, cart_total_cubit.dart\n    catalog/\n      data/  domain/  presentation/",
+      "explanation": "در ساختار اول فایل‌های سبد خرید در سه پوشه پخش‌اند. در ساختار دوم هر چیزی که به سبد مربوط است زیر `features/cart/` است و `core/` فقط کد واقعاً مشترک را دارد."
+     },
+     "realExample": {
+      "language": "dart",
+      "code": "import 'package:flutter_bloc/flutter_bloc.dart';\n\n// features/cart/domain/cart_item.dart\nclass CartItem {\n  const CartItem(this.productId, this.name, this.price, this.qty);\n  final int productId;\n  final String name;\n  final int price, qty; // price in Toman\n  int get subtotal => price * qty;\n}\n\n// features/cart/domain/cart_repository.dart\nabstract interface class CartRepository {\n  Future<List<CartItem>> items();\n}\n\n// features/cart/domain/get_cart_total.dart\nclass GetCartTotal {\n  const GetCartTotal(this._repo);\n  final CartRepository _repo;\n  Future<int> call() async => (await _repo.items()).fold<int>(0, (sum, i) => sum + i.subtotal);\n}\n\n// features/cart/presentation/cart_total_cubit.dart\nclass CartTotalCubit extends Cubit<int?> {\n  CartTotalCubit(this._getTotal) : super(null);\n  final GetCartTotal _getTotal;\n  Future<void> load() async => emit(await _getTotal());\n}",
+      "explanation": "هر چهار فایل در `features/cart/` هستند. presentation فقط use case را می‌شناسد، use case فقط interface مخزن را، و پیاده‌سازی dio در `data/` جایگزین‌پذیر می‌ماند."
+     },
+     "mistakes": [
+      "پوشه‌ی `features/shared/` که کم‌کم همه‌چیز در آن ریخته می‌شود؛ کد واقعاً مشترک را به `core/` ببر.",
+      "import مستقیم `features/payment/data/...` از داخل cart؛ فقط از interface در `core/` یا API عمومی استفاده کن.",
+      "مهاجرت یک‌شبه‌ی کل پروژه به feature-first؛ Pull Request غول‌آسا می‌شود و review آن تقریباً غیرممکن است."
+     ],
+     "bestPractices": [
+      "برای اپ کوچک یک‌نفره layer-first کافی است؛ وقتی تیم یا تعداد قابلیت‌ها بزرگ شد به feature-first برو.",
+      "مهاجرت را feature به feature انجام بده و بعد از انتقال هر قابلیت، تست‌ها را سبز نگه دار.",
+      "نام پوشه‌ها را در همه‌ی featureها یکسان نگه دار (`data`، `domain`، `presentation`) تا همه سریع راه را پیدا کنند."
+     ],
+     "relatedTerms": [
+      "clean-architecture",
+      "repository-pattern",
+      "use-case"
+     ],
+     "tryIt": "ساختار layer-first بالا را در یک پروژه‌ی خالی به feature-first تبدیل کن و برای `catalog` یک use case به نام `SearchProducts` بنویس. انتظار: هیچ فایلی در `features/cart/` از `features/catalog/` چیزی import نکند و `flutter analyze` تمیز باشد."
+    },
+    {
+     "title": "مرز ماژول‌ها: قرارداد و تزریق وابستگی",
+     "estimatedMinutes": 30,
+     "what": "دو مغازه در یک پاساژ لازم نیست کلید انبار هم را داشته باشند؛ از پشت پیشخوان با هم معامله می‌کنند. ماژول‌ها هم همین‌طورند: `feature_product` لازم ندارد بداند سبد خرید چطور پیاده شده، فقط interface `CartApi` را از ماژول قرارداد (`core_contracts`) می‌شناسد.\n\nپیاده‌سازی را خود ماژول سبد هنگام شروع اپ در get_it ثبت می‌کند و app shell همه‌ی ماژول‌ها را به هم وصل می‌کند.",
+     "why": "اگر صفحه‌ی محصول مستقیم کلاس سبد خرید را بسازد، هر تغییر سبد ماژول محصول را هم مجبور به build و تست دوباره می‌کند و وابستگی چرخشی راه می‌افتد. با قرارداد و DI، هر ماژول مستقل تست می‌شود و پیاده‌سازی با نسخه‌ی Fake عوض‌شدنی است.",
+     "simpleExample": {
+      "language": "dart",
+      "code": "import 'package:flutter/material.dart';\nimport 'package:get_it/get_it.dart';\n\n// core_contracts/lib/core_contracts.dart\nabstract interface class CartApi {\n  Future<void> addProduct(int productId);\n}\n\n// feature_product: knows only the contract, never feature_cart\nclass AddToCartButton extends StatelessWidget {\n  const AddToCartButton({super.key, required this.productId});\n  final int productId;\n  @override\n  Widget build(BuildContext context) => FilledButton(\n        onPressed: () => GetIt.I<CartApi>().addProduct(productId),\n        child: const Text('افزودن به سبد'),\n      );\n}",
+      "explanation": "دکمه فقط `CartApi` را می‌شناسد. این‌که سبد در حافظه است، در دیتابیس یا روی سرور، برای ماژول محصول اهمیتی ندارد و در تست می‌شود یک Fake ثبت کرد."
+     },
+     "realExample": {
+      "language": "dart",
+      "code": "import 'package:flutter/material.dart';\nimport 'package:get_it/get_it.dart';\nimport 'package:go_router/go_router.dart';\n\nabstract interface class CartApi {\n  Future<void> addProduct(int productId);\n}\nabstract interface class FeatureModule {\n  void register(GetIt di);\n  List<RouteBase> get routes;\n}\n\nclass CartModule implements FeatureModule {\n  @override\n  void register(GetIt di) => di.registerLazySingleton<CartApi>(_FakeCart.new);\n  @override\n  List<RouteBase> get routes => [GoRoute(path: '/cart', builder: (_, _) => const Placeholder())];\n}\nclass _FakeCart implements CartApi {\n  @override\n  Future<void> addProduct(int productId) async => debugPrint('cart: +$productId');\n}\n\n// App shell: the only place that knows every module\nvoid main() {\n  final modules = <FeatureModule>[CartModule()];\n  for (final m in modules) {\n    m.register(GetIt.I);\n  }\n  runApp(MaterialApp.router(routerConfig: GoRouter(\n      initialLocation: '/cart', routes: [for (final m in modules) ...m.routes])));\n}",
+      "explanation": "هر ماژول با `register` پیاده‌سازی‌اش را ثبت و با `routes` صفحه‌هایش را معرفی می‌کند. app shell فقط لیست ماژول‌ها را می‌شناسد؛ افزودن قابلیت جدید یعنی یک خط در `modules`."
+     },
+     "mistakes": [
+      "گذاشتن interface در همان ماژولی که پیاده‌سازی را دارد؛ مصرف‌کننده باز مجبور است به کل ماژول وابسته شود.",
+      "صدا زدن `GetIt.I` در عمق همه‌ی کلاس‌ها؛ وابستگی‌ها پنهان می‌شوند و تست نوشتن سخت می‌شود.",
+      "ثبت وابستگی‌ها بعد از `runApp` یا به‌صورت پراکنده؛ اولین صفحه با خطای «is not registered inside GetIt» باز می‌شود."
+     ],
+     "bestPractices": [
+      "در ماژول‌های core فقط interface و مدل‌های مشترک بگذار؛ پیاده‌سازی سنگین جایش آن‌جا نیست.",
+      "وابستگی را تا جای ممکن از constructor بده و `GetIt` را فقط در لبه‌ها، مثل route builder یا ساخت Cubit، صدا بزن.",
+      "در تست هر ماژول، قراردادها را با Fake یا mocktail در get_it ثبت کن تا ماژول بدون بقیه‌ی اپ تست شود."
+     ],
+     "relatedTerms": [
+      "dependency-injection",
+      "solid",
+      "clean-architecture"
+     ],
+     "tryIt": "به `CartApi` متد `Stream<int> watchCount()` اضافه کن و یک `ProductModule` با مسیر `/product/:id` بساز که `AddToCartButton` و تعداد سبد را در AppBar نشان دهد. انتظار: با هر کلیک عدد سبد یکی زیاد شود و `ProductModule` هیچ import مستقیمی از `CartModule` نداشته باشد."
+    },
+    {
+     "title": "Monorepo و مدیریت وابستگی با pub workspaces",
+     "estimatedMinutes": 30,
+     "what": "Monorepo یعنی همه‌ی packageهای اپ در یک مخزن git، مثل واحدهای یک ساختمان با یک مدیر ساختمان. از Dart ۳٫۶ قابلیت pub workspaces داری: در `pubspec.yaml` ریشه اعضا را زیر `workspace:` می‌نویسی و هر عضو با `resolution: workspace` به آن می‌پیوندد.\n\nنتیجه: یک `pubspec.lock` برای همه، یک بار `pub get` و نسخه‌ی یکسان هر وابستگی در کل پروژه. ابزار melos هم اسکریپت‌ها را روی همه‌ی اعضا اجرا می‌کند.",
+     "why": "بدون workspace هر package جداگانه `pub get` می‌گیرد و ممکن است تست‌های `feature_cart` با نسخه‌ای از dio اجرا شوند که اپ اصلی با آن build نمی‌شود. در چند مخزن جدا هم یک تغییر ساده در `core` یعنی چند Pull Request هماهنگ.",
+     "simpleExample": {
+      "language": "yaml",
+      "code": "# pubspec.yaml at the repository root\nname: shop_workspace\npublish_to: none\nenvironment:\n  sdk: ^3.6.0\nworkspace:\n  - app\n  - packages/core_network\n  - packages/feature_cart\n  - packages/feature_catalog\n\n# And in every member, e.g. packages/feature_cart/pubspec.yaml:\n# environment:\n#   sdk: ^3.6.0\n# resolution: workspace",
+      "explanation": "ریشه فقط فهرست اعضا را دارد. با یک `flutter pub get` در ریشه، وابستگی همه‌ی اعضا با هم resolve می‌شود و یک `pubspec.lock` مشترک در ریشه ساخته می‌شود."
+     },
+     "realExample": {
+      "language": "yaml",
+      "code": "# Root pubspec.yaml (continued): melos 7 reads its config from here\ndev_dependencies:\n  melos: ^7.0.0\n\nmelos:\n  scripts:\n    analyze:\n      exec: flutter analyze .\n    test:\n      run: flutter test\n      exec:\n        concurrency: 2\n        failFast: true\n      packageFilters:\n        dirExists: test\n\n# CI (e.g. GitHub Actions), key steps only:\n#   dart pub global activate melos\n#   melos bootstrap\n#   melos run analyze\n#   melos exec --diff=origin/main --include-dependents -- flutter test",
+      "explanation": "melos اسکریپت‌های تکراری را روی همه‌ی اعضای workspace اجرا می‌کند. در CI، `--diff` فقط packageهای تغییرکرده و `--include-dependents` وابسته‌هایشان را تست می‌کند؛ در monorepo بزرگ این یعنی چند دقیقه صرفه‌جویی در هر Pull Request."
+     },
+     "mistakes": [
+      "محدوده‌ی نسخه‌ی ناسازگار یک package مثل dio در اعضای مختلف؛ در workspace همه باید با هم جور باشند وگرنه pub get شکست می‌خورد.",
+      "اجرای تست فقط روی packageهای تغییرکرده؛ اگر `core_network` عوض شود، featureهای وابسته به آن هم باید تست شوند.",
+      "commit نکردن `pubspec.lock` ریشه برای اپ؛ هر عضو تیم و CI ممکن است نسخه‌های متفاوتی نصب کنند."
+     ],
+     "bestPractices": [
+      "همه‌ی اعضا را با `resolution: workspace` و محدوده‌ی SDK یکسان تعریف کن و `pub get` را فقط در ریشه بزن.",
+      "هر ماه `flutter pub outdated` را در ریشه اجرا کن و به‌روزرسانی وابستگی‌ها را در Pull Request جدا انجام بده.",
+      "قوانین lint را در یک `analysis_options.yaml` ریشه بگذار تا همه‌ی اعضا با یک استاندارد بررسی شوند."
+     ],
+     "relatedTerms": [
+      "ci-cd",
+      "scalability",
+      "technical-debt"
+     ],
+     "tryIt": "یک workspace با سه عضو `app`، `packages/core_ui` و `packages/feature_cart` بساز و در ریشه `flutter pub get` بزن. انتظار: فقط یک `pubspec.lock` در ریشه ساخته شود و `flutter analyze` در ریشه هر سه عضو را بدون خطا بررسی کند."
+    }
+   ]
+  },
+  {
+   "course": "flutter-610",
+   "lessons": [
+    {
+     "title": "Flutter روی وب و دسکتاپ",
+     "estimatedMinutes": 25,
+     "what": "یک کد Flutter روی اندروید، iOS، وب، ویندوز، مک و لینوکس اجرا می‌شود؛ مثل دستور پختی که هم در آشپزخانه‌ی خانه جواب می‌دهد هم در رستوران، ولی ظرف و اندازه‌اش فرق می‌کند. پنجره‌ی ۱۹۲۰ پیکسلی دسکتاپ با گوشی ۳۹۰ پیکسلی فرق دارد و کاربرش موس و کیبورد دارد.\n\nپس layout را با `LayoutBuilder` بر اساس عرض در دسترس تطبیق می‌دهی و پلتفرم را با `kIsWeb` و `defaultTargetPlatform` تشخیص می‌دهی.",
+     "why": "پنل مدیریت فروشگاه یا نسخه‌ی وب اپ بانکی را کاربر روی لپ‌تاپ باز می‌کند. اگر همان لیست تک‌ستونه‌ی موبایل را کش بدهی، صفحه خالی و زشت می‌شود. اگر هم روی وب از `Platform.isAndroid` در `dart:io` استفاده کنی، اپ با خطا متوقف می‌شود.",
+     "simpleExample": {
+      "language": "dart",
+      "code": "import 'package:flutter/foundation.dart';\n\nString platformLabel() {\n  if (kIsWeb) return 'وب';\n  return switch (defaultTargetPlatform) {\n    TargetPlatform.android => 'اندروید',\n    TargetPlatform.iOS => 'iOS',\n    TargetPlatform.windows => 'ویندوز',\n    TargetPlatform.macOS => 'مک',\n    TargetPlatform.linux => 'لینوکس',\n    TargetPlatform.fuchsia => 'فوشیا',\n  };\n}",
+      "explanation": "`kIsWeb` و `defaultTargetPlatform` روی همه‌ی پلتفرم‌ها، از جمله وب، امن‌اند؛ برخلاف `Platform` در `dart:io`. `switch` روی enum کامل است، پس اگر حالتی جا بیفتد کامپایل نمی‌شود."
+     },
+     "realExample": {
+      "language": "dart",
+      "code": "import 'package:flutter/material.dart';\n\nclass ShopLayout extends StatelessWidget {\n  const ShopLayout({super.key, required this.products});\n  final List<String> products;\n\n  @override\n  Widget build(BuildContext context) {\n    return LayoutBuilder(builder: (context, constraints) {\n      final width = constraints.maxWidth;\n      final columns = width >= 1200 ? 4 : width >= 800 ? 3 : 2;\n      final grid = GridView.builder(\n        gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(crossAxisCount: columns),\n        itemCount: products.length,\n        itemBuilder: (_, i) => Card(child: Center(child: Text(products[i]))),\n      );\n      if (width < 800) return grid; // phone: grid only\n      return Row(children: [\n        NavigationRail(\n          selectedIndex: 0,\n          labelType: NavigationRailLabelType.all,\n          destinations: const [\n            NavigationRailDestination(icon: Icon(Icons.store), label: Text('فروشگاه')),\n            NavigationRailDestination(icon: Icon(Icons.receipt_long), label: Text('سفارش‌ها')),\n          ],\n        ),\n        Expanded(child: grid),\n      ]);\n    });\n  }\n}",
+      "explanation": "`LayoutBuilder` عرض واقعی در دسترس را می‌دهد، نه اندازه‌ی کل صفحه؛ پس در پنجره‌ی کوچک دسکتاپ هم درست رفتار می‌کند. زیر ۸۰۰ پیکسل شبکه‌ی ۲ ستونه، و در عرض بیشتر NavigationRail و تا ۴ ستون."
+     },
+     "mistakes": [
+      "استفاده از `Platform.isAndroid` از `dart:io` در کد مشترک؛ روی وب با خطای Unsupported operation متوقف می‌شود.",
+      "تشخیص «دسکتاپ» با نوع پلتفرم به‌جای عرض؛ تبلت افقی یا پنجره‌ی کوچک ویندوز layout اشتباه می‌گیرد.",
+      "فراموش کردن موس و کیبورد: نبودن hover، ارسال فرم با Enter و ترتیب درست Tab بین فیلدها در دسکتاپ."
+     ],
+     "bestPractices": [
+      "breakpointها را یک جا تعریف کن (مثلاً ۶۰۰، ۸۰۰ و ۱۲۰۰) تا همه‌ی صفحه‌ها از همان‌ها استفاده کنند.",
+      "برای وب `flutter build web --wasm` را هم امتحان کن و زمان اولین بارگذاری را روی اینترنت همراه بسنج.",
+      "کد وابسته به پلتفرم را پشت یک interface بگذار و نسخه‌ی وب و native را با conditional import جدا کن."
+     ],
+     "relatedTerms": [
+      "layout-constraints",
+      "build-context",
+      "scalability"
+     ],
+     "tryIt": "`ShopLayout` را با ۲۰ محصول روی Chrome (`flutter run -d chrome`) اجرا کن و پنجره را کوچک و بزرگ کن. انتظار: زیر ۸۰۰ پیکسل ۲ ستون بدون NavigationRail، بین ۸۰۰ تا ۱۲۰۰ سه ستون و بالاتر از آن ۴ ستون ببینی."
+    },
+    {
+     "title": "Platform Channel: گفت‌وگو با کد Native",
+     "estimatedMinutes": 30,
+     "what": "Platform Channel مثل مترجم همزمان بین دو نفر است که زبان هم را نمی‌دانند: Dart پیامی با نام متد و آرگومان‌ها می‌فرستد، کد Kotlin یا Swift آن را اجرا می‌کند و جواب را برمی‌گرداند. همه‌چیز ناهمزمان است و نتیجه یک Future است.\n\n`MethodChannel` برای درخواست و پاسخ است، مثل گرفتن سطح باتری. `EventChannel` برای جریان پیوسته‌ی رویداد از native است، مثل وضعیت اتصال کارت‌خوان، و در Dart به Stream تبدیل می‌شود.",
+     "why": "خیلی از قابلیت‌ها package آماده ندارند یا باید به SDK اختصاصی وصل شوی؛ مثلاً SDK کارت‌خوان فروشگاهی که فقط نسخه‌ی اندروید دارد. بدون Platform Channel یا باید از آن قابلیت بگذری یا کل اپ را native بنویسی.",
+     "simpleExample": {
+      "language": "dart",
+      "code": "import 'package:flutter/services.dart';\n\nconst _battery = MethodChannel('ir.codeacademy.shop/battery');\n\nFuture<String> batteryLabel() async {\n  try {\n    final level = await _battery.invokeMethod<int>('getBatteryLevel');\n    return 'باتری: ${level ?? '-'}٪';\n  } on PlatformException catch (e) {\n    return 'خطای native: ${e.message}';\n  } on MissingPluginException {\n    return 'این قابلیت روی این پلتفرم پیاده نشده';\n  }\n}",
+      "explanation": "نام کانال باید دقیقاً با سمت native یکی باشد. اگر native خطا برگرداند `PlatformException` می‌گیری و اگر هیچ handlerی ثبت نشده باشد، مثلاً روی وب، `MissingPluginException`."
+     },
+     "realExample": {
+      "language": "dart",
+      "code": "import 'package:flutter/services.dart';\n\n/// Wraps a hypothetical card-reader SDK that exists only on Android.\nclass CardReader {\n  static const _methods = MethodChannel('ir.codeacademy.shop/card_reader');\n  static const _events = EventChannel('ir.codeacademy.shop/card_reader/status');\n\n  /// Starts a payment and returns the bank reference number.\n  Future<String> pay({required int amountToman}) async {\n    final ref = await _methods.invokeMethod<String>('pay', {'amount': amountToman});\n    if (ref == null) throw PlatformException(code: 'EMPTY', message: 'No reference');\n    return ref;\n  }\n\n  /// 'connected' | 'waiting_card' | 'disconnected'\n  Stream<String> get status => _events.receiveBroadcastStream().cast<String>();\n}\n\n// Android side (MainActivity.kt), for reference:\n// MethodChannel(flutterEngine.dartExecutor.binaryMessenger, \"ir.codeacademy.shop/card_reader\")\n//   .setMethodCallHandler { call, result ->\n//     when (call.method) {\n//       \"pay\" -> reader.pay(call.argument<Int>(\"amount\")!!) { ref -> result.success(ref) }\n//       else -> result.notImplemented()\n//     }\n//   }",
+      "explanation": "بقیه‌ی اپ فقط یک کلاس تمیز با Future و Stream می‌بیند و جزئیات کانال پنهان است. سمت Kotlin هر متد را با `result.success` جواب می‌دهد و برای متد ناشناخته `notImplemented`، که در Dart به `MissingPluginException` تبدیل می‌شود."
+     },
+     "mistakes": [
+      "نام کانال یا متد متفاوت در Dart و Kotlin، حتی یک حرف؛ نتیجه فقط `MissingPluginException` است و پیدا کردنش وقت می‌برد.",
+      "فرستادن عدد بزرگ‌تر از محدوده‌ی ۳۲ بیتی، مثل مبلغ ریالی کلان؛ در Kotlin به‌جای Int یک Long می‌رسد و `argument<Int>` شکست می‌خورد.",
+      "انجام کار سنگین native مستقیم در handler روی main thread؛ UI اندروید و Flutter هر دو قفل می‌شوند."
+     ],
+     "bestPractices": [
+      "برای APIهای بزرگ از `pigeon` استفاده کن تا کد کانال type-safe برای Dart و Kotlin/Swift تولید شود.",
+      "کانال را پشت یک کلاس Dart با متدهای تایپ‌شده پنهان کن تا بقیه‌ی اپ نام رشته‌ای متدها را نبیند.",
+      "در تست، handler کانال را با `setMockMethodCallHandler` روی `TestDefaultBinaryMessengerBinding` شبیه‌سازی کن."
+     ],
+     "relatedTerms": [
+      "future",
+      "stream",
+      "async-await"
+     ],
+     "tryIt": "در `MainActivity.kt` متد `getBatteryLevel` را با `BatteryManager` پیاده کن و `batteryLabel` را با یک دکمه صدا بزن. انتظار: روی گوشی اندروید متنی مثل «باتری: ۸۵٪» و روی Chrome پیام «این قابلیت روی این پلتفرم پیاده نشده» ببینی."
+    },
+    {
+     "title": "طراحی یک Package خوب",
+     "estimatedMinutes": 30,
+     "what": "package خوب مثل یک وسیله‌ی برقی با دفترچه‌ی راهنماست: از بیرون چند دکمه‌ی واضح دارد و سیم‌کشی داخلش پنهان است. در Dart، API عمومی در `lib/<name>.dart` export می‌شود و پیاده‌سازی در `lib/src/` می‌ماند.\n\nمثال این درس package فرضی `toman_kit` است: تبدیل ارقام به فارسی، فرمت مبلغ به تومان و اعتبارسنجی کد ملی؛ چیزی که تقریباً هر اپ ایرانی لازم دارد.",
+     "why": "اگر هر پروژه کد تبدیل ارقام و بررسی کد ملی را کپی کند، یک باگ در ده جا تکرار می‌شود. package با API کوچک، پایدار، تست‌شده و مستند یک بار نوشته می‌شود و همه استفاده می‌کنند؛ API شلوغ و ناپایدار اما با هر نسخه‌ی جدید کد کاربران را می‌شکند.",
+     "simpleExample": {
+      "language": "dart",
+      "code": "/// Converts Latin digits to Persian: '0912' -> '۰۹۱۲'.\nString toPersianDigits(String input) {\n  const persian = '۰۱۲۳۴۵۶۷۸۹';\n  return input.replaceAllMapped(RegExp('[0-9]'), (m) => persian[int.parse(m[0]!)]);\n}\n\n/// Formats an amount with separators: 2450000 -> '۲٬۴۵۰٬۰۰۰ تومان'.\nString formatToman(int amount) {\n  final grouped = amount.toString().replaceAllMapped(\n        RegExp(r'\\B(?=(\\d{3})+(?!\\d))'),\n        (_) => '٬',\n      );\n  return '${toPersianDigits(grouped)} تومان';\n}\n\n// lib/toman_kit.dart exposes only these two:\n//   export 'src/format.dart' show toPersianDigits, formatToman;",
+      "explanation": "دو تابع کوچک با نام روشن و مستندات `///` که مثال ورودی و خروجی دارد. فایل اصلی package فقط همین‌ها را با `show` export می‌کند و هر تابع کمکی دیگر در `src/` پنهان می‌ماند."
+     },
+     "realExample": {
+      "language": "dart",
+      "code": "import 'package:flutter_test/flutter_test.dart'; // in a pure Dart package: package:test\n\n/// Validates an Iranian national code (10 digits, last one is a check digit).\nbool isValidNationalCode(String code) {\n  if (!RegExp(r'^\\d{10}$').hasMatch(code)) return false;\n  if (RegExp(r'^(\\d)\\1{9}$').hasMatch(code)) return false; // e.g. 1111111111\n  final digits = code.split('').map(int.parse).toList();\n  var sum = 0;\n  for (var i = 0; i < 9; i++) {\n    sum += digits[i] * (10 - i);\n  }\n  final r = sum % 11;\n  return digits[9] == (r < 2 ? r : 11 - r);\n}\n\nvoid main() {\n  group('isValidNationalCode', () {\n    test('accepts a correct check digit', () {\n      expect(isValidNationalCode('0012345679'), isTrue);\n    });\n    test('rejects a wrong check digit', () {\n      expect(isValidNationalCode('0012345670'), isFalse);\n    });\n    test('rejects wrong length and repeated digits', () {\n      expect(isValidNationalCode('12345'), isFalse);\n      expect(isValidNationalCode('1111111111'), isFalse);\n    });\n  });\n}",
+      "explanation": "در الگوریتم رقم کنترل کد ملی، ۹ رقم اول در وزن‌های ۱۰ تا ۲ ضرب و باقی‌مانده‌ی جمع بر ۱۱ حساب می‌شود. تست‌ها حالت درست، رقم کنترل غلط، طول غلط و ارقام تکراری را پوشش می‌دهند."
+     },
+     "mistakes": [
+      "export کردن فایل‌های `src/` بدون `show`؛ هر تابع کمکی جزو API عمومی می‌شود و دیگر نمی‌توانی آزادانه عوضش کنی.",
+      "وابسته کردن یک package منطقی ساده به Flutter؛ دیگر در سرور Dart یا ابزار خط فرمان قابل استفاده نیست.",
+      "پرتاب Exception برای ورودی نامعتبر عادی مثل کد ملی ۹ رقمی؛ برگرداندن `false` برای کاربر package راحت‌تر است."
+     ],
+     "bestPractices": [
+      "API را کوچک شروع کن؛ افزودن تابع جدید آسان است ولی حذف آن یک نسخه‌ی major می‌خواهد.",
+      "برای هر تابع عمومی مستندات `///` با یک مثال ورودی و خروجی بنویس؛ pub.dev از همین‌ها صفحه‌ی API می‌سازد.",
+      "پوشه‌ی `example/` با یک نمونه‌ی کوچک بساز؛ pub.dev آن را در تب Example نشان می‌دهد."
+     ],
+     "relatedTerms": [
+      "unit-test",
+      "solid",
+      "code-review"
+     ],
+     "tryIt": "با `dart create -t package toman_kit` یک package بساز، سه تابع این درس را در `lib/src/` بگذار و فقط با `show` export کن. انتظار: `dart test` سبز شود و در پروژه‌ای دیگر فقط همین سه تابع در autocomplete دیده شوند."
+    },
+    {
+     "title": "انتشار Package روی pub.dev",
+     "estimatedMinutes": 30,
+     "what": "انتشار package مثل چاپ کتاب است: نسخه‌ی چاپ‌شده را نمی‌شود پس گرفت، فقط ویرایش بعدی را منتشر می‌کنی. روی pub.dev هم هر نسخه دائمی است؛ فقط می‌توانی آن را تا ۷ روز retract کنی یا کل package را discontinued علامت بزنی.\n\nقبل از انتشار `pubspec.yaml` کامل (name، description، version، repository) و فایل‌های `README.md`، `CHANGELOG.md` و `LICENSE` لازم است و `dart pub publish --dry-run` همه را بررسی می‌کند.",
+     "why": "package مفیدی که بی‌مستندات یا با نسخه‌گذاری بی‌حساب منتشر شود، اعتماد کسی را نمی‌گیرد. بدتر این‌که تغییر ناسازگار در یک نسخه‌ی patch، اپ همه‌ی کسانی را که `^1.2.0` نوشته‌اند در اولین `pub upgrade` می‌شکند.",
+     "simpleExample": {
+      "language": "yaml",
+      "code": "name: toman_kit\ndescription: >-\n  Persian digits, Toman price formatting and Iranian national code\n  validation for Dart and Flutter apps.\nversion: 1.1.0\nrepository: https://github.com/example/toman_kit\ntopics: [persian, iran, formatting]\n\nenvironment:\n  sdk: ^3.6.0\n\ndev_dependencies:\n  lints: ^6.0.0\n  test: ^1.25.0",
+      "explanation": "`description` بهتر است بین ۶۰ تا ۱۸۰ نویسه باشد تا pub.dev امتیاز کامل بدهد و `repository` به کد منبع اشاره کند. `topics` به پیدا شدن package در جست‌وجو کمک می‌کند."
+     },
+     "realExample": {
+      "language": "bash",
+      "code": "# 1) Quality checks\ndart format --output=none --set-exit-if-changed .\ndart analyze --fatal-infos\ndart test\n\n# 2) Score it locally the way pub.dev does\ndart pub global activate pana\npana .\n\n# 3) Bump version in pubspec.yaml and add a CHANGELOG.md entry:\n#    ## 1.1.0\n#    - Add `isValidNationalCode`.\n\n# 4) See exactly what will be uploaded, then publish\ndart pub publish --dry-run\ndart pub publish\n\n# 5) Tag the release so code and version stay in sync\ngit tag v1.1.0 && git push origin v1.1.0",
+      "explanation": "اول کیفیت را خودت بسنج؛ `--dry-run` بدون انتشار واقعی، فایل‌ها و هشدارها را نشان می‌دهد. اولین `publish` برای ورود با حساب Google یک لینک می‌دهد. tag گیت نسخه‌ی منتشرشده را با کد منبع یکی نگه می‌دارد."
+     },
+     "mistakes": [
+      "بالا بردن نسخه‌ی patch (مثلاً `1.1.1`) برای تغییر نام یک تابع عمومی؛ این تغییر ناسازگار است و نسخه‌ی major می‌خواهد.",
+      "انتشار بدون `--dry-run`؛ فایل بزرگ یا محرمانه مثل `.env` ممکن است همراه package برود و دیگر پاک نمی‌شود.",
+      "خالی گذاشتن `CHANGELOG.md`؛ کاربر نمی‌فهمد به‌روزرسانی چه چیزی را عوض کرده و آیا کدش می‌شکند."
+     ],
+     "bestPractices": [
+      "از Semantic Versioning پیروی کن: رفع باگ patch، قابلیت سازگار minor، تغییر ناسازگار major.",
+      "انتشار را با GitHub Actions و احراز هویت OIDC خودکار کن تا با push کردن یک tag نسخه منتشر شود.",
+      "package را زیر یک verified publisher منتشر کن تا کاربران ببینند متعلق به یک دامنه‌ی تأییدشده است."
+     ],
+     "relatedTerms": [
+      "ci-cd",
+      "code-review",
+      "unit-test"
+     ],
+     "tryIt": "برای `toman_kit` فایل‌های `README.md` با یک مثال، `CHANGELOG.md` و `LICENSE` بنویس و `dart pub publish --dry-run` بزن. انتظار: پیام `Package has 0 warnings.` ببینی. انتشار واقعی لازم نیست."
+    }
+   ]
+  }
+ ]
+}
